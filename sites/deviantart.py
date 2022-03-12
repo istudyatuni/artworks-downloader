@@ -127,10 +127,14 @@ class DAService():
 		url = f'{API_URL}/gallery/folders'
 		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
 			async for folder in self._pager(session, 'GET', url, params=params):
+				name = folder['name']
+				# i don't know what is this, so just tell about
+				if 'has_subfolders' in folder:
+					print('Folder', name, 'has subfolders, but this feature currently not supported')
 				yield {
 					'id': folder['folderid'],
-					'name': folder['name'].lower().replace(' ', '-'),
-					'pretty_name': folder['name'],
+					'name': name.lower().replace(' ', '-'),
+					'pretty_name': name,
 				}
 
 	async def list_folder_arts(self, username: str, folder: str) -> AsyncGenerator[Any, None]:
@@ -192,8 +196,22 @@ async def download(url: str, data_folder: str):
 
 	print('Artist', artist)
 
+	async def run_for_folder(folder: str):
+		count_arts = 0
+		# this session for downloading images
+		async with aiohttp.ClientSession() as session:
+			async for art in service.list_folder_arts(artist, folder):
+				src = art['content']['src']
+				ext = os.path.splitext(urlparse(src).path)[1]
+				name = art['url'].split('/')[-1] + ext
+
+				await save_art(session, src, save_folder, name)
+				count_arts += 1
+
+		print('Total', count_arts, 'arts')
+
 	if parsed['type'] == 'all':
-		pass
+		await run_for_folder('all')
 	elif parsed['type'] == 'folder':
 		folder_to_find = parsed['folder']
 		folderid = None
@@ -202,25 +220,17 @@ async def download(url: str, data_folder: str):
 			if folder['name'] == folder_to_find:
 				folderid = folder['id']
 				print('Gallery', folder['pretty_name'])
-				break
+
+				# not breaking now for catching what is the subfolder
+				# break
 
 		if folderid is None:
 			print('Not found gallery', f'"{folder_to_find}"')
 			return
 
-		count_arts = 0
-
-		# this session for downloading images
-		async with aiohttp.ClientSession() as session:
-			async for art in service.list_folder_arts(artist, folderid):
-				src = art['content']['src']
-				ext = os.path.splitext(urlparse(src).path)[1]
-				name = art['url'].split('/')[-1] + ext
-				await save_art(session, src, save_folder, name)
-
-				count_arts += 1
-
-		print('Total', count_arts, 'arts')
+		await run_for_folder(folderid)
+	elif parsed['type'] == 'art':
+		pass
 
 def ask_app_creds():
 	creds = get_creds()
