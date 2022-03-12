@@ -169,15 +169,16 @@ def parse_link(url: str):
 		return { 'type': 'folder', 'folder': path[3], 'artist': artist }
 
 	if path[1] == 'art':
-		# https://www.deviantart.com/<artist>/art/Fruit-745214538
-		return { 'type': 'art', 'art': path[2], 'artist': artist }
+		# https://www.deviantart.com/<artist>/art/<name>
+		return { 'type': 'art', 'url': url, 'artist': artist, 'name': path[2] }
 
 	return { 'artist': artist }
 
 async def save_art(session: aiohttp.ClientSession, url: str, folder: str, name: str):
 	print_level_prefix = ' ' * 2
 
-	path = os.path.join(folder, name)
+	ext = os.path.splitext(urlparse(url).path)[1]
+	path = os.path.join(folder, name + ext)
 	if os.path.exists(path):
 		return print(print_level_prefix + 'Skip existing:', name)
 
@@ -201,11 +202,8 @@ async def download(url: str, data_folder: str):
 		# this session for downloading images
 		async with aiohttp.ClientSession() as session:
 			async for art in service.list_folder_arts(artist, folder):
-				src = art['content']['src']
-				ext = os.path.splitext(urlparse(src).path)[1]
-				name = art['url'].split('/')[-1] + ext
-
-				await save_art(session, src, save_folder, name)
+				name = art['url'].split('/')[-1]
+				await save_art(session, art['content']['src'], save_folder, name)
 				count_arts += 1
 
 		print('Total', count_arts, 'arts')
@@ -216,6 +214,7 @@ async def download(url: str, data_folder: str):
 		folder_to_find = parsed['folder']
 		folderid = None
 
+		print('Searching for gallery')
 		async for folder in service.list_folders(artist):
 			if folder['name'] == folder_to_find:
 				folderid = folder['id']
@@ -230,7 +229,14 @@ async def download(url: str, data_folder: str):
 
 		await run_for_folder(folderid)
 	elif parsed['type'] == 'art':
-		pass
+		url_to_find = parsed['url']
+
+		print('Searching for art')
+		async for art in service.list_folder_arts(artist, 'all'):
+			if art['url'] == url_to_find:
+				async with aiohttp.ClientSession() as session:
+					await save_art(session, art['content']['src'], save_folder, parsed['name'])
+					break
 
 def ask_app_creds():
 	creds = get_creds()
