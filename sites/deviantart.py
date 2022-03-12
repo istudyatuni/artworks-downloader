@@ -1,6 +1,8 @@
+import aiofiles
 import aiohttp
 import os
 from copy import deepcopy
+from typing import Any, AsyncGenerator
 from urllib.parse import urlencode, urlparse
 
 from creds import get_creds, save_creds
@@ -9,7 +11,8 @@ from redirect_server import run
 SLUG = 'deviantart'
 
 BASE_URL = 'https://www.deviantart.com'
-OAUTH2_URL = BASE_URL + '/oauth2/authorize'
+AUTH_URL = BASE_URL + '/oauth2/authorize'
+API_URL = '/api/v1/oauth2'
 REDIRECT_URI = 'http://localhost:23445'
 
 INVALID_CODE_MSG = 'Incorrect authorization code.'
@@ -17,6 +20,7 @@ INVALID_CODE_MSG = 'Incorrect authorization code.'
 # TODO: add revoke
 # https://www.deviantart.com/developers/authentication
 class DAService():
+	"""Perform almost all work with auth and API"""
 	def __init__(self):
 		self.creds = get_creds() or {}
 		if self.creds is None:
@@ -30,6 +34,10 @@ class DAService():
 
 		self.access_token = creds['oauth2'].get('access_token')
 		self.refresh_token = creds['oauth2'].get('refresh_token')
+
+	@property
+	def _auth_header(self) -> str:
+		return 'Bearer ' + self.access_token
 
 	def _save_tokens(self):
 		creds = deepcopy(self.creds)
@@ -86,34 +94,133 @@ class DAService():
 				elif data['error_description'] == INVALID_CODE_MSG:
 					print('Please authorize again') # or refresh token instead
 
+	async def _pager(
+		self,
+		session: aiohttp.ClientSession,
+		method: str,
+		url: str,
+		**kwargs
+	) -> AsyncGenerator[Any, None]:
+		params = { **kwargs.pop('params', {}), 'offset': 0, 'limit': 24 }
+		while True:
+			async with session.request(
+				method,
+				url,
+				params=params,
+				**kwargs
+			) as response:
+				data = await response.json()
+
+				for result in data['results']:
+					yield result
+
+				if data['has_more'] is False:
+					break
+
+				params['offset'] = data['next_offset']
+
+	async def list_folders(self, username: str) -> AsyncGenerator[Any, None]:
+		await self._ensure_access()
+
+		params = { 'username': username, 'mature_content': 'true' }
+		headers = { 'authorization': self._auth_header }
+		url = f'{API_URL}/gallery/folders'
+		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
+			async for folder in self._pager(session, 'GET', url, params=params):
+				yield {
+					'id': folder['folderid'],
+					'name': folder['name'].lower().replace(' ', '-'),
+					'pretty_name': folder['name'],
+				}
+
+	async def list_folder_arts(self, username: str, folder: str) -> AsyncGenerator[Any, None]:
+		await self._ensure_access()
+
+		params = { 'username': username, 'mature_content': 'true' }
+		headers = { 'authorization': self._auth_header }
+		url = f'{API_URL}/gallery/{folder}'
+		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
+			async for art in self._pager(session, 'GET', url, params=params):
+				yield art
+
 def parse_link(url: str):
 	parsed = urlparse(url)
 	path = parsed.path.split('/')
 	path.pop(0)
 	artist = path[0]
 
-	if len(path) == 1:
+	if len(path) == 1 or (len(path) > 2 and path[2] == 'all'):
 		# https://www.deviantart.com/<artist>
-		return { 'artist': artist }
-
-	if path[1] == 'gallery' and len(path) == 2 or ():
-		# https://www.deviantart.com/<artist>/gallery
-		# or
 		# https://www.deviantart.com/<artist>/gallery/all
-		return { 'artist': artist }
+		return { 'type': 'all', 'artist': artist }
+
+	if len(path) == 2 and path[1] == 'gallery':
+		# https://www.deviantart.com/<artist>/gallery
+		# it's "Featured" collection
+		return { 'type': 'folder', 'folder': 'featured', 'artist': artist }
+
+	if path[1] == 'gallery':
+		# https://www.deviantart.com/<artist>/gallery/<some number>/<gallery name>
+		# gallery name in format one-two-etc
+		return { 'type': 'folder', 'folder': path[3], 'artist': artist }
+
+	if path[1] == 'art':
+		# https://www.deviantart.com/<artist>/art/Fruit-745214538
+		return { 'type': 'art', 'art': path[2], 'artist': artist }
 
 	return { 'artist': artist }
 
-	# return { 'type': 'all', 'artist': parsed.path.lstrip('/') }
+async def save_art(session: aiohttp.ClientSession, url: str, folder: str, name: str):
+	print_level_prefix = ' ' * 2
+
+	path = os.path.join(folder, name)
+	if os.path.exists(path):
+		return print(print_level_prefix + 'Skip existing:', name)
+
+	async with session.get(url) as image:
+		async with aiofiles.open(path, 'wb') as file:
+			await file.write(await image.read())
+			print(print_level_prefix + 'Download:', name)
 
 async def download(url: str, data_folder: str):
 	service = DAService()
-	await service._ensure_access()
 
 	parsed = parse_link(url)
 	artist = parsed['artist']
 	save_folder = os.path.join(data_folder, artist)
 	os.makedirs(save_folder, exist_ok=True)
+
+	print('Artist', artist)
+
+	if parsed['type'] == 'all':
+		pass
+	elif parsed['type'] == 'folder':
+		folder_to_find = parsed['folder']
+		folderid = None
+
+		async for folder in service.list_folders(artist):
+			if folder['name'] == folder_to_find:
+				folderid = folder['id']
+				print('Gallery', folder['pretty_name'])
+				break
+
+		if folderid is None:
+			print('Not found gallery', f'"{folder_to_find}"')
+			return
+
+		count_arts = 0
+
+		# this session for downloading images
+		async with aiohttp.ClientSession() as session:
+			async for art in service.list_folder_arts(artist, folderid):
+				src = art['content']['src']
+				ext = os.path.splitext(urlparse(src).path)[1]
+				name = art['url'].split('/')[-1] + ext
+				await save_art(session, src, save_folder, name)
+
+				count_arts += 1
+
+		print('Total', count_arts, 'arts')
 
 def ask_app_creds():
 	creds = get_creds()
@@ -134,6 +241,7 @@ def ask_app_creds():
 	}
 
 def register():
+	"""Authorize application"""
 	creds = {
 		SLUG: ask_app_creds(),
 		**{
@@ -152,7 +260,7 @@ def register():
 		'scope': ' '.join(['browse']),
 		'view': 'login'
 	}
-	url = f'{OAUTH2_URL}?{urlencode(query)}'
+	url = f'{AUTH_URL}?{urlencode(query)}'
 
 	try:
 		run(url, cred_saver)
