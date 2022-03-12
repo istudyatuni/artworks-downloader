@@ -1,19 +1,95 @@
-import aiofiles
 import aiohttp
-import json
-import json
 import os
-from typing import Any, Dict
-from urllib.parse import urlparse
-# from functools import reduce
+from copy import deepcopy
+from urllib.parse import urlencode, urlparse
 
-BASE_URL = 'https://www.artstation.com'
-USER_PROJECTS_URL = '/users/{user}/projects.json'
-PROJECT_INFO_URL = '/projects/{hash}.json'
+from creds import get_creds, save_creds
+from redirect_server import run
+
+SLUG = 'deviantart'
+
+BASE_URL = 'https://www.deviantart.com'
+OAUTH2_URL = BASE_URL + '/oauth2/authorize'
+REDIRECT_URI = 'http://localhost:23445'
+
+INVALID_CODE_MSG = 'Incorrect authorization code.'
+
+# TODO: add revoke
+# https://www.deviantart.com/developers/authentication
+class DAService():
+	def __init__(self):
+		self.creds = get_creds() or {}
+		if self.creds is None:
+			raise Exception('Not authorized')
+
+		creds = self.creds[SLUG]
+
+		self.client_id = creds['client_id']
+		self.client_secret = creds['client_secret']
+		self.code = creds['oauth2']['code']
+
+		self.access_token = creds['oauth2'].get('access_token')
+		self.refresh_token = creds['oauth2'].get('refresh_token')
+
+	def _save_tokens(self):
+		creds = deepcopy(self.creds)
+		creds[SLUG]['oauth2']['access_token'] = self.access_token
+		creds[SLUG]['oauth2']['refresh_token'] = self.refresh_token
+		save_creds(creds)
+
+	async def _ensure_access(self):
+		if self.refresh_token is None:
+			return await self._fetch_access_token()
+
+		async with aiohttp.ClientSession(BASE_URL) as session:
+			async with session.post('/api/v1/oauth2/placebo', params={
+				'access_token': self.access_token
+			}) as response:
+				if (await response.json())['status'] == 'success':
+					return
+
+		await self._refresh_token()
+
+	async def _fetch_access_token(self):
+		"""Fetch `access_token` using `authorization_code`"""
+		params = {
+			'grant_type': 'authorization_code',
+			'code': self.code,
+			'redirect_uri': REDIRECT_URI,
+		}
+		await self._authorize(params)
+
+	async def _refresh_token(self):
+		"""Refresh `access_token` using `refresh_token`"""
+		if self.refresh_token is None:
+			raise Exception('No refresh token')
+
+		params = {
+			'grant_type': 'refresh_token',
+			'refresh_token': self.refresh_token,
+		}
+		await self._authorize(params)
+
+	async def _authorize(self, add_params):
+		params = {
+			'client_id': self.client_id,
+			'client_secret': self.client_secret,
+			**add_params,
+		}
+		async with aiohttp.ClientSession(BASE_URL) as session:
+			async with session.post('/oauth2/token', params=params) as response:
+				data = await response.json()
+				if response.ok:
+					self.access_token = data['access_token']
+					self.refresh_token = data['refresh_token']
+					self._save_tokens()
+				elif data['error_description'] == INVALID_CODE_MSG:
+					print('Please authorize again') # or refresh token instead
 
 def parse_link(url: str):
 	parsed = urlparse(url)
 	path = parsed.path.split('/')
+	path.pop(0)
 	artist = path[0]
 
 	if len(path) == 1:
@@ -30,59 +106,60 @@ def parse_link(url: str):
 
 	# return { 'type': 'all', 'artist': parsed.path.lstrip('/') }
 
-async def fetch_json(session: aiohttp.ClientSession, url: str) -> Dict[str, Any]:
-	async with session.get(url) as response:
-		html = await response.text()
-
-	start_ind = html.find('__INITIAL_STATE__')
-	end_ind = html.find(';\n', start_ind)
-	# 31 is len of `__INITIAL_STATE__ = JSON.parse(`
-	# 1 is len of `)` at the end
-	json_data = html[start_ind + 31:end_ind - 1]
-
-	from pprint import pprint
-	# first parse with many escape chars, then parse json string
-	# '"{\"field\" ...\"' -> '{"field" ...' -> {'field' ...
-	try:
-		j = json.loads(json_data)
-	except json.decoder.JSONDecodeError:
-		print(json_data)
-		raise
-	data = json.loads(j)
-	# data = json.loads(json.loads(json_data))
-	pprint(data)
-	return data['@@entities']['deviation']
-
 async def download(url: str, data_folder: str):
+	service = DAService()
+	await service._ensure_access()
+
 	parsed = parse_link(url)
 	artist = parsed['artist']
 	save_folder = os.path.join(data_folder, artist)
 	os.makedirs(save_folder, exist_ok=True)
 
-	# https://www.deviantart.com/<artist>
-	# with this link many other authors
-	# https://www.deviantart.com/<artist>/gallery/all
-	# for this link I can't get content because of CloudFront
+def ask_app_creds():
+	creds = get_creds()
+	if (
+		creds is not None and
+		creds.get(SLUG) is not None and
+		creds[SLUG].get('client_id') is not None
+	):
+		ans = input('Application data already saved, again? [y/N] ')
+		if ans.lower() in ['n', '']:
+			creds = creds[SLUG]
+			return { 'client_id': creds['client_id'], 'client_secret': creds['client_secret'] }
+		elif ans.lower() != 'y':
+			print('What?')
+	return {
+		'client_id': input('Enter client_id: '),
+		'client_secret': input('Enter client_secret: ')
+	}
 
-	async with aiohttp.ClientSession() as session:
-		for art in (await fetch_json(session, url)).values():
-			m = art['media']
-			fetch_url = m['baseUri']
-			fileext = os.path.splitext(urlparse(fetch_url).path.split('/')[-1])[1]
-			filename = os.path.join(save_folder, m['prettyName'] + fileext)
+def register():
+	creds = {
+		SLUG: ask_app_creds(),
+		**{
+			SLUG: { 'oauth2': { 'code': None } }
+		}
+	}
 
-			# additional = [t for t in m['types'] if t['t'] == 'fullview']
-			# try:
-			# 	fetch_url = fetch_url + '/' + additional[0]['c'].replace('<prettyName>', m['prettyName'])
-			# except:
-			# 	print(json.dumps(art, indent=4))
-			# 	raise
+	# callback
+	def cred_saver(data):
+		creds[SLUG]['oauth2'] = data
 
-			async with session.get(
-				fetch_url,
-				params={ 'token': ''.join(m['token']) }
-			) as response:
-				response.raise_for_status()
-				async with aiofiles.open(filename, 'wb') as file:
-					await file.write(await response.read())
-				print('Download:', filename)
+	query = {
+		'response_type': 'code',
+		'client_id': creds[SLUG]['client_id'],
+		'redirect_uri': REDIRECT_URI,
+		'scope': ' '.join(['browse']),
+		'view': 'login'
+	}
+	url = f'{OAUTH2_URL}?{urlencode(query)}'
+
+	try:
+		run(url, cred_saver)
+	except SystemExit:
+		print('Server stopped')
+
+	if creds[SLUG]['oauth2'].get('code') is not None:
+		return creds
+
+	return None
