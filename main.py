@@ -6,7 +6,8 @@ from urllib.parse import urlparse
 from sites import download
 
 SLUGS = {
-	'www.artstation.com': 'artstation'
+	'www.artstation.com': 'artstation',
+	'www.deviantart.com': 'deviantart',
 }
 
 def detect_site(url: str) -> str:
