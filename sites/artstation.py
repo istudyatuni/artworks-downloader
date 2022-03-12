@@ -12,8 +12,10 @@ def parse_link(url: str):
 	parsed = urlparse(url)
 
 	if parsed.path.startswith('/artwork/'):
+		# https://www.artstation.com/artwork/<hash>
 		return { 'type': 'art', 'project': parsed.path.split('/')[-1] }
 
+	# https://www.artstation.com/<artist>
 	return { 'type': 'all', 'artist': parsed.path.lstrip('/') }
 
 async def list_projects(session: aiohttp.ClientSession, user: str):

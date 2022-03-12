@@ -196,6 +196,7 @@ async def download(url: str, data_folder: str):
 	os.makedirs(save_folder, exist_ok=True)
 
 	print('Artist', artist)
+	print('Saving to folder', save_folder, end='\n\n')
 
 	async def run_for_folder(folder: str):
 		count_arts = 0
