@@ -129,7 +129,7 @@ class DAService():
 			async for folder in self._pager(session, 'GET', url, params=params):
 				name = folder['name']
 				# i don't know what is this, so just tell about
-				if 'has_subfolders' in folder:
+				if folder['has_subfolders'] is True:
 					print('Folder', name, 'has subfolders, but this feature currently not supported')
 				yield {
 					'id': folder['folderid'],
