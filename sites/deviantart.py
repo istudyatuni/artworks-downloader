@@ -6,7 +6,7 @@ from typing import Any, AsyncGenerator
 from urllib.parse import urlencode, urlparse
 
 from creds import get_creds, save_creds
-from redirect_server import run
+from redirect_server import run as run_redirect_catch_server
 
 SLUG = 'deviantart'
 
@@ -187,6 +187,35 @@ async def save_art(session: aiohttp.ClientSession, url: str, folder: str, name: 
 			await file.write(await image.read())
 			print(print_level_prefix + 'Download:', name)
 
+async def run_for_folder_by_name(service: DAService, save_folder: str, artist: str, folder: str):
+	count_arts = 0
+	# this session for downloading images
+	async with aiohttp.ClientSession() as session:
+		async for art in service.list_folder_arts(artist, folder):
+			name = art['url'].split('/')[-1]
+			await save_art(session, art['content']['src'], save_folder, name)
+			count_arts += 1
+
+	print('Total', count_arts, 'arts')
+
+async def search_for_folder(service: DAService, artist: str, folder_to_find: str) -> str | None:
+	folderid = None
+	print('Searching for gallery')
+	async for folder in service.list_folders(artist):
+		if folder['name'] == folder_to_find:
+			folderid = folder['id']
+			print('Gallery', folder['pretty_name'])
+			# not breaking now for catching what is the subfolder
+			# break
+
+	return folderid
+
+async def search_for_art(service: DAService, artist: str, url_to_find: str) -> str | None:
+	print('Searching for art')
+	async for art in service.list_folder_arts(artist, 'all'):
+		if art['url'] == url_to_find:
+			return art['content']['src']
+
 async def download(url: str, data_folder: str):
 	service = DAService()
 
@@ -198,46 +227,22 @@ async def download(url: str, data_folder: str):
 	print('Artist', artist)
 	print('Saving to folder', save_folder, end='\n\n')
 
-	async def run_for_folder(folder: str):
-		count_arts = 0
-		# this session for downloading images
-		async with aiohttp.ClientSession() as session:
-			async for art in service.list_folder_arts(artist, folder):
-				name = art['url'].split('/')[-1]
-				await save_art(session, art['content']['src'], save_folder, name)
-				count_arts += 1
-
-		print('Total', count_arts, 'arts')
-
 	if parsed['type'] == 'all':
-		await run_for_folder('all')
+		await run_for_folder_by_name(service, artist, save_folder, 'all')
 	elif parsed['type'] == 'folder':
 		folder_to_find = parsed['folder']
-		folderid = None
-
-		print('Searching for gallery')
-		async for folder in service.list_folders(artist):
-			if folder['name'] == folder_to_find:
-				folderid = folder['id']
-				print('Gallery', folder['pretty_name'])
-
-				# not breaking now for catching what is the subfolder
-				# break
-
+		folderid = await search_for_folder(service, artist, folder_to_find)
 		if folderid is None:
 			print('Not found gallery', f'"{folder_to_find}"')
 			return
-
-		await run_for_folder(folderid)
+		await run_for_folder_by_name(service, artist, save_folder, folderid)
 	elif parsed['type'] == 'art':
-		url_to_find = parsed['url']
-
-		print('Searching for art')
-		async for art in service.list_folder_arts(artist, 'all'):
-			if art['url'] == url_to_find:
-				async with aiohttp.ClientSession() as session:
-					await save_art(session, art['content']['src'], save_folder, parsed['name'])
-					break
+		src = await search_for_art(service, artist, parsed['url'])
+		name = parsed['name']
+		if src is None:
+			return print('Art', name, 'not found')
+		async with aiohttp.ClientSession() as session:
+			await save_art(session, src, save_folder, name)
 
 def ask_app_creds():
 	creds = get_creds()
@@ -280,7 +285,7 @@ def register():
 	url = f'{AUTH_URL}?{urlencode(query)}'
 
 	try:
-		run(url, cred_saver)
+		run_redirect_catch_server(url, cred_saver)
 	except SystemExit:
 		print('Server stopped')
 
