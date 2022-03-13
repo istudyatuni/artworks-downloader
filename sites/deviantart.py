@@ -187,7 +187,7 @@ async def save_art(session: aiohttp.ClientSession, url: str, folder: str, name: 
 			await file.write(await image.read())
 			print(print_level_prefix + 'Download:', name)
 
-async def run_for_folder_by_name(service: DAService, save_folder: str, artist: str, folder: str):
+async def run_for_folder_by_id(service: DAService, save_folder: str, artist: str, folder: str):
 	count_arts = 0
 	# this session for downloading images
 	async with aiohttp.ClientSession() as session:
@@ -204,7 +204,7 @@ async def search_for_folder(service: DAService, artist: str, folder_to_find: str
 	async for folder in service.list_folders(artist):
 		if folder['name'] == folder_to_find:
 			folderid = folder['id']
-			print('Gallery', folder['pretty_name'])
+			print('Gallery', folder['pretty_name'], f'({folderid})')
 			# not breaking now for catching what is the subfolder
 			# break
 
@@ -228,14 +228,14 @@ async def download(url: str, data_folder: str):
 	print('Saving to folder', save_folder, end='\n\n')
 
 	if parsed['type'] == 'all':
-		await run_for_folder_by_name(service, artist, save_folder, 'all')
+		await run_for_folder_by_id(service, save_folder, artist, 'all')
 	elif parsed['type'] == 'folder':
 		folder_to_find = parsed['folder']
 		folderid = await search_for_folder(service, artist, folder_to_find)
 		if folderid is None:
 			print('Not found gallery', f'"{folder_to_find}"')
 			return
-		await run_for_folder_by_name(service, artist, save_folder, folderid)
+		await run_for_folder_by_id(service, save_folder, artist, folderid)
 	elif parsed['type'] == 'art':
 		src = await search_for_art(service, artist, parsed['url'])
 		name = parsed['name']
