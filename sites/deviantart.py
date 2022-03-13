@@ -1,3 +1,4 @@
+import asyncio
 import aiofiles
 import aiohttp
 import os
@@ -17,6 +18,8 @@ API_URL = '/api/v1/oauth2'
 REDIRECT_URI = 'http://localhost:23445'
 
 INVALID_CODE_MSG = 'Incorrect authorization code.'
+
+DEFAULT_RATE_LIMIT_TIMEOUT = 1
 
 # TODO: add revoke
 # https://www.deviantart.com/developers/authentication
@@ -102,6 +105,7 @@ class DAService():
 		url: str,
 		**kwargs
 	) -> AsyncGenerator[Any, None]:
+		rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT
 		params = { **kwargs.pop('params', {}), 'offset': 0, 'limit': 24 }
 		while True:
 			async with session.request(
@@ -111,6 +115,22 @@ class DAService():
 				**kwargs
 			) as response:
 				data = await response.json()
+
+				if response.status == 429:
+					# Rate limit: https://www.deviantart.com/developers/errors
+					if rate_limit_sec == DEFAULT_RATE_LIMIT_TIMEOUT:
+						print('Rate limit reached for url', response.url)
+					elif rate_limit_sec > 64 * 10:  # 10 min
+						await self._ensure_access()
+
+					print('\rRetrying in', rate_limit_sec, 'sec', end='', flush=True)
+					await asyncio.sleep(rate_limit_sec)
+
+					rate_limit_sec *= 2
+					continue
+				else:
+					rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT
+					print()
 
 				for result in data['results']:
 					yield result
@@ -312,7 +332,7 @@ async def download_list(urls: list[str], data_folder: str):
 		for artist, art_list in mapping_art.items():
 			arts_count = len(art_list)
 			save_folder = os.path.join(data_folder, artist)
-			print('Artist', artist)
+			print('Artist', artist, '\nSearching for arts')
 
 			async for art in service.list_folder_arts(artist, 'all'):
 				url = art['url']
@@ -323,6 +343,8 @@ async def download_list(urls: list[str], data_folder: str):
 					arts_count -= 1
 					if arts_count == 0:
 						break
+
+			print('Total', len(art_list), 'arts')
 
 def ask_app_creds():
 	creds = get_creds()
