@@ -9,6 +9,7 @@ from creds import get_creds, save_creds
 from redirect_server import run as run_redirect_catch_server
 
 SLUG = 'deviantart'
+OAUTH_KEY = 'oauth2'
 
 BASE_URL = 'https://www.deviantart.com'
 AUTH_URL = BASE_URL + '/oauth2/authorize'
@@ -30,10 +31,10 @@ class DAService():
 
 		self.client_id = creds['client_id']
 		self.client_secret = creds['client_secret']
-		self.code = creds['oauth2']['code']
+		self.code = creds[OAUTH_KEY]['code']
 
-		self.access_token = creds['oauth2'].get('access_token')
-		self.refresh_token = creds['oauth2'].get('refresh_token')
+		self.access_token = creds[OAUTH_KEY].get('access_token')
+		self.refresh_token = creds[OAUTH_KEY].get('refresh_token')
 
 	@property
 	def _auth_header(self) -> str:
@@ -41,8 +42,8 @@ class DAService():
 
 	def _save_tokens(self):
 		creds = deepcopy(self.creds)
-		creds[SLUG]['oauth2']['access_token'] = self.access_token
-		creds[SLUG]['oauth2']['refresh_token'] = self.refresh_token
+		creds[SLUG][OAUTH_KEY]['access_token'] = self.access_token
+		creds[SLUG][OAUTH_KEY]['refresh_token'] = self.refresh_token
 		save_creds(creds)
 
 	async def _ensure_access(self):
@@ -257,6 +258,7 @@ def ask_app_creds():
 			return { 'client_id': creds['client_id'], 'client_secret': creds['client_secret'] }
 		elif ans.lower() != 'y':
 			print('What?')
+			quit(1)
 	return {
 		'client_id': input('Enter client_id: '),
 		'client_secret': input('Enter client_secret: ')
@@ -267,13 +269,13 @@ def register():
 	creds = {
 		SLUG: ask_app_creds(),
 		**{
-			SLUG: { 'oauth2': { 'code': None } }
+			SLUG: { OAUTH_KEY: { 'code': None } }
 		}
 	}
 
 	# callback
 	def cred_saver(data):
-		creds[SLUG]['oauth2'] = data
+		creds[SLUG][OAUTH_KEY] = data
 
 	query = {
 		'response_type': 'code',
@@ -289,7 +291,7 @@ def register():
 	except SystemExit:
 		print('Server stopped')
 
-	if creds[SLUG]['oauth2'].get('code') is not None:
+	if creds[SLUG][OAUTH_KEY].get('code') is not None:
 		return creds
 
 	return None

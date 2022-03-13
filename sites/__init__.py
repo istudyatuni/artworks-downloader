@@ -4,4 +4,8 @@ def download(slug: str):
 	return import_module('sites.' + slug).download
 
 def register(slug: str):
-	return import_module('sites.' + slug).register
+	try:
+		return import_module('sites.' + slug).register
+	except AttributeError:
+		print(slug, 'not needed register')
+		quit(1)
