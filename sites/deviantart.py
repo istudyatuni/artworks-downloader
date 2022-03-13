@@ -245,6 +245,9 @@ async def download(url: str, data_folder: str):
 		async with aiohttp.ClientSession() as session:
 			await save_art(session, src, save_folder, name)
 
+async def download_list(urls: list[str], data_folder: str):
+	pass
+
 def ask_app_creds():
 	creds = get_creds()
 	if (

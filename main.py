@@ -20,18 +20,27 @@ def parse_args():
 
 	parser.add_argument('-u', '--url', type=str, help='URL to download')
 	parser.add_argument('--folder', type=str, help='Folder to save artworks. Default folder - data', default='data')
+	parser.add_argument('-l', '--list', type=str, help='List with URLs to download', default=None)
 
 	parser.add_argument('--deviantart', type=str, default=None)
 
 	return parser.parse_args()
 
-async def process(url, folder):
+async def process(url: str, folder: str):
 	site_slug = detect_site(url)
 	await download(site_slug)(url, os.path.join(folder, site_slug))
 
-def main() -> Optional[Tuple[str, str]]:
+async def process_list(urls: list[str], folder: str):
+	mapping = {s: [] for s in SLUGS.values()}
+	for u in urls:
+		mapping[detect_site(u)].append(u)
+	from pprint import pprint
+	pprint(mapping)
+
+def main() -> Optional[Tuple[str | list[str], str]]:
 	args = parse_args()
-	url = args.url
+	to_dl = args.url
+	urls_file = args.list
 	folder = os.path.abspath(args.folder)
 	deviantart_action = args.deviantart
 
@@ -45,11 +54,18 @@ def main() -> Optional[Tuple[str, str]]:
 		print('Unknown deviantart action:', deviantart_action)
 		quit(1)
 
-	return url, folder
+	if urls_file is not None:
+		with open(urls_file) as file:
+			to_dl = map(lambda s: s.strip(), file.read().strip().split('\n'))
+
+	return list(to_dl), folder
 
 if __name__ == '__main__':
 	if (result := main()) is None:
 		quit(0)
 
-	url, folder = result
-	asyncio.run(process(url, folder))
+	result, folder = result
+	if isinstance(result, list):
+		asyncio.run(process_list(result, folder))
+	else:
+		asyncio.run(process(result, folder))
