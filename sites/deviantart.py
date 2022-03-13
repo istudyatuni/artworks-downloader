@@ -128,7 +128,7 @@ class DAService():
 
 					rate_limit_sec *= 2
 					continue
-				else:
+				elif rate_limit_sec != DEFAULT_RATE_LIMIT_TIMEOUT:
 					rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT
 					print()
 
@@ -315,13 +315,15 @@ async def download_list(urls: list[str], data_folder: str):
 	# process
 	for artist in mapping_all:
 		save_folder = os.path.join(data_folder, artist)
-		print('Artist', artist)
+		os.makedirs(save_folder, exist_ok=True)
+		print('\nArtist', artist)
 
 		await download_folder_by_id(service, save_folder, artist, 'all')
 
 	for artist, folder_list in mapping_folder.items():
 		save_folder = os.path.join(data_folder, artist)
-		print('Artist', artist)
+		os.makedirs(save_folder, exist_ok=True)
+		print('\nArtist', artist)
 
 		async for folder in service.list_folders(artist):
 			if folder['name'] in folder_list:
@@ -332,7 +334,8 @@ async def download_list(urls: list[str], data_folder: str):
 		for artist, art_list in mapping_art.items():
 			arts_count = len(art_list)
 			save_folder = os.path.join(data_folder, artist)
-			print('Artist', artist, '\nSearching for arts')
+			os.makedirs(save_folder, exist_ok=True)
+			print('\nArtist', artist, '\nSearching for arts')
 
 			async for art in service.list_folder_arts(artist, 'all'):
 				url = art['url']
