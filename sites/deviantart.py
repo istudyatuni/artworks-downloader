@@ -267,10 +267,12 @@ async def download(url: list[str] | str, data_folder: str) -> None:
 async def download_list(urls: list[str], data_folder: str):
 	service = DAService()
 
-	# 'all': ['artist1', ...]
-	# 'folder': { '<artist>': ['folder1', ...] }
-	# 'art': { '<artist>': [{ 'name': 'name1', 'url': 'url1' }, ...] }
-	mapping = { 'all': [], 'folder': {}, 'art': {} }
+	# ['artist1', ...]
+	mapping_all: list[str] = []
+	# { '<artist>': ['folder1', ...] }
+	mapping_folder: dict[str, list[str]] = {}
+	# { '<artist>': [{ 'name': 'name1', 'url': 'url1' }, ...] }
+	mapping_art: dict[str, list[dict[str, str]]] = {}
 
 	# group urls by types and artists
 	for u in urls:
@@ -278,21 +280,24 @@ async def download_list(urls: list[str], data_folder: str):
 		t = parsed['type']
 		a = parsed['artist']
 		if t == 'all':
-			mapping[t].append(a)
-		elif t == 'folder' or t == 'art':
-			value = parsed.get('folder') or { 'name': parsed['name'], 'url': u }
-			if mapping[t].get(a) is None:
-				mapping[t][a] = []
-			mapping[t][a].append(value)
+			mapping_all.append(a)
+		elif t == 'folder':
+			if mapping_folder.get(a) is None:
+				mapping_folder[a] = []
+			mapping_folder[a].append(parsed['folder'])
+		elif t == 'art':
+			if mapping_art.get(a) is None:
+				mapping_art[a] = []
+			mapping_art[a].append({ 'name': parsed['name'], 'url': u })
 
 	# process
-	for artist in mapping['all']:
+	for artist in mapping_all:
 		save_folder = os.path.join(data_folder, artist)
 		await download_folder_by_id(service, save_folder, artist, 'all')
-	for artist, folder in mapping['folder'].items():
+	for artist, folder in mapping_folder.items():
 		save_folder = os.path.join(data_folder, artist)
 		await find_and_download_folder(service, save_folder, artist, folder)
-	for artist, art in mapping['art'].items():
+	for artist, art in mapping_art.items():
 		save_folder = os.path.join(data_folder, artist)
 		await find_and_download_art(service, save_folder, artist, art['url'], art['name'])
 
