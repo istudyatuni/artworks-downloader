@@ -148,7 +148,7 @@ class DAService():
 			async for art in self._pager(session, 'GET', url, params=params):
 				yield art
 
-def parse_link(url: str):
+def parse_link(url: str) -> dict[str, str]:
 	parsed = urlparse(url)
 	path = parsed.path.split('/')
 	path.pop(0)
@@ -173,7 +173,8 @@ def parse_link(url: str):
 		# https://www.deviantart.com/<artist>/art/<name>
 		return { 'type': 'art', 'url': url, 'artist': artist, 'name': path[2] }
 
-	return { 'artist': artist }
+	print('Unsupported link:', url)
+	return { 'type': 'unknown', 'artist': artist }
 
 async def save_art(session: aiohttp.ClientSession, url: str, folder: str, name: str):
 	print_level_prefix = ' ' * 2
@@ -188,7 +189,7 @@ async def save_art(session: aiohttp.ClientSession, url: str, folder: str, name: 
 			await file.write(await image.read())
 			print(print_level_prefix + 'Download:', name)
 
-async def run_for_folder_by_id(service: DAService, save_folder: str, artist: str, folder: str):
+async def download_folder_by_id(service: DAService, save_folder: str, artist: str, folder: str):
 	count_arts = 0
 	# this session for downloading images
 	async with aiohttp.ClientSession() as session:
@@ -198,6 +199,18 @@ async def run_for_folder_by_id(service: DAService, save_folder: str, artist: str
 			count_arts += 1
 
 	print('Total', count_arts, 'arts')
+
+async def find_and_download_folder(
+	service: DAService,
+	save_folder: str,
+	artist: str,
+	folder_name: str
+):
+	folderid = await search_for_folder(service, artist, folder_name)
+	if folderid is None:
+		print('Not found gallery', f'"{folder_name}"')
+		return
+	await download_folder_by_id(service, save_folder, artist, folderid)
 
 async def search_for_folder(service: DAService, artist: str, folder_to_find: str) -> str | None:
 	folderid = None
@@ -217,7 +230,23 @@ async def search_for_art(service: DAService, artist: str, url_to_find: str) -> s
 		if art['url'] == url_to_find:
 			return art['content']['src']
 
-async def download(url: str, data_folder: str):
+async def find_and_download_art(
+	service: DAService,
+	save_folder: str,
+	artist: str,
+	url: str,
+	name: str
+):
+	src = await search_for_art(service, artist, url)
+	if src is None:
+		return print('Art', name, 'not found')
+	async with aiohttp.ClientSession() as session:
+		await save_art(session, src, save_folder, name)
+
+async def download(url: list[str] | str, data_folder: str) -> None:
+	if isinstance(url, list):
+		return await download_list(url,data_folder)
+
 	service = DAService()
 
 	parsed = parse_link(url)
@@ -229,24 +258,43 @@ async def download(url: str, data_folder: str):
 	print('Saving to folder', save_folder, end='\n\n')
 
 	if parsed['type'] == 'all':
-		await run_for_folder_by_id(service, save_folder, artist, 'all')
+		await download_folder_by_id(service, save_folder, artist, 'all')
 	elif parsed['type'] == 'folder':
-		folder_to_find = parsed['folder']
-		folderid = await search_for_folder(service, artist, folder_to_find)
-		if folderid is None:
-			print('Not found gallery', f'"{folder_to_find}"')
-			return
-		await run_for_folder_by_id(service, save_folder, artist, folderid)
+		await find_and_download_folder(service, save_folder, artist, parsed['folder'])
 	elif parsed['type'] == 'art':
-		src = await search_for_art(service, artist, parsed['url'])
-		name = parsed['name']
-		if src is None:
-			return print('Art', name, 'not found')
-		async with aiohttp.ClientSession() as session:
-			await save_art(session, src, save_folder, name)
+		await find_and_download_art(service, save_folder, artist, url, parsed['name'])
 
 async def download_list(urls: list[str], data_folder: str):
-	pass
+	service = DAService()
+
+	# 'all': ['artist1', ...]
+	# 'folder': { '<artist>': ['folder1', ...] }
+	# 'art': { '<artist>': [{ 'name': 'name1', 'url': 'url1' }, ...] }
+	mapping = { 'all': [], 'folder': {}, 'art': {} }
+
+	# group urls by types and artists
+	for u in urls:
+		parsed = parse_link(u)
+		t = parsed['type']
+		a = parsed['artist']
+		if t == 'all':
+			mapping[t].append(a)
+		elif t == 'folder' or t == 'art':
+			value = parsed.get('folder') or { 'name': parsed['name'], 'url': u }
+			if mapping[t].get(a) is None:
+				mapping[t][a] = []
+			mapping[t][a].append(value)
+
+	# process
+	for artist in mapping['all']:
+		save_folder = os.path.join(data_folder, artist)
+		await download_folder_by_id(service, save_folder, artist, 'all')
+	for artist, folder in mapping['folder'].items():
+		save_folder = os.path.join(data_folder, artist)
+		await find_and_download_folder(service, save_folder, artist, folder)
+	for artist, art in mapping['art'].items():
+		save_folder = os.path.join(data_folder, artist)
+		await find_and_download_art(service, save_folder, artist, art['url'], art['name'])
 
 def ask_app_creds():
 	creds = get_creds()

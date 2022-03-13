@@ -34,8 +34,11 @@ async def process_list(urls: list[str], folder: str):
 	mapping = {s: [] for s in SLUGS.values()}
 	for u in urls:
 		mapping[detect_site(u)].append(u)
-	from pprint import pprint
-	pprint(mapping)
+	for slug, l in mapping.items():
+		try:
+			await download(slug)(l, os.path.join(folder, slug))
+		except NotImplementedError:
+			print('List for', slug, 'not supported, skipping')
 
 def main() -> Optional[Tuple[str | list[str], str]]:
 	args = parse_args()

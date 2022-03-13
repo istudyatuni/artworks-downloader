@@ -1,4 +1,6 @@
-# Downloader from artstation.com
+# Artworks downloader
+
+From artstation.com and deviantart.com
 
 ## Install
 
@@ -63,3 +65,17 @@ After that you can use it just like
 ```sh
 python main.py -u [URL here]
 ```
+
+## Supported URLs
+
+- **artstation.com**
+  - `https://www.artstation.com/artwork/<hash>`
+  - `https://www.artstation.com/<artist>`
+- **deviantart.com**
+  - All deviations
+    - `https://www.deviantart.com/<artist>`
+    - `https://www.deviantart.com/<artist>/gallery/all`
+  - "Featured" collection
+    - `https://www.deviantart.com/<artist>/gallery`
+  - `https://www.deviantart.com/<artist>/gallery/<some number>/<gallery name>`
+  - `https://www.deviantart.com/<artist>/art/<name>`

@@ -59,7 +59,10 @@ async def fetch_asset(session: aiohttp.ClientSession, asset, save_folder, projec
 				await file.write(await response.read())
 			print(print_level_prefix + 'Download:', name)
 
-async def download(url: str, data_folder: str):
+async def download(url: list[str] | str, data_folder: str):
+	if isinstance(url, list):
+		raise NotImplementedError
+
 	projects = []
 	parsed = parse_link(url)
 
