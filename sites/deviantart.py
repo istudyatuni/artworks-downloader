@@ -267,6 +267,8 @@ async def download(url: list[str] | str, data_folder: str) -> None:
 async def download_list(urls: list[str], data_folder: str):
 	service = DAService()
 
+	print('Saving to folder', data_folder)
+
 	# ['artist1', ...]
 	mapping_all: list[str] = []
 	# { '<artist>': ['folder1', ...] }
@@ -293,13 +295,34 @@ async def download_list(urls: list[str], data_folder: str):
 	# process
 	for artist in mapping_all:
 		save_folder = os.path.join(data_folder, artist)
+		print('Artist', artist)
+
 		await download_folder_by_id(service, save_folder, artist, 'all')
-	for artist, folder in mapping_folder.items():
+
+	for artist, folder_list in mapping_folder.items():
 		save_folder = os.path.join(data_folder, artist)
-		await find_and_download_folder(service, save_folder, artist, folder)
-	for artist, art in mapping_art.items():
-		save_folder = os.path.join(data_folder, artist)
-		await find_and_download_art(service, save_folder, artist, art['url'], art['name'])
+		print('Artist', artist)
+
+		async for folder in service.list_folders(artist):
+			if folder['name'] in folder_list:
+				print('Gallery', folder['pretty_name'])
+				await download_folder_by_id(service, save_folder, artist, folder['id'])
+
+	async with aiohttp.ClientSession() as session:
+		for artist, art_list in mapping_art.items():
+			arts_count = len(art_list)
+			save_folder = os.path.join(data_folder, artist)
+			print('Artist', artist)
+
+			async for art in service.list_folder_arts(artist, 'all'):
+				url = art['url']
+				if any(filter(lambda a: a['url'] == url, art_list)):
+					name = url.split('/')[-1]
+					await save_art(session, art['content']['src'], save_folder, name)
+
+					arts_count -= 1
+					if arts_count == 0:
+						break
 
 def ask_app_creds():
 	creds = get_creds()
