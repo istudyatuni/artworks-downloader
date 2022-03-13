@@ -60,8 +60,9 @@ def main() -> Optional[Tuple[str | list[str], str]]:
 	if urls_file is not None:
 		with open(urls_file) as file:
 			to_dl = map(lambda s: s.strip(), file.read().strip().split('\n'))
+		to_dl = list(to_dl)
 
-	return list(to_dl), folder
+	return to_dl, folder
 
 if __name__ == '__main__':
 	if (result := main()) is None:
