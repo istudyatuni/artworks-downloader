@@ -19,8 +19,8 @@ def parse_args():
 	parser = argparse.ArgumentParser(description='Artworks downloader')
 
 	parser.add_argument('-u', '--url', type=str, help='URL to download')
+	parser.add_argument('-l', '--list', type=str, help='File with list of URLs to download', default=None)
 	parser.add_argument('--folder', type=str, help='Folder to save artworks. Default folder - data', default='data')
-	parser.add_argument('-l', '--list', type=str, help='List with URLs to download', default=None)
 
 	parser.add_argument('--deviantart', type=str, default=None)
 
