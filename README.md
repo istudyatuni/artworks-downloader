@@ -19,12 +19,12 @@ usage: python main.py [-h] [--folder FOLDER] url
 
 Artworks downloader
 
-positional arguments:
-  url              URL to download
-
 options:
-  -h, --help       show this help message and exit
-  --folder FOLDER  Folder to save artworks. Default folder - data
+  -h, --help            show this help message and exit
+  -u URL, --url URL     URL to download
+  -l LIST, --list LIST  File with list of URLs to download
+  --folder FOLDER       Folder to save artworks. Default folder - data
+  --deviantart DEVIANTART
 ```
 
 ### Artstation
