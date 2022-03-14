@@ -39,6 +39,8 @@ async def process_list(urls: list[str], folder: str):
 	for u in urls:
 		mapping[detect_site(u)].append(u)
 	for slug, l in mapping.items():
+		if len(l) == 0:
+			continue
 		try:
 			await download(slug)(l, os.path.join(folder, slug))
 		except NotImplementedError:

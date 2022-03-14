@@ -66,8 +66,6 @@ async def fetch_asset(session: aiohttp.ClientSession, asset, save_folder, projec
 
 async def download(urls_to_download: list[str] | str, data_folder: str):
 	urls = urls_to_download if isinstance(urls_to_download, list) else [urls_to_download]
-	if len(urls) == 0:
-		return
 
 	# { '<artist>': [Project(1), ...] }
 	projects: dict[str, list[Project]] = defaultdict(list)

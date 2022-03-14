@@ -303,9 +303,6 @@ async def download(url: list[str] | str, data_folder: str) -> None:
 		await find_and_download_art(service, save_folder, artist, url, parsed['name'])
 
 async def download_list(urls: list[str], data_folder: str):
-	if len(urls) == 0:
-		return
-
 	service = DAService()
 
 	print('\nSaving to folder', data_folder)
