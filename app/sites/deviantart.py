@@ -6,9 +6,9 @@ from copy import deepcopy
 from typing import Any, AsyncGenerator
 from urllib.parse import urlencode, urlparse
 
-from creds import get_creds, save_creds
-from redirect_server import run as run_redirect_catch_server
-from utils import mkdir
+from app.creds import get_creds, save_creds
+from app.redirect_server import run as run_redirect_catch_server
+from app.utils import mkdir
 
 SLUG = 'deviantart'
 OAUTH_KEY = 'oauth2'

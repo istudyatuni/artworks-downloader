@@ -4,8 +4,8 @@ import os
 from typing import Optional, Tuple
 from urllib.parse import urlparse
 
-from creds import save_creds
-from sites import download, register
+from app.creds import save_creds
+from app.sites import download, register
 
 SLUGS = {
 	'www.artstation.com': 'artstation',

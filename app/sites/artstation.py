@@ -5,7 +5,7 @@ import aiofiles
 import aiohttp
 import os
 
-from utils import mkdir
+from app.utils import mkdir
 
 BASE_URL = 'https://www.artstation.com'
 USER_PROJECTS_URL = '/users/{user}/projects.json'
