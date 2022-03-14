@@ -1,14 +1,17 @@
-import aiohttp
-import aiofiles
-import os
-from urllib.parse import urlparse
+from collections import defaultdict, namedtuple
 from functools import reduce
+from urllib.parse import urlparse
+import aiofiles
+import aiohttp
+import os
 
 from utils import mkdir
 
 BASE_URL = 'https://www.artstation.com'
 USER_PROJECTS_URL = '/users/{user}/projects.json'
 PROJECT_INFO_URL = '/projects/{hash}.json'
+
+Project = namedtuple('Project', ['title', 'hash_id', 'assets'])
 
 def parse_link(url: str):
 	parsed = urlparse(url)
@@ -31,10 +34,10 @@ async def fetch_project(session: aiohttp.ClientSession, project):
 		project_hash = project['hash_id']
 
 	async with session.get(PROJECT_INFO_URL.format(hash=project_hash)) as response:
-		print('Add to queue: project', project_hash)
+		print('Add to queue: artwork', project_hash)
 		return (await response.json())
 
-async def fetch_asset(session: aiohttp.ClientSession, asset, save_folder, project = ''):
+async def fetch_asset(session: aiohttp.ClientSession, asset, save_folder, project = None):
 	print_level_prefix = ' ' * 2
 
 	if asset['has_image'] is False:
@@ -44,10 +47,10 @@ async def fetch_asset(session: aiohttp.ClientSession, asset, save_folder, projec
 	file_ext = os.path.splitext(urlparse(asset['image_url']).path.split('/')[-1])[1]
 	sep = ' - '
 	name = sep.join([
-		asset['title'],
+		asset['title'] or '',
 		# if project is not empty, in collection only 1 image
 		# project name written to file name
-		project,
+		project or '',
 		str(asset['id']) + file_ext
 	]).strip(sep).replace(sep * 2, sep)
 	filename = os.path.join(save_folder, name)
@@ -61,56 +64,64 @@ async def fetch_asset(session: aiohttp.ClientSession, asset, save_folder, projec
 				await file.write(await response.read())
 			print(print_level_prefix + 'Download:', name)
 
-async def download(url: list[str] | str, data_folder: str):
-	if isinstance(url, list):
-		raise NotImplementedError
+async def download(urls_to_download: list[str] | str, data_folder: str):
+	urls = urls_to_download if isinstance(urls_to_download, list) else [urls_to_download]
+	if len(urls) == 0:
+		return
 
-	projects = []
-	parsed = parse_link(url)
+	# { '<artist>': [Project(1), ...] }
+	projects: dict[str, list[Project]] = defaultdict(list)
 
-	async with aiohttp.ClientSession(BASE_URL) as session:
-		if parsed['type'] == 'all':
-			artist = parsed['artist']
-			print('Artist', artist)
+	for url in urls:
+		parsed = parse_link(url)
 
-			# fetch info about all projects
-			for project in await list_projects(session, artist):
-				projects.append(await fetch_project(session, project))
-		else:
-			# about specified project
-			p = await fetch_project(session, parsed['project'])
-			projects.append(p)
+		async with aiohttp.ClientSession(BASE_URL) as session:
+			if parsed['type'] == 'all':
+				artist = parsed['artist']
 
-			artist = p['user']['username']
-			print('Artist', artist)
+				# fetch info about all projects
+				for project in await list_projects(session, artist):
+					p = await fetch_project(session, project)
+					projects[artist].append(Project(p['title'], p['hash_id'], p['assets']))
+			elif parsed['type'] == 'art':
+				# about specified project
+				p = await fetch_project(session, parsed['project'])
+				name = p['user']['username']
+				projects[name].append(Project(p['title'], p['hash_id'], p['assets']))
 
-	save_folder = os.path.join(data_folder, artist)
-	mkdir(save_folder)
+	print('\nSaving to folder', data_folder)
+	for artist in projects.keys():
+		mkdir(os.path.join(data_folder, artist))
 
 	print(
-		'Saving to folder',
-		save_folder,
-		'\n\nStarted download:',
-		len(projects),
+		'Started download',
+		# summary length of all arrays in projects
+		reduce(lambda a, b: a + len(b), projects.values(), 0),
 		'albums and',
-		# count all 'assets' arrays lengths from projects
-		reduce(lambda a, b: a + len(b), [p['assets'] for p in projects], 0),
-		'assets\n'
+		# sum all 'assets' arrays lengths from projects
+		sum(
+			reduce(lambda a, b: a + len(b.assets), p, 0)
+			for p in projects.values()
+		),
+		'assets'
 	)
 
 	# download assets
 	async with aiohttp.ClientSession() as session:
-		for project in projects:
-			sub = f"{project['title']} - {project['hash_id']}"
-			assets = project['assets']
-			print('Download album:', sub)
+		for artist, projects_list in projects.items():
+			print('\nArtist', artist)
+			for project in projects_list:
+				save_folder = os.path.join(data_folder, artist)
+				sub = f"{project.title} - {project.hash_id}"
+				assets = project.assets
+				print('Download album:', sub)
 
-			if len(assets) > 1:
-				# if count of attacments more than 1, save to subfolder
-				sub_folder = os.path.join(save_folder, sub)
-				mkdir(sub_folder)
+				if len(assets) > 1:
+					# if count of attachments more than 1, save to sub-folder
+					sub_folder = os.path.join(save_folder, sub)
+					mkdir(sub_folder)
 
-				for asset in assets:
-					await fetch_asset(session, asset, sub_folder)
-			elif len(assets) == 1:
-				await fetch_asset(session, assets[0], save_folder, sub)
+					for asset in assets:
+						await fetch_asset(session, asset, sub_folder)
+				elif len(assets) == 1:
+					await fetch_asset(session, assets[0], save_folder, sub)
