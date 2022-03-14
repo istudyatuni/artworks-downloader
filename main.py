@@ -55,7 +55,7 @@ def main() -> Optional[Tuple[str | list[str], str]]:
 		return
 	elif deviantart_action is not None:
 		print('Unknown deviantart action:', deviantart_action)
-		quit(1)
+		return
 
 	if urls_file is not None:
 		with open(urls_file) as file:

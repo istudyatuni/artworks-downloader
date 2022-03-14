@@ -3,6 +3,7 @@ import aiofiles
 import aiohttp
 import os
 from copy import deepcopy
+from functools import partial
 from typing import Any, AsyncGenerator
 from urllib.parse import urlencode, urlparse
 
@@ -21,6 +22,8 @@ INVALID_CODE_MSG = 'Incorrect authorization code.'
 
 DEFAULT_RATE_LIMIT_TIMEOUT = 1
 
+mkdir = partial(os.makedirs, exist_ok=True)
+
 # TODO: add revoke
 # https://www.deviantart.com/developers/authentication
 class DAService():
@@ -34,7 +37,7 @@ class DAService():
 
 		self.client_id = creds['client_id']
 		self.client_secret = creds['client_secret']
-		self.code = creds[OAUTH_KEY]['code']
+		self.code = creds[OAUTH_KEY].get('code')
 
 		self.access_token = creds[OAUTH_KEY].get('access_token')
 		self.refresh_token = creds[OAUTH_KEY].get('refresh_token')
@@ -45,6 +48,7 @@ class DAService():
 
 	def _save_tokens(self):
 		creds = deepcopy(self.creds)
+		creds[SLUG][OAUTH_KEY].pop('code', 0)
 		creds[SLUG][OAUTH_KEY]['access_token'] = self.access_token
 		creds[SLUG][OAUTH_KEY]['refresh_token'] = self.refresh_token
 		save_creds(creds)
@@ -64,6 +68,10 @@ class DAService():
 
 	async def _fetch_access_token(self):
 		"""Fetch `access_token` using `authorization_code`"""
+		if self.code is None:
+			print('Authorize app first')
+			quit(1)
+
 		params = {
 			'grant_type': 'authorization_code',
 			'code': self.code,
@@ -91,7 +99,10 @@ class DAService():
 		async with aiohttp.ClientSession(BASE_URL) as session:
 			async with session.post('/oauth2/token', params=params) as response:
 				data = await response.json()
-				if response.ok:
+				if 'error' in data:
+					print('An error occured during authorization\n ', data['error_description'])
+					quit(1)
+				elif response.ok:
 					self.access_token = data['access_token']
 					self.refresh_token = data['refresh_token']
 					self._save_tokens()
@@ -106,7 +117,12 @@ class DAService():
 		**kwargs
 	) -> AsyncGenerator[Any, None]:
 		rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT
-		params = { **kwargs.pop('params', {}), 'offset': 0, 'limit': 24 }
+		params = {
+			**kwargs.pop('params', {}),
+			'offset': 0,
+			'limit': 24,
+			'mature_content': 'true',
+		}
 		while True:
 			async with session.request(
 				method,
@@ -131,6 +147,10 @@ class DAService():
 				elif rate_limit_sec != DEFAULT_RATE_LIMIT_TIMEOUT:
 					rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT
 					print()
+				elif 'error' in data:
+					print('An error occured during fetching', response.url)
+					print(' ', data['error_description'])
+					quit(1)
 
 				for result in data['results']:
 					yield result
@@ -143,7 +163,7 @@ class DAService():
 	async def list_folders(self, username: str) -> AsyncGenerator[Any, None]:
 		await self._ensure_access()
 
-		params = { 'username': username, 'mature_content': 'true' }
+		params = { 'username': username }
 		headers = { 'authorization': self._auth_header }
 		url = f'{API_URL}/gallery/folders'
 		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
@@ -161,7 +181,7 @@ class DAService():
 	async def list_folder_arts(self, username: str, folder: str) -> AsyncGenerator[Any, None]:
 		await self._ensure_access()
 
-		params = { 'username': username, 'mature_content': 'true' }
+		params = { 'username': username }
 		headers = { 'authorization': self._auth_header }
 		url = f'{API_URL}/gallery/{folder}'
 		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
@@ -272,7 +292,7 @@ async def download(url: list[str] | str, data_folder: str) -> None:
 	parsed = parse_link(url)
 	artist = parsed['artist']
 	save_folder = os.path.join(data_folder, artist)
-	os.makedirs(save_folder, exist_ok=True)
+	mkdir(save_folder)
 
 	print('Artist', artist)
 	print('Saving to folder', save_folder, end='\n\n')
@@ -315,14 +335,14 @@ async def download_list(urls: list[str], data_folder: str):
 	# process
 	for artist in mapping_all:
 		save_folder = os.path.join(data_folder, artist)
-		os.makedirs(save_folder, exist_ok=True)
+		mkdir(save_folder)
 		print('\nArtist', artist)
 
 		await download_folder_by_id(service, save_folder, artist, 'all')
 
 	for artist, folder_list in mapping_folder.items():
 		save_folder = os.path.join(data_folder, artist)
-		os.makedirs(save_folder, exist_ok=True)
+		mkdir(save_folder)
 		print('\nArtist', artist)
 
 		async for folder in service.list_folders(artist):
@@ -334,7 +354,7 @@ async def download_list(urls: list[str], data_folder: str):
 		for artist, art_list in mapping_art.items():
 			arts_count = len(art_list)
 			save_folder = os.path.join(data_folder, artist)
-			os.makedirs(save_folder, exist_ok=True)
+			mkdir(save_folder)
 			print('\nArtist', artist, '\nSearching for arts')
 
 			async for art in service.list_folder_arts(artist, 'all'):
@@ -358,8 +378,10 @@ def ask_app_creds():
 	):
 		ans = input('Application data already saved, again? [y/N] ')
 		if ans.lower() in ['n', '']:
-			creds = creds[SLUG]
-			return { 'client_id': creds['client_id'], 'client_secret': creds['client_secret'] }
+			return {
+				'client_id': creds[SLUG]['client_id'],
+				'client_secret': creds[SLUG]['client_secret'],
+			}
 		elif ans.lower() != 'y':
 			print('What?')
 			quit(1)
