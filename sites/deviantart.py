@@ -3,12 +3,12 @@ import aiofiles
 import aiohttp
 import os
 from copy import deepcopy
-from functools import partial
 from typing import Any, AsyncGenerator
 from urllib.parse import urlencode, urlparse
 
 from creds import get_creds, save_creds
 from redirect_server import run as run_redirect_catch_server
+from utils import mkdir
 
 SLUG = 'deviantart'
 OAUTH_KEY = 'oauth2'
@@ -21,8 +21,6 @@ REDIRECT_URI = 'http://localhost:23445'
 INVALID_CODE_MSG = 'Incorrect authorization code.'
 
 DEFAULT_RATE_LIMIT_TIMEOUT = 1
-
-mkdir = partial(os.makedirs, exist_ok=True)
 
 # TODO: add revoke
 # https://www.deviantart.com/developers/authentication

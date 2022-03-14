@@ -4,6 +4,8 @@ import os
 from urllib.parse import urlparse
 from functools import reduce
 
+from utils import mkdir
+
 BASE_URL = 'https://www.artstation.com'
 USER_PROJECTS_URL = '/users/{user}/projects.json'
 PROJECT_INFO_URL = '/projects/{hash}.json'
@@ -83,7 +85,7 @@ async def download(url: list[str] | str, data_folder: str):
 			print('Artist', artist)
 
 	save_folder = os.path.join(data_folder, artist)
-	os.makedirs(save_folder, exist_ok=True)
+	mkdir(save_folder)
 
 	print(
 		'Saving to folder',
@@ -106,7 +108,7 @@ async def download(url: list[str] | str, data_folder: str):
 			if len(assets) > 1:
 				# if count of attacments more than 1, save to subfolder
 				sub_folder = os.path.join(save_folder, sub)
-				os.makedirs(sub_folder, exist_ok=True)
+				mkdir(sub_folder)
 
 				for asset in assets:
 					await fetch_asset(session, asset, sub_folder)

@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Any
 
 CRED_FILE = 'credentials.json'
 
@@ -9,7 +10,7 @@ def get_creds():
 			return json.load(file)
 	return None
 
-def save_creds(obj):
+def save_creds(obj: dict[str, Any]):
 	if (creds := get_creds()) is not None:
 		data = {**creds, **obj}
 	else:
