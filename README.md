@@ -1,7 +1,5 @@
 # Artworks downloader
 
-From artstation.com and deviantart.com
-
 ## Install
 
 Clone this repo, then from inside the project
@@ -27,7 +25,15 @@ options:
   --deviantart DEVIANTART
 ```
 
-### Artstation
+### Supported sites
+
+- artstation.com
+- pixiv.net
+
+### Sites with simple usage
+
+- artstation.com
+- pixiv.net
 
 Just run
 
@@ -79,3 +85,5 @@ python main.py -u [URL here]
     - `https://www.deviantart.com/<artist>/gallery`
   - `https://www.deviantart.com/<artist>/gallery/<some number>/<gallery name>`
   - `https://www.deviantart.com/<artist>/art/<name>`
+- **pixiv.net**
+  - `https://www.pixiv.net/<lang>/artworks/<id>`
