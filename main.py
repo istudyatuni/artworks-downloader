@@ -10,6 +10,7 @@ from app.sites import download, register
 SLUGS = {
 	'www.artstation.com': 'artstation',
 	'www.deviantart.com': 'deviantart',
+	'www.pixiv.net': 'pixiv',
 }
 
 def detect_site(url: str) -> str:
@@ -65,7 +66,8 @@ def main() -> Optional[Tuple[str | list[str], str]]:
 
 	if urls_file is not None:
 		with open(urls_file) as file:
-			to_dl = map(lambda s: s.strip(), file.read().strip().split('\n'))
+			content = file.read().strip().split('\n')
+			to_dl = map(lambda s: s.strip(), filter(lambda e: bool(e), content))
 		to_dl = list(to_dl)
 
 	return to_dl, folder
