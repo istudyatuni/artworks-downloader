@@ -8,7 +8,7 @@ from urllib.parse import urlencode, urlparse
 
 from app.creds import get_creds, save_creds
 from app.redirect_server import run as run_redirect_catch_server
-from app.utils import mkdir
+from app.utils import mkdir, print_inline
 
 SLUG = 'deviantart'
 OAUTH_KEY = 'oauth2'
@@ -137,7 +137,7 @@ class DAService():
 					elif rate_limit_sec > 64 * 10:  # 10 min
 						await self._ensure_access()
 
-					print('\rRetrying in', rate_limit_sec, 'sec', end='', flush=True)
+					print_inline('Retrying in', rate_limit_sec, 'sec')
 					await asyncio.sleep(rate_limit_sec)
 
 					rate_limit_sec *= 2
