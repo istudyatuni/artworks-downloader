@@ -31,6 +31,10 @@ async def process(url: str, folder: str):
 	await download(site_slug)(url, os.path.join(folder, site_slug))
 
 async def process_list(urls: list[str], folder: str):
+	if len(urls) == 1 and urls[0] == '':
+		print('List is empty')
+		return
+
 	mapping = {s: [] for s in SLUGS.values()}
 	for u in urls:
 		mapping[detect_site(u)].append(u)

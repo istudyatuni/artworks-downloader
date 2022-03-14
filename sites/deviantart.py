@@ -393,9 +393,9 @@ def ask_app_creds():
 def register():
 	"""Authorize application"""
 	creds = {
-		SLUG: ask_app_creds(),
-		**{
-			SLUG: { OAUTH_KEY: { 'code': None } }
+		SLUG: {
+			**ask_app_creds(),
+			OAUTH_KEY: { 'code': None },
 		}
 	}
 
