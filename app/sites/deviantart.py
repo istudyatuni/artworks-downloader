@@ -188,8 +188,7 @@ class DAService():
 
 def parse_link(url: str) -> dict[str, str]:
 	parsed = urlparse(url)
-	path = parsed.path.split('/')
-	path.pop(0)
+	path = parsed.path.lstrip('/').split('/')
 	artist = path[0]
 
 	if len(path) == 1 or (len(path) > 2 and path[2] == 'all'):

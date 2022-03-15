@@ -15,8 +15,7 @@ HEADERS = {
 
 def parse_link(url: str):
 	parsed = urlparse(url)
-	path = parsed.path.split('/')
-	path.pop(0)
+	path = parsed.path.lstrip('/').split('/')
 	if path[1] == 'artworks':
 		return { 'type': 'art', 'id': path[2] }
 	return { 'type': 'unknown' }
