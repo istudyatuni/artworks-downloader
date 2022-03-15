@@ -1,3 +1,4 @@
+import asyncio
 from glob import glob
 from urllib.parse import urlparse
 import aiofiles
@@ -22,7 +23,7 @@ async def fetch_image(session: aiohttp.ClientSession, url: str, name: str, folde
 	async with session.get(url) as response:
 		async with aiofiles.open(os.path.join(folder, name), 'wb') as file:
 			await file.write(await response.read())
-			print('Download:', name)
+			print('OK')
 
 async def download(urls_to_download: list[str] | str, data_folder: str):
 	urls = urls_to_download if isinstance(urls_to_download, list) else [urls_to_download]
@@ -36,8 +37,16 @@ async def download(urls_to_download: list[str] | str, data_folder: str):
 				print('Skip existing:', parsed['id'])
 				continue
 
-			async with session.get(API_URL + parsed['id']) as response:
-				data = (await response.json())['data']
+			while True:
+				async with session.get(API_URL + parsed['id']) as response:
+					if response.status == 429:
+						print('To many requests, sleeping for 10 seconds')
+						await asyncio.sleep(10)
+						continue
+					data = (await response.json())['data']
+					break
+
+			print('Download', data['id'], '', end='', flush=True)
 
 			full_url = data['path']
 			name = (
