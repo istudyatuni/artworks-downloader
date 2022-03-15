@@ -1,5 +1,12 @@
 # Artworks downloader
 
+- artstation.com [#info](#sites-with-simple-usage)
+- deviantart.com [#info](#deviantart)
+- pixiv.net [#info](#sites-with-simple-usage)
+- wallhaven.cc [#info](#sites-with-simple-usage) [#notes](#wallhaven)
+
+[Supported URL types](#supported-url-types)
+
 ## Install
 
 Clone this repo, then from inside the project
@@ -25,15 +32,7 @@ options:
   --deviantart DEVIANTART
 ```
 
-### Supported sites
-
-- artstation.com
-- pixiv.net
-
 ### Sites with simple usage
-
-- artstation.com
-- pixiv.net
 
 Just run
 
@@ -72,7 +71,13 @@ After that you can use it just like
 python main.py -u [URL here]
 ```
 
-## Supported URLs
+## Notes
+
+### Wallhaven
+
+NSFW images supported only with API key, currently this is not implemented. [API docs](https://wallhaven.cc/help/api#wallpapers)
+
+## Supported URL types
 
 - **artstation.com**
   - `https://www.artstation.com/artwork/<hash>`
@@ -87,3 +92,6 @@ python main.py -u [URL here]
   - `https://www.deviantart.com/<artist>/art/<name>`
 - **pixiv.net**
   - `https://www.pixiv.net/<lang>/artworks/<id>`
+- **wallhaven.cc**
+  - `https://wallhaven.cc/w/<id>`
+  - `https://whvn.cc/<id>`
