@@ -11,6 +11,8 @@ SLUGS = {
 	'www.artstation.com': 'artstation',
 	'www.deviantart.com': 'deviantart',
 	'www.pixiv.net': 'pixiv',
+	'wallhaven.cc': 'wallhaven',
+	'whvn.cc': 'wallhaven',
 }
 
 def detect_site(url: str) -> str:
