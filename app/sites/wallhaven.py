@@ -3,7 +3,7 @@ from glob import glob
 from urllib.parse import urlparse
 import aiofiles
 import aiohttp
-import os.path
+import os
 
 from app.utils import filename_normalize, mkdir
 
@@ -20,9 +20,16 @@ def parse_link(url: str):
 	return { 'id': path[0] }
 
 async def fetch_image(session: aiohttp.ClientSession, url: str, name: str, folder: str):
+	filename = os.path.join(folder, name)
 	async with session.get(url) as response:
-		async with aiofiles.open(os.path.join(folder, name), 'wb') as file:
-			await file.write(await response.read())
+		async with aiofiles.open(filename, 'wb') as file:
+			try:
+				await file.write(await response.read())
+			except:
+				os.remove(filename)
+				# \b\b for print above ^C
+				print('\b\bREMOVING EMPTY FILE')
+				raise
 			print('OK')
 
 async def download(urls_to_download: list[str] | str, data_folder: str):
