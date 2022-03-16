@@ -49,7 +49,7 @@ async def process_list(urls: list[str], folder: str):
 		except NotImplementedError:
 			print('List for', slug, 'not supported, skipping')
 
-def main() -> Optional[Tuple[str | list[str], str]]:
+def prepare() -> Optional[Tuple[str | list[str], str]]:
 	args = parse_args()
 	to_dl = args.url
 	urls_file = args.list
@@ -74,8 +74,8 @@ def main() -> Optional[Tuple[str | list[str], str]]:
 
 	return to_dl, folder
 
-if __name__ == '__main__':
-	if (result := main()) is None:
+def main():
+	if (result := prepare()) is None:
 		quit(0)
 
 	result, folder = result
@@ -83,3 +83,9 @@ if __name__ == '__main__':
 		asyncio.run(process_list(result, folder))
 	else:
 		asyncio.run(process(result, folder))
+
+if __name__ == '__main__':
+	try:
+		main()
+	except KeyboardInterrupt:
+		print('\nExiting')
