@@ -56,7 +56,7 @@ You should have deviantart.com account, login to it, then
   - run
 
   ```sh
-  python main.py --deviantart register
+  python main.py --action deviantart:register
   ```
 
   - paste needed values
@@ -75,7 +75,11 @@ python main.py -u [URL here]
 
 ### Wallhaven
 
-NSFW images supported only with API key, currently this is not implemented. [API docs](https://wallhaven.cc/help/api#wallpapers)
+NSFW images supported only with API key, to use it, get it from [account settings](https://wallhaven.cc/settings/account), then run
+
+```sh
+python main.py --action wallhaven:key
+```
 
 ## Supported URL types
 

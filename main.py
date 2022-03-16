@@ -25,7 +25,7 @@ def parse_args():
 	parser.add_argument('-l', '--list', type=str, help='File with list of URLs to download', default=None)
 	parser.add_argument('--folder', type=str, help='Folder to save artworks. Default folder - data', default='data')
 
-	parser.add_argument('--deviantart', type=str, default=None)
+	parser.add_argument('--action', type=str, default=None)
 
 	return parser.parse_args()
 
@@ -54,16 +54,22 @@ def prepare() -> Optional[Tuple[str | list[str], str]]:
 	to_dl = args.url
 	urls_file = args.list
 	folder = os.path.abspath(args.folder)
-	deviantart_action = args.deviantart
+	action = tuple(args.action.split(':')) if args.action else None
 
-	if deviantart_action == 'register':
+	if action == ('deviantart', 'register'):
 		creds = register('deviantart')()
 		if creds is not None:
 			save_creds(creds)
 			print('Authorized')
 		return
-	elif deviantart_action is not None:
-		print('Unknown deviantart action:', deviantart_action)
+	elif action == ('wallhaven', 'key'):
+		creds = register('wallhaven')()
+		if creds is not None:
+			save_creds(creds)
+			print('Saved')
+		return
+	elif action is not None:
+		print('Unknown action:', args.action)
 		return
 
 	if urls_file is not None:
