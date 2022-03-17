@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```
-usage: python main.py [-h] [--folder FOLDER] url
+usage: python main.py [-h] [-u URL] [-l LIST] [--folder FOLDER] [--action ACTION]
 
 Artworks downloader
 
@@ -29,7 +29,7 @@ options:
   -u URL, --url URL     URL to download
   -l LIST, --list LIST  File with list of URLs to download
   --folder FOLDER       Folder to save artworks. Default folder - data
-  --deviantart DEVIANTART
+  --action ACTION
 ```
 
 ### Sites with simple usage
