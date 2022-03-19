@@ -45,7 +45,7 @@ async def download(urls_to_download: list[str] | str, data_folder: str, with_key
 	has_api_key = not (
 		creds is None or
 		creds.get(SLUG) is None or
-		creds[SLUG]['api_key'] is None
+		creds[SLUG].get('api_key') is None
 	)
 
 	if with_key:

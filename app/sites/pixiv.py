@@ -63,11 +63,11 @@ async def download(urls_to_download: list[str] | str, data_folder: str):
 				name = info.title + f'_p{i}' + ext
 				print_inline(' ', i + 1)
 
-				async with session.get(base_url + str(i) + ext) as response:
-					filename = os.path.join(save_folder, name)
-					if os.path.exists(filename):
-						print(' ', 'Skip existing:', filename)
-						continue
+				filename = os.path.join(save_folder, name)
+				if os.path.exists(filename):
+					print(' ', 'Skip existing:', filename)
+					continue
 
+				async with session.get(base_url + str(i) + ext) as response:
 					async with aiofiles.open(filename, 'wb') as file:
 						await file.write(await response.read())
