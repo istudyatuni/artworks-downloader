@@ -150,6 +150,8 @@ class DAService():
 					print(' ', data['error_description'])
 					quit(1)
 
+				response.raise_for_status()
+
 				for result in data['results']:
 					yield result
 
@@ -251,15 +253,11 @@ async def save_art(service: DAService, session: aiohttp.ClientSession, art: Any,
 		await save_from_url(session, original_url, folder, name)
 
 async def download_folder_by_id(service: DAService, save_folder: str, artist: str, folder: str):
-	count_arts = 0
 	# this session for downloading images
 	async with aiohttp.ClientSession() as session:
 		async for art in service.list_folder_arts(artist, folder):
 			name = art['url'].split('/')[-1]
 			await save_art(service, session, art, save_folder, name)
-			count_arts += 1
-
-	print('Total', count_arts, 'arts')
 
 async def find_and_download_folder(
 	service: DAService,
@@ -374,7 +372,7 @@ async def download_list(urls: list[str], data_folder: str):
 			arts_count = len(art_list)
 			save_folder = os.path.join(data_folder, artist)
 			mkdir(save_folder)
-			print('\nArtist', artist, '\nSearching for arts')
+			print('\nArtist', artist)
 
 			async for art in service.list_folder_arts(artist, 'all'):
 				url = art['url']
@@ -385,8 +383,6 @@ async def download_list(urls: list[str], data_folder: str):
 					arts_count -= 1
 					if arts_count == 0:
 						break
-
-			print('Total', len(art_list), 'arts')
 
 def ask_app_creds():
 	creds = get_creds()
