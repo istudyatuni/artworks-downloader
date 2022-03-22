@@ -186,6 +186,19 @@ class DAService():
 			async for art in self._pager(session, 'GET', url, params=params):
 				yield art
 
+	async def get_download(self, deviationid: str):
+		await self._ensure_access()
+
+		headers = { 'authorization': self._auth_header }
+		url = f'{API_URL}/deviation/download/{deviationid}'
+		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
+			async with session.get(url) as response:
+				data = await response.json()
+				if 'error' in data:
+					print('Error when getting download link:', data['error_description'])
+					return None
+				return data['src']
+
 def parse_link(url: str) -> dict[str, str]:
 	parsed = urlparse(url)
 	path = parsed.path.lstrip('/').split('/')
@@ -213,7 +226,7 @@ def parse_link(url: str) -> dict[str, str]:
 	print('Unsupported link:', url)
 	return { 'type': 'unknown', 'artist': artist }
 
-async def save_art(session: aiohttp.ClientSession, url: str, folder: str, name: str):
+async def save_from_url(session: aiohttp.ClientSession, url: str, folder: str, name: str):
 	print_level_prefix = ' ' * 2
 
 	ext = os.path.splitext(urlparse(url).path)[1]
@@ -226,13 +239,24 @@ async def save_art(session: aiohttp.ClientSession, url: str, folder: str, name: 
 			await file.write(await image.read())
 			print(print_level_prefix + 'Download:', name)
 
+async def save_art(service: DAService, session: aiohttp.ClientSession, art: Any, folder: str, name: str):
+	if (
+		art['is_downloadable'] is False or
+		art['download_filesize'] == art['content']['filesize']
+	):
+		return await save_from_url(session, art['content']['src'], folder, name)
+
+	original_url = await service.get_download(art['deviationid'])
+	if original_url is not None:
+		await save_from_url(session, original_url, folder, name)
+
 async def download_folder_by_id(service: DAService, save_folder: str, artist: str, folder: str):
 	count_arts = 0
 	# this session for downloading images
 	async with aiohttp.ClientSession() as session:
 		async for art in service.list_folder_arts(artist, folder):
 			name = art['url'].split('/')[-1]
-			await save_art(session, art['content']['src'], save_folder, name)
+			await save_art(service, session, art, save_folder, name)
 			count_arts += 1
 
 	print('Total', count_arts, 'arts')
@@ -261,11 +285,11 @@ async def search_for_folder(service: DAService, artist: str, folder_to_find: str
 
 	return folderid
 
-async def search_for_art(service: DAService, artist: str, url_to_find: str) -> str | None:
+async def search_for_art(service: DAService, artist: str, url_to_find: str) -> Any:
 	print('Searching for art')
 	async for art in service.list_folder_arts(artist, 'all'):
 		if art['url'] == url_to_find:
-			return art['content']['src']
+			return art
 
 async def find_and_download_art(
 	service: DAService,
@@ -274,11 +298,9 @@ async def find_and_download_art(
 	url: str,
 	name: str
 ):
-	src = await search_for_art(service, artist, url)
-	if src is None:
-		return print('Art', name, 'not found')
+	art = await search_for_art(service, artist, url)
 	async with aiohttp.ClientSession() as session:
-		await save_art(session, src, save_folder, name)
+		await save_art(service, session, art, save_folder, name)
 
 async def download(url: list[str] | str, data_folder: str) -> None:
 	if isinstance(url, list):
@@ -358,7 +380,7 @@ async def download_list(urls: list[str], data_folder: str):
 				url = art['url']
 				if any(filter(lambda a: a['url'] == url, art_list)):
 					name = url.split('/')[-1]
-					await save_art(session, art['content']['src'], save_folder, name)
+					await save_art(service, session, art, save_folder, name)
 
 					arts_count -= 1
 					if arts_count == 0:
