@@ -113,8 +113,8 @@ async def find_and_download_art(
 
 # helpers
 
-def is_exists(artist: str, name: str):
-	return len(glob(f'./{artist}/{name}.*')) > 0
+def is_exists(folder: str, artist: str, name: str):
+	return len(glob(f'{folder}/{artist}/{name}.*')) > 0
 
 # main functions
 
@@ -164,8 +164,8 @@ async def download_list(urls: list[str], data_folder: str):
 			mapping_folder[a].append(parsed['folder'])
 		elif t == 'art':
 			n = parsed['name']
-			if is_exists(a, n):
-				print('Skip existing:', n)
+			if is_exists(data_folder, a, n):
+				print('Skip existing:', a + '/' + n)
 				continue
 
 			if mapping_art.get(a) is None:
