@@ -3,6 +3,7 @@ import aiofiles
 import aiohttp
 import os
 from copy import deepcopy
+from glob import glob
 from typing import Any, AsyncGenerator
 from urllib.parse import urlencode, urlparse
 
@@ -228,6 +229,8 @@ def parse_link(url: str) -> dict[str, str]:
 	print('Unsupported link:', url)
 	return { 'type': 'unknown', 'artist': artist }
 
+# download
+
 async def save_from_url(session: aiohttp.ClientSession, url: str, folder: str, name: str):
 	print_level_prefix = ' ' * 2
 
@@ -251,6 +254,8 @@ async def save_art(service: DAService, session: aiohttp.ClientSession, art: Any,
 	original_url = await service.get_download(art['deviationid'])
 	if original_url is not None:
 		await save_from_url(session, original_url, folder, name)
+
+# wrappers for common actions
 
 async def download_folder_by_id(service: DAService, save_folder: str, artist: str, folder: str):
 	# this session for downloading images
@@ -300,6 +305,13 @@ async def find_and_download_art(
 	async with aiohttp.ClientSession() as session:
 		await save_art(service, session, art, save_folder, name)
 
+# helpers
+
+def is_exists(artist: str, name: str):
+	return len(glob(f'./{artist}/{name}.*')) > 0
+
+# main functions
+
 async def download(url: list[str] | str, data_folder: str) -> None:
 	if isinstance(url, list):
 		return await download_list(url,data_folder)
@@ -345,9 +357,14 @@ async def download_list(urls: list[str], data_folder: str):
 				mapping_folder[a] = []
 			mapping_folder[a].append(parsed['folder'])
 		elif t == 'art':
+			n = parsed['name']
+			if is_exists(a, n):
+				print('Skip existing:', n)
+				continue
+
 			if mapping_art.get(a) is None:
 				mapping_art[a] = []
-			mapping_art[a].append({ 'name': parsed['name'], 'url': u })
+			mapping_art[a].append({ 'name': n, 'url': u })
 
 	# process
 	for artist in mapping_all:
@@ -383,6 +400,8 @@ async def download_list(urls: list[str], data_folder: str):
 					arts_count -= 1
 					if arts_count == 0:
 						break
+
+# register
 
 def ask_app_creds():
 	creds = get_creds()
