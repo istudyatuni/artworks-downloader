@@ -70,47 +70,6 @@ async def download_folder_by_id(service: DAService, save_folder: str, artist: st
 			name = art['url'].split('/')[-1]
 			await save_art(service, session, art, save_folder, name)
 
-async def find_and_download_folder(
-	service: DAService,
-	save_folder: str,
-	artist: str,
-	folder_name: str
-):
-	folderid = await search_for_folder(service, artist, folder_name)
-	if folderid is None:
-		print('Not found gallery', f'"{folder_name}"')
-		return
-	await download_folder_by_id(service, save_folder, artist, folderid)
-
-async def search_for_folder(service: DAService, artist: str, folder_to_find: str) -> str | None:
-	folderid = None
-	print('Searching for gallery')
-	async for folder in service.list_folders(artist):
-		if folder['name'] == folder_to_find:
-			folderid = folder['id']
-			print('Gallery', folder['pretty_name'], f'({folderid})')
-			# not breaking now for catching what is the subfolder
-			# break
-
-	return folderid
-
-async def search_for_art(service: DAService, artist: str, url_to_find: str) -> Any:
-	print('Searching for art')
-	async for art in service.list_folder_arts(artist, 'all'):
-		if art['url'] == url_to_find:
-			return art
-
-async def find_and_download_art(
-	service: DAService,
-	save_folder: str,
-	artist: str,
-	url: str,
-	name: str
-):
-	art = await search_for_art(service, artist, url)
-	async with aiohttp.ClientSession() as session:
-		await save_art(service, session, art, save_folder, name)
-
 # helpers
 
 def is_exists(folder: str, artist: str, name: str):
@@ -118,28 +77,9 @@ def is_exists(folder: str, artist: str, name: str):
 
 # main functions
 
-async def download(url: list[str] | str, data_folder: str) -> None:
-	if isinstance(url, list):
-		return await download_list(url,data_folder)
+async def download(url_list: list[str] | str, data_folder: str):
+	urls = url_list if isinstance(url_list, list) else [url_list]
 
-	service = DAService()
-
-	parsed = parse_link(url)
-	artist = parsed['artist']
-	save_folder = os.path.join(data_folder, artist)
-	mkdir(save_folder)
-
-	print('Artist', artist)
-	print('Saving to folder', save_folder, end='\n\n')
-
-	if parsed['type'] == 'all':
-		await download_folder_by_id(service, save_folder, artist, 'all')
-	elif parsed['type'] == 'folder':
-		await find_and_download_folder(service, save_folder, artist, parsed['folder'])
-	elif parsed['type'] == 'art':
-		await find_and_download_art(service, save_folder, artist, url, parsed['name'])
-
-async def download_list(urls: list[str], data_folder: str):
 	service = DAService()
 
 	print('\nSaving to folder', data_folder)
