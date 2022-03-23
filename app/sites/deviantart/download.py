@@ -82,7 +82,7 @@ async def download(url_list: list[str] | str, data_folder: str):
 
 	service = DAService()
 
-	print('\nSaving to folder', data_folder)
+	print('Saving to folder', data_folder)
 
 	# ['artist1', ...]
 	mapping_all: list[str] = []
@@ -132,7 +132,8 @@ async def download(url_list: list[str] | str, data_folder: str):
 
 	async with aiohttp.ClientSession() as session:
 		for artist, art_list in mapping_art.items():
-			arts_count = len(art_list)
+			all_urls = set(map(lambda a: a['url'], art_list))
+
 			save_folder = os.path.join(data_folder, artist)
 			mkdir(save_folder)
 			print('\nArtist', artist)
@@ -143,9 +144,11 @@ async def download(url_list: list[str] | str, data_folder: str):
 					name = url.split('/')[-1]
 					await save_art(service, session, art, save_folder, name)
 
-					arts_count -= 1
-					if arts_count == 0:
+					all_urls.remove(url)
+					if len(all_urls) == 0:
 						break
 
-			if arts_count > 0:
-				print('Not found', arts_count, 'arts, artist', artist)
+			if len(all_urls) > 0:
+				print('Not found', len(all_urls), 'arts (' + artist + '):')
+				for u in all_urls:
+					print(' ', u)
