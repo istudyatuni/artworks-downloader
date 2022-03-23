@@ -202,3 +202,16 @@ class DAService():
 					print('Error when getting download link:', data['error_description'])
 					return None
 				return data['src']
+
+	async def get_art_info(self, deviationid: str):
+		await self._ensure_access()
+
+		headers = { 'authorization': self._auth_header }
+		url = f'{API_URL}/deviation/{deviationid}'
+		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
+			async with session.get(url) as response:
+				data = await response.json()
+				if 'error' in data:
+					print('Error when getting art info:', data['error_description'])
+					return None
+				return data

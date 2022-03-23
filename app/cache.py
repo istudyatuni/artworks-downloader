@@ -10,9 +10,8 @@ INSERT_QUERY = '''INSERT OR IGNORE INTO cache (key, value) VALUES (:key, :value)
 SELECT_QUERY = '''SELECT value FROM cache WHERE key = :key'''
 
 conn = sl.connect(CACHE_DB)
-cursor = conn.cursor()
-
 conn.row_factory = sl.Row
+cursor = conn.cursor()
 
 cursor.executescript(INIT_QUERY)
 conn.commit()
@@ -28,9 +27,5 @@ def insert(slug: str, key: str, value: str):
 	conn.commit()
 
 def select(slug: str, key: str):
-	res = cursor.execute(SELECT_QUERY, _key(slug, key)).fetchone()
-	if res is None:
-		return
-	# split slug out
-	_, value = res['value'].split(':', 1)
-	return value
+	res = cursor.execute(SELECT_QUERY, (_key(slug, key),)).fetchone()
+	return res if res is None else res['value']

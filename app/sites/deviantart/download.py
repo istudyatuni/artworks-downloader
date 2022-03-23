@@ -5,6 +5,8 @@ from glob import glob
 from typing import Any
 from urllib.parse import urlparse
 
+import app.cache as cache
+from app.sites.deviantart.common import SLUG, make_cache_key
 from .service import DAService
 from app.utils import mkdir
 
@@ -38,19 +40,23 @@ def parse_link(url: str) -> dict[str, str]:
 # download images
 
 async def save_from_url(session: aiohttp.ClientSession, url: str, folder: str, name: str):
-	print_level_prefix = ' ' * 2
-
 	ext = os.path.splitext(urlparse(url).path)[1]
 	path = os.path.join(folder, name + ext)
 	if os.path.exists(path):
-		return print(print_level_prefix + 'Skip existing:', name)
+		return print(' ', 'Skip existing:', name)
 
 	async with session.get(url) as image:
 		async with aiofiles.open(path, 'wb') as file:
 			await file.write(await image.read())
-			print(print_level_prefix + 'Download:', name)
+			print(' ', 'Download:', name)
 
-async def save_art(service: DAService, session: aiohttp.ClientSession, art: Any, folder: str, name: str):
+async def save_art(
+	service: DAService,
+	session: aiohttp.ClientSession,
+	art: Any,
+	folder: str
+):
+	name = art['url'].split('/')[-1]
 	if (
 		art['is_downloadable'] is False or
 		art['download_filesize'] == art['content']['filesize']
@@ -63,12 +69,21 @@ async def save_art(service: DAService, session: aiohttp.ClientSession, art: Any,
 
 # wrappers for common actions
 
-async def download_folder_by_id(service: DAService, save_folder: str, artist: str, folder: str):
+async def download_folder_by_id(
+	service: DAService,
+	save_folder: str,
+	artist: str,
+	folder: str
+):
 	# this session for downloading images
 	async with aiohttp.ClientSession() as session:
 		async for art in service.list_folder_arts(artist, folder):
-			name = art['url'].split('/')[-1]
-			await save_art(service, session, art, save_folder, name)
+			await save_art(service, session, art, save_folder)
+
+async def download_art_by_id(service: DAService, deviationid: str, folder: str):
+	art = await service.get_art_info(deviationid)
+	async with aiohttp.ClientSession() as session:
+		await save_art(service, session, art, folder)
 
 # helpers
 
@@ -108,11 +123,20 @@ async def download(url_list: list[str] | str, data_folder: str):
 				print('Skip existing:', a + '/' + n)
 				continue
 
+			if (deviationid := cache.select(SLUG, make_cache_key(a, u))) is not None:
+				print('Download cached:', a + '/' + n)
+				save_folder = os.path.join(data_folder, a)
+				mkdir(save_folder)
+				await download_art_by_id(service, deviationid, save_folder)
+				continue
+
 			if mapping_art.get(a) is None:
 				mapping_art[a] = []
 			mapping_art[a].append({ 'name': n, 'url': u })
 
 	# process
+
+	# save artists all arts
 	for artist in mapping_all:
 		save_folder = os.path.join(data_folder, artist)
 		mkdir(save_folder)
@@ -120,6 +144,7 @@ async def download(url_list: list[str] | str, data_folder: str):
 
 		await download_folder_by_id(service, save_folder, artist, 'all')
 
+	# save collections
 	for artist, folder_list in mapping_folder.items():
 		save_folder = os.path.join(data_folder, artist)
 		mkdir(save_folder)
@@ -130,6 +155,7 @@ async def download(url_list: list[str] | str, data_folder: str):
 				print('Gallery', folder['pretty_name'])
 				await download_folder_by_id(service, save_folder, artist, folder['id'])
 
+	# save single arts
 	async with aiohttp.ClientSession() as session:
 		for artist, art_list in mapping_art.items():
 			all_urls = set(map(lambda a: a['url'], art_list))
@@ -141,8 +167,7 @@ async def download(url_list: list[str] | str, data_folder: str):
 			async for art in service.list_folder_arts(artist, 'all'):
 				url = art['url']
 				if any(filter(lambda a: a['url'] == url, art_list)):
-					name = url.split('/')[-1]
-					await save_art(service, session, art, save_folder, name)
+					await save_art(service, session, art, save_folder)
 
 					all_urls.remove(url)
 					if len(all_urls) == 0:
