@@ -40,6 +40,10 @@ class DAService():
 	def _auth_header(self) -> str:
 		return 'Bearer ' + self.access_token
 
+	@property
+	def _headers(self):
+		return { 'authorization': self._auth_header }
+
 	def _save_tokens(self):
 		creds = deepcopy(self.creds)
 		creds[SLUG][OAUTH_KEY].pop('code', 0)
@@ -160,9 +164,8 @@ class DAService():
 		await self._ensure_access()
 
 		params = { 'username': username }
-		headers = { 'authorization': self._auth_header }
 		url = f'{API_URL}/gallery/folders'
-		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
+		async with aiohttp.ClientSession(BASE_URL, headers=self._headers) as session:
 			async for folder in self._pager(session, 'GET', url, params=params):
 				name = folder['name']
 				# i don't know what is this, so just tell about
@@ -178,9 +181,8 @@ class DAService():
 		await self._ensure_access()
 
 		params = { 'username': username }
-		headers = { 'authorization': self._auth_header }
 		url = f'{API_URL}/gallery/{folder}'
-		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
+		async with aiohttp.ClientSession(BASE_URL, headers=self._headers) as session:
 			async for art in self._pager(session, 'GET', url, params=params):
 				if art is not None:
 					cache.insert(
@@ -193,9 +195,8 @@ class DAService():
 	async def get_download(self, deviationid: str):
 		await self._ensure_access()
 
-		headers = { 'authorization': self._auth_header }
 		url = f'{API_URL}/deviation/download/{deviationid}'
-		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
+		async with aiohttp.ClientSession(BASE_URL, headers=self._headers) as session:
 			async with session.get(url) as response:
 				data = await response.json()
 				if 'error' in data:
@@ -206,9 +207,8 @@ class DAService():
 	async def get_art_info(self, deviationid: str):
 		await self._ensure_access()
 
-		headers = { 'authorization': self._auth_header }
 		url = f'{API_URL}/deviation/{deviationid}'
-		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
+		async with aiohttp.ClientSession(BASE_URL, headers=self._headers) as session:
 			async with session.get(url) as response:
 				data = await response.json()
 				if 'error' in data:
