@@ -5,7 +5,7 @@ from glob import glob
 from typing import Any
 from urllib.parse import urlparse
 
-from . import DAService
+from .service import DAService
 from app.utils import mkdir
 
 def parse_link(url: str) -> dict[str, str]:
@@ -206,3 +206,6 @@ async def download_list(urls: list[str], data_folder: str):
 					arts_count -= 1
 					if arts_count == 0:
 						break
+
+			if arts_count > 0:
+				print('Not found', arts_count, 'arts, artist', artist)

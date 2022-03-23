@@ -1,6 +1,6 @@
 from urllib.parse import urlencode
 
-from . import BASE_URL, OAUTH_KEY, REDIRECT_URI, SLUG
+from .common import BASE_URL, OAUTH_KEY, REDIRECT_URI, SLUG
 from app.creds import get_creds
 from app.redirect_server import run as run_redirect_catch_server
 

@@ -3,12 +3,14 @@ import aiohttp
 from copy import deepcopy
 from typing import Any, AsyncGenerator
 
-from . import (
+from .common import (
 	BASE_URL,
+	make_cache_key,
 	OAUTH_KEY,
 	REDIRECT_URI,
 	SLUG,
 )
+import app.cache as cache
 from app.creds import get_creds, save_creds
 from app.utils import print_inline
 
@@ -180,6 +182,12 @@ class DAService():
 		url = f'{API_URL}/gallery/{folder}'
 		async with aiohttp.ClientSession(BASE_URL, headers=headers) as session:
 			async for art in self._pager(session, 'GET', url, params=params):
+				if art is not None:
+					cache.insert(
+						SLUG,
+						make_cache_key(art['author']['username'], art['url']),
+						art['deviationid']
+					)
 				yield art
 
 	async def get_download(self, deviationid: str):
