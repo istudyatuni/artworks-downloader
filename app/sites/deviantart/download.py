@@ -87,7 +87,7 @@ async def download_art_by_id(service: DAService, deviationid: str, folder: str):
 
 # helpers
 
-def is_exists(folder: str, artist: str, name: str):
+def is_art_exists(folder: str, artist: str, name: str):
 	return len(glob(f'{folder}/{artist}/{name}.*')) > 0
 
 # main functions
@@ -119,7 +119,7 @@ async def download(url_list: list[str] | str, data_folder: str):
 			mapping_folder[a].append(parsed['folder'])
 		elif t == 'art':
 			n = parsed['name']
-			if is_exists(data_folder, a, n):
+			if is_art_exists(data_folder, a, n):
 				print('Skip existing:', a + '/' + n)
 				continue
 
