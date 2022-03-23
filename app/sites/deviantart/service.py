@@ -204,12 +204,19 @@ class DAService():
 					return None
 				return data['src']
 
-	async def get_art_info(self, deviationid: str):
+	async def get_art_info(self, deviationid: str, _rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT):
 		await self._ensure_access()
 
 		url = f'{API_URL}/deviation/{deviationid}'
 		async with aiohttp.ClientSession(BASE_URL, headers=self._headers) as session:
 			async with session.get(url) as response:
+				if response.status == 429:
+					print_inline('Rate limit reached, spleeping for', _rate_limit_sec, 'seconds')
+					await asyncio.sleep(_rate_limit_sec)
+					return await self.get_art_info(deviationid, _rate_limit_sec * 2)
+				elif _rate_limit_sec > DEFAULT_RATE_LIMIT_TIMEOUT:
+					print()
+
 				data = await response.json()
 				if 'error' in data:
 					print('Error when getting art info:', data['error_description'])
