@@ -15,7 +15,11 @@ from app.creds import get_creds, save_creds
 from app.utils import print_inline
 
 API_URL = '/api/v1/oauth2'
-DEFAULT_RATE_LIMIT_TIMEOUT = 1
+# start from 32 instead of 1 to skip small timeouts because
+# every time I tested it, we always hit 32+ seconds
+# but with 32 at start we can wait in most cases only 32 seconds
+# (I don't know why, maybe it not works everytime)
+DEFAULT_RATE_LIMIT_TIMEOUT = 32
 INVALID_CODE_MSG = 'Incorrect authorization code.'
 
 # TODO: add revoke
@@ -133,7 +137,12 @@ class DAService():
 				if response.status == 429:
 					# Rate limit: https://www.deviantart.com/developers/errors
 					if rate_limit_sec == DEFAULT_RATE_LIMIT_TIMEOUT:
-						print('Rate limit reached for url', response.url)
+						print(
+							'Rate limit in pager (' +
+							params['username'] +
+							'), offset',
+							params['offset']
+						)
 					elif rate_limit_sec > 64 * 10:  # 10 min
 						await self._ensure_access()
 
@@ -144,6 +153,7 @@ class DAService():
 					continue
 				elif rate_limit_sec != DEFAULT_RATE_LIMIT_TIMEOUT:
 					rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT
+					await self._ensure_access()
 					print()
 				elif 'error' in data:
 					print('An error occured during fetching', response.url)
