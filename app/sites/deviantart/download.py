@@ -1,3 +1,4 @@
+from collections import defaultdict
 import aiofiles
 import aiohttp
 import os
@@ -102,9 +103,9 @@ async def download(url_list: list[str] | str, data_folder: str):
 	# ['artist1', ...]
 	mapping_all: list[str] = []
 	# { '<artist>': ['folder1', ...] }
-	mapping_folder: dict[str, list[str]] = {}
+	mapping_folder: dict[str, list[str]] = defaultdict(list)
 	# { '<artist>': [{ 'name': 'name1', 'url': 'url1' }, ...] }
-	mapping_art: dict[str, list[dict[str, str]]] = {}
+	mapping_art: dict[str, list[dict[str, str]]] = defaultdict(list)
 
 	# group urls by types and artists
 	for u in urls:
@@ -114,8 +115,6 @@ async def download(url_list: list[str] | str, data_folder: str):
 		if t == 'all':
 			mapping_all.append(a)
 		elif t == 'folder':
-			if mapping_folder.get(a) is None:
-				mapping_folder[a] = []
 			mapping_folder[a].append(parsed['folder'])
 		elif t == 'art':
 			n = parsed['name']
@@ -123,15 +122,14 @@ async def download(url_list: list[str] | str, data_folder: str):
 				print('Skip existing:', a + '/' + n)
 				continue
 
-			if (deviationid := cache.select(SLUG, make_cache_key(a, u))) is not None:
+			deviationid = cache.select(SLUG, make_cache_key(a, u))
+			if deviationid is not None:
 				print('Download cached:', a + '/' + n)
 				save_folder = os.path.join(data_folder, a)
 				mkdir(save_folder)
 				await download_art_by_id(service, deviationid, save_folder)
 				continue
 
-			if mapping_art.get(a) is None:
-				mapping_art[a] = []
 			mapping_art[a].append({ 'name': n, 'url': u })
 
 	# process
