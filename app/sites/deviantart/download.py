@@ -58,6 +58,11 @@ async def save_art(
 	folder: str
 ):
 	name = art['url'].split('/')[-1]
+
+	if (premium_folder_data := art.get('premium_folder_data')) is not None:
+		if premium_folder_data['has_access'] is False:
+			print('  No access to', name + ':', 'downloading preview')
+
 	if (
 		art['is_downloadable'] is False or
 		art['download_filesize'] == art['content']['filesize']
