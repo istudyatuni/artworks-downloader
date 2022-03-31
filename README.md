@@ -1,9 +1,10 @@
 # Artworks downloader
 
-- artstation.com [#info](#sites-with-simple-usage)
-- deviantart.com [#info](#deviantart)
-- pixiv.net [#info](#sites-with-simple-usage)
-- wallhaven.cc [#info](#sites-with-simple-usage) [#notes](#wallhaven)
+- artstation.com [#usage](#sites-with-simple-usage)
+- deviantart.com [#usage](#deviantart)
+- pixiv.net [#usage](#sites-with-simple-usage)
+- reddit.com [#usage](#sites-with-simple-usage)
+- wallhaven.cc [#usage](#sites-with-simple-usage) [#notes](#wallhaven)
 
 [Supported URL types](#supported-url-types)
 
@@ -96,6 +97,10 @@ python main.py --action wallhaven:key
   - `https://www.deviantart.com/<artist>/art/<name>`
 - **pixiv.net**
   - `https://www.pixiv.net/<lang>/artworks/<id>`
+- **reddit.com**
+  - `https://redd.it/<id>`
+  - `https://www.reddit.com/comments/<id>`
+  - `https://www.reddit.com/r/<subreddit>/comments/<id>/<any name>`
 - **wallhaven.cc**
   - `https://wallhaven.cc/w/<id>`
   - `https://whvn.cc/<id>`

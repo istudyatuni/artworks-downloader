@@ -8,15 +8,17 @@ from app.creds import save_creds
 from app.sites import download, register
 
 SLUGS = {
+	'redd.it': 'reddit',
+	'wallhaven.cc': 'wallhaven',
+	'whvn.cc': 'wallhaven',
 	'www.artstation.com': 'artstation',
 	'www.deviantart.com': 'deviantart',
 	'www.pixiv.net': 'pixiv',
-	'wallhaven.cc': 'wallhaven',
-	'whvn.cc': 'wallhaven',
+	'www.reddit.com': 'reddit',
 }
 
-def detect_site(url: str) -> str:
-	return SLUGS[urlparse(url).netloc]
+def detect_site(url: str) -> str | None:
+	return SLUGS.get(urlparse(url).netloc)
 
 def parse_args():
 	parser = argparse.ArgumentParser(description='Artworks downloader')
@@ -31,6 +33,9 @@ def parse_args():
 
 async def process(url: str, folder: str):
 	site_slug = detect_site(url)
+	if site_slug is None:
+		print('Unknown link', url)
+		return
 	await download(site_slug)(url, os.path.join(folder, site_slug))
 
 async def process_list(urls: list[str], folder: str):
@@ -40,7 +45,12 @@ async def process_list(urls: list[str], folder: str):
 
 	mapping = {s: [] for s in SLUGS.values()}
 	for u in urls:
-		mapping[detect_site(u)].append(u)
+		site_slug = detect_site(u)
+		if site_slug is None:
+			print('Unknown link', u)
+			continue
+
+		mapping[site_slug].append(u)
 	for slug, l in mapping.items():
 		if len(l) == 0:
 			continue
