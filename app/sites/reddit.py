@@ -17,6 +17,8 @@ IMAGE_URI = 'https://i.redd.it/'
 DATA_CACHE_POSTFIX = ':data'
 SKIP_CACHE_TAG = 'SKIP'
 
+REDDIT_DOMAINS = ['reddit.com', 'i.redd.it', 'v.redd.it']
+
 Parsed = namedtuple('Parsed', ['id'])
 
 def parse_link(url: str) -> Parsed:
@@ -83,9 +85,11 @@ async def download(urls_to_download: list[str] | str, data_folder: str):
 				data = await fetch_data(session, JSON_URI.format(id=parsed.id))
 				media_metadata = data.get('media_metadata')
 				data = {
-					'title': data['title'],
+					'domain': data['domain'],
 					'is_gallery': data.get('is_gallery', False),
 					'is_video': data['is_video'],
+					'subreddit': data['subreddit'],
+					'title': data['title'],
 					'url': data['url'],
 				}
 				if data['is_gallery'] is True:
@@ -98,11 +102,16 @@ async def download(urls_to_download: list[str] | str, data_folder: str):
 			else:
 				data = json.loads(cache.select(SLUG, parsed.id + DATA_CACHE_POSTFIX))
 
+			if data['domain'] not in REDDIT_DOMAINS:
+				print('Media is from ', data['domain'], url)
+				continue
+
+			save_folder = os.path.join(data_folder, data['subreddit'])
 			title = sep.join([data['title'], parsed.id])
 			is_gallery: bool = data.get('is_gallery', False)
 
 			if is_gallery:
-				folder = os.path.join(data_folder, filename_normalize(title))
+				folder = os.path.join(save_folder, filename_normalize(title))
 				mkdir(folder)
 				print(title)
 
@@ -131,4 +140,5 @@ async def download(urls_to_download: list[str] | str, data_folder: str):
 
 				media_id, ext = os.path.splitext(url_filename)
 				filename = sep.join([title, media_id]) + ext
-				await download_art(session, img_url, data_folder, filename)
+				mkdir(save_folder)
+				await download_art(session, img_url, save_folder, filename)
