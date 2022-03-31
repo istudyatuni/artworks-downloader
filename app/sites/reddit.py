@@ -61,9 +61,7 @@ async def download_art(
 			await file.write(await response.read())
 			print(indent_str + 'Download:', name)
 
-async def download(urls_to_download: list[str] | str, data_folder: str):
-	urls = urls_to_download if isinstance(urls_to_download, list) else [urls_to_download]
-
+async def download(urls: list[str], data_folder: str):
 	sep = ' - '
 	print('Saving to', data_folder)
 

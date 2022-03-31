@@ -98,9 +98,7 @@ def is_art_exists(folder: str, artist: str, name: str):
 
 # main functions
 
-async def download(url_list: list[str] | str, data_folder: str):
-	urls = url_list if isinstance(url_list, list) else [url_list]
-
+async def download(urls: list[str], data_folder: str):
 	service = DAService()
 
 	print('Saving to folder', data_folder)

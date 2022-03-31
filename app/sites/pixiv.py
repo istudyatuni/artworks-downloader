@@ -62,9 +62,7 @@ async def download_art(session: aiohttp.ClientSession, info: Art, save_folder: s
 			async with aiofiles.open(filename, 'wb') as file:
 				await file.write(await response.read())
 
-async def download(urls_to_download: list[str] | str, data_folder: str):
-	urls = urls_to_download if isinstance(urls_to_download, list) else [urls_to_download]
-
+async def download(urls: list[str], data_folder: str):
 	async with aiohttp.ClientSession(headers=HEADERS) as session:
 		for url in urls:
 			parsed = parse_link(url)

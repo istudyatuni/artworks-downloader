@@ -31,13 +31,6 @@ def parse_args():
 
 	return parser.parse_args()
 
-async def process(url: str, folder: str):
-	site_slug = detect_site(url)
-	if site_slug is None:
-		print('Unknown link', url)
-		return
-	await download(site_slug)(url, os.path.join(folder, site_slug))
-
 async def process_list(urls: list[str], folder: str):
 	if len(urls) == 1 and urls[0] == '':
 		print('List is empty')
@@ -59,9 +52,10 @@ async def process_list(urls: list[str], folder: str):
 		except NotImplementedError:
 			print('List for', slug, 'not supported, skipping')
 
-def prepare() -> Optional[Tuple[str | list[str], str]]:
+def prepare() -> Optional[Tuple[list[str], str]]:
 	args = parse_args()
-	to_dl = args.url
+	# put to list for hanling single url as list when download
+	to_dl = [args.url]
 	urls_file = args.list
 	folder = os.path.abspath(args.folder)
 	action = tuple(args.action.split(':')) if args.action else None
@@ -94,11 +88,7 @@ def main():
 	if (result := prepare()) is None:
 		quit(0)
 
-	result, folder = result
-	if isinstance(result, list):
-		asyncio.run(process_list(result, folder))
-	else:
-		asyncio.run(process(result, folder))
+	asyncio.run(process_list(*result))
 
 if __name__ == '__main__':
 	try:

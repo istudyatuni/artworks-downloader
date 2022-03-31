@@ -35,8 +35,7 @@ async def fetch_image(session: aiohttp.ClientSession, url: str, name: str, folde
 				raise
 			print('OK')
 
-async def download(urls_to_download: list[str] | str, data_folder: str, with_key = False):
-	urls = urls_to_download if isinstance(urls_to_download, list) else [urls_to_download]
+async def download(urls: list[str], data_folder: str, with_key = False):
 	mkdir(data_folder)
 
 	retry_with_key = []
