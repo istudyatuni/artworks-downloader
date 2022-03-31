@@ -6,7 +6,7 @@ import aiohttp
 import os
 from app.creds import get_creds
 
-from app.utils import filename_normalize, mkdir
+from app.utils import filename_normalize, filename_shortening, mkdir
 
 SLUG = 'wallhaven'
 
@@ -105,6 +105,7 @@ async def download(urls_to_download: list[str] | str, data_folder: str, with_key
 				+ ', '.join(map(lambda tag: tag['name'], data['tags']))
 			)
 			name = filename_normalize(name) + os.path.splitext(full_url)[1]
+			name = filename_shortening(name, with_ext=True)
 			await fetch_image(session, full_url, name, data_folder)
 
 	if len(retry_with_key) > 0:

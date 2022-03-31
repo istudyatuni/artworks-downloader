@@ -1,11 +1,19 @@
 from functools import partial
 from os import makedirs
+import os.path
 import re
 
 mkdir = partial(makedirs, exist_ok=True)
 print_inline = partial(print, end='\r', flush=True)
 
 def filename_normalize(filename: str):
-	# max filename size is 255
-	# minus 4 for dot and file extension
-	return re.sub(r'[<>:"\\\/|?*]', '_', filename)[:251]
+	""" Normalize filename: replace `<` `>` `:` `"` `\\` `/` `|` `?` `*` with `_` """
+	return re.sub(r'[<>:"\\\/|?*]', '_', filename)
+
+def filename_shortening(filename: str, with_ext = False):
+	""" Strip filename to 255 symbols """
+	if with_ext:
+		file, ext = os.path.splitext(filename)
+		return file[:255 - len(ext)] + ext
+
+	return filename[:255]
