@@ -6,7 +6,7 @@ import aiohttp
 import json
 import os.path
 
-from app.utils import filename_normalize, mkdir, print_inline
+from app.utils import filename_normalize, filename_unhide, mkdir, print_inline
 
 Art = namedtuple('Art', ['count', 'first_url', 'id', 'artist', 'title'])
 
@@ -38,7 +38,8 @@ async def fetch_info(session: aiohttp.ClientSession, url: str, parsed: dict):
 		art['pageCount'],
 		art['urls']['original'],
 		parsed['id'],
-		filename_normalize(art['userName']),
+		# username can begin with a dot
+		filename_unhide(filename_normalize(art['userName'])),
 		filename_normalize(art['title']),
 	)
 

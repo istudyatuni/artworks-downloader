@@ -6,6 +6,9 @@ import re
 mkdir = partial(makedirs, exist_ok=True)
 print_inline = partial(print, end='\r', flush=True)
 
+def filename_unhide(filename: str):
+	return '_' + filename if filename.startswith('.') else filename
+
 def filename_normalize(filename: str):
 	""" Normalize filename: replace `<` `>` `:` `"` `\\` `/` `|` `?` `*` with `_` """
 	return re.sub(r'[<>:"\\\/|?*]', '_', filename)
