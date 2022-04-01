@@ -2,6 +2,7 @@
 
 - artstation.com [#usage](#sites-with-simple-usage)
 - deviantart.com [#usage](#deviantart)
+- imgur.com [#usage](#sites-with-simple-usage)
 - pixiv.net [#usage](#sites-with-simple-usage)
 - reddit.com [#usage](#sites-with-simple-usage)
 - wallhaven.cc [#usage](#sites-with-simple-usage) [#notes](#wallhaven)
@@ -95,6 +96,10 @@ python main.py --action wallhaven:key
     - `https://www.deviantart.com/<artist>/gallery`
   - `https://www.deviantart.com/<artist>/gallery/<some number>/<gallery name>`
   - `https://www.deviantart.com/<artist>/art/<name>`
+- **imgur.com**
+  - `https://imgur.com/a/<id>`
+  - `https://imgur.com/gallery/<id>`
+  - `https://imgur.com/t/<tag>/<id>`
 - **pixiv.net**
   - `https://www.pixiv.net/<lang>/artworks/<id>`
 - **reddit.com**

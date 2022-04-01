@@ -8,6 +8,7 @@ from app.creds import save_creds
 from app.sites import download, register
 
 SLUGS = {
+	'imgur.com': 'imgur',
 	'redd.it': 'reddit',
 	'wallhaven.cc': 'wallhaven',
 	'whvn.cc': 'wallhaven',
@@ -47,10 +48,7 @@ async def process_list(urls: list[str], folder: str):
 	for slug, l in mapping.items():
 		if len(l) == 0:
 			continue
-		try:
-			await download(slug)(l, os.path.join(folder, slug))
-		except NotImplementedError:
-			print('List for', slug, 'not supported, skipping')
+		await download(slug)(l, os.path.join(folder, slug))
 
 def prepare() -> Optional[Tuple[list[str], str]]:
 	args = parse_args()
