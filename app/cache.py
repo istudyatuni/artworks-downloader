@@ -1,3 +1,5 @@
+from typing import Any
+import json
 import sqlite3 as sl
 
 CACHE_DB = '.cache.db'
@@ -20,16 +22,23 @@ conn.commit()
 def _key(slug: str, key: str):
 	return slug + ':' + key
 
-def insert(slug: str, key: str, value: str):
+def insert(slug: str, key: str, value: str | Any, as_json=False):
+	# if not as json value should be string
+	if as_json is False and not isinstance(value, str):
+		raise Exception('Invalid value type')
+
 	cursor.execute(INSERT_QUERY, {
 		'key': _key(slug, key),
-		'value': value
+		'value': json.dumps(value) if as_json else value
 	})
 	conn.commit()
 
-def select(slug: str, key: str):
+def select(slug: str, key: str, as_json=False):
 	res = cursor.execute(SELECT_QUERY, (_key(slug, key),)).fetchone()
-	return res if res is None else res['value']
+	if res is None:
+		return res
+	value = res['value']
+	return json.loads(value) if as_json else value
 
 def delete(slug: str, key: str):
 	cursor.execute(DELETE_QUERY, (_key(slug, key),))

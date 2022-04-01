@@ -3,7 +3,6 @@ from typing import Any
 from urllib.parse import urlparse
 import aiofiles
 import aiohttp
-import json
 import os.path
 
 from app.utils import filename_normalize, mkdir
@@ -96,12 +95,12 @@ async def download(urls: list[str], data_folder: str):
 						for media_id, info in media_metadata.items()
 					}
 
-				cache.insert(SLUG, parsed.id + DATA_CACHE_POSTFIX, json.dumps(data))
+				cache.insert(SLUG, parsed.id + DATA_CACHE_POSTFIX, data, as_json=True)
 			else:
-				data = json.loads(cache.select(SLUG, parsed.id + DATA_CACHE_POSTFIX))
+				data = cache.select(SLUG, parsed.id + DATA_CACHE_POSTFIX, as_json=True)
 
 			if data['domain'] not in REDDIT_DOMAINS:
-				print('Media is from ', data['domain'], url)
+				print('Media is from', data['domain'], url)
 				continue
 
 			save_folder = os.path.join(data_folder, data['subreddit'])
