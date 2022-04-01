@@ -85,7 +85,6 @@ async def download(urls: list[str], data_folder: str):
 				name = p['user']['username']
 				projects[name].append(Project(p['title'], p['hash_id'], p['assets']))
 
-	print('\nSaving to folder', data_folder)
 	for artist in projects.keys():
 		mkdir(os.path.join(data_folder, artist))
 

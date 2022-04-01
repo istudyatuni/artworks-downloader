@@ -62,7 +62,6 @@ async def download_art(
 
 async def download(urls: list[str], data_folder: str):
 	sep = ' - '
-	print('Saving to', data_folder)
 
 	async with aiohttp.ClientSession() as session:
 		for url in urls:

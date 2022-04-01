@@ -101,8 +101,6 @@ def is_art_exists(folder: str, artist: str, name: str):
 async def download(urls: list[str], data_folder: str):
 	service = DAService()
 
-	print('Saving to folder', data_folder)
-
 	# ['artist1', ...]
 	mapping_all: list[str] = []
 	# { '<artist>': ['folder1', ...] }
