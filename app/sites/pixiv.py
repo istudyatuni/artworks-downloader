@@ -7,21 +7,23 @@ import json
 import os.path
 
 from app.utils import filename_normalize, filename_unhide, mkdir, print_inline
+import app.cache as cache
 
-Art = namedtuple('Art', ['count', 'first_url', 'id', 'artist', 'title'])
-
+SLUG = 'pixiv'
 HEADERS = {
 	'referer': 'https://www.pixiv.net/',
 }
+
+Parsed = namedtuple('Parsed', ['id'])
 
 def parse_link(url: str):
 	parsed = urlparse(url)
 	path = parsed.path.lstrip('/').split('/')
 	if path[1] == 'artworks':
-		return { 'type': 'art', 'id': path[2] }
-	return { 'type': 'unknown' }
+		return Parsed(path[2])
+	return Parsed(None)
 
-async def fetch_info(session: aiohttp.ClientSession, url: str, parsed: dict):
+async def fetch_info(session: aiohttp.ClientSession, url: str, parsed: Parsed):
 	print('Fetching data for', url)
 	async with session.get(url) as response:
 		data = await response.text()
@@ -32,26 +34,26 @@ async def fetch_info(session: aiohttp.ClientSession, url: str, parsed: dict):
 	# 28 is len of meta-preload-data" content='
 	# 3 is back-offset from <script
 	json_data = json.loads(data[id_ind + 28:script_ind - 3])
-	art = json_data['illust'][parsed['id']]
+	art = json_data['illust'][parsed.id]
 
-	return Art(
-		art['pageCount'],
-		art['urls']['original'],
-		parsed['id'],
+	return {
+		'count': art['pageCount'],
+		'first_url': art['urls']['original'],
+		'id': parsed.id,
 		# username can begin with a dot
-		filename_unhide(filename_normalize(art['userName'])),
-		filename_normalize(art['title']),
-	)
+		'artist': filename_unhide(filename_normalize(art['userName'])),
+		'title': filename_normalize(art['title']),
+	}
 
-async def download_art(session: aiohttp.ClientSession, info: Art, save_folder: str):
+async def download_art(session: aiohttp.ClientSession, info: dict, save_folder: str):
 	# https://i.pximg.net/img-original/img/.../xxx_p0.png
-	base_url, ext = os.path.splitext(info.first_url)
+	base_url, ext = os.path.splitext(info['first_url'])
 	base_url = base_url[:-1]
 
-	name = info.title + ext
+	name = info['title'] + ext
 	print(' ', 'Download:', name)
-	for i in range(info.count):
-		name = info.title + f'_p{i}' + ext
+	for i in range(info['count']):
+		name = info['title'] + f'_p{i}' + ext
 		print_inline(' ', i + 1)
 
 		filename = os.path.join(save_folder, name)
@@ -67,13 +69,20 @@ async def download(urls: list[str], data_folder: str):
 	async with aiohttp.ClientSession(headers=HEADERS) as session:
 		for url in urls:
 			parsed = parse_link(url)
-			if parsed['type'] != 'art':
+			if parsed.id is None:
 				print('Unsupported link:', url)
 				continue
 
-			info = await fetch_info(session, url, parsed)
+			cached: dict = cache.select(SLUG, parsed.id, as_json=True)
 
-			save_folder = os.path.join(data_folder, info.artist, info.id)
+			if cached is None:
+				info = await fetch_info(session, url, parsed)
+				cache.insert(SLUG, parsed.id, info, as_json=True)
+			else:
+				print(url)
+				info = cached
+
+			save_folder = os.path.join(data_folder, info['artist'], info['id'])
 			mkdir(save_folder)
 
 			while True:
