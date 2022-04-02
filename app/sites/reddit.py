@@ -80,6 +80,8 @@ async def download_art(
 async def download(urls: list[str], data_folder: str):
 	sep = ' - '
 
+	can_retry_other_site = []
+
 	async with aiohttp.ClientSession() as session:
 		for url in urls:
 			parsed = parse_link(url)
@@ -100,8 +102,11 @@ async def download(urls: list[str], data_folder: str):
 			else:
 				data = cache.select(SLUG, parsed.id + DATA_CACHE_POSTFIX, as_json=True)
 
-			if data['domain'] not in REDDIT_DOMAINS:
-				print('Media is from', data['domain'], url)
+			domain = data['domain']
+			if domain not in REDDIT_DOMAINS:
+				print('Media is from', domain, url)
+				if domain == 'imgur.com':
+					can_retry_other_site.append(data['url'])
 				continue
 
 			save_folder = os.path.join(data_folder, data['subreddit'])
@@ -139,3 +144,6 @@ async def download(urls: list[str], data_folder: str):
 				filename = sep.join([title, media_id]) + ext
 				mkdir(save_folder)
 				await download_art(session, img_url, save_folder, filename)
+
+	if len(can_retry_other_site) > 0:
+		print('\nYou can rerun script for these urls:', *can_retry_other_site, sep='\n')
