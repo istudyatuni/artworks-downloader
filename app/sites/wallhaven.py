@@ -3,12 +3,12 @@ from enum import Enum
 from glob import glob
 from typing import Any, Tuple
 from urllib.parse import urlparse
-import aiofiles
 import aiohttp
 import asyncio
 import os
 
 from app.creds import get_creds
+from app.utils.download import download_binary
 from app.utils.path import filename_normalize, filename_shortening, mkdir
 import app.cache as cache
 
@@ -68,17 +68,8 @@ async def fetch_data(
 			return data, FetchDataAction.download
 
 async def fetch_image(session: aiohttp.ClientSession, url: str, name: str, folder: str):
-	filename = os.path.join(folder, name)
-	async with session.get(url) as response:
-		async with aiofiles.open(filename, 'wb') as file:
-			try:
-				await file.write(await response.read())
-			except:
-				os.remove(filename)
-				# \b\b for print above ^C
-				print('\b\bREMOVING EMPTY FILE')
-				raise
-			print('OK')
+	await download_binary(session, url, os.path.join(folder, name))
+	print('OK')
 
 async def download(urls: list[str], data_folder: str, with_key = False):
 	mkdir(data_folder)

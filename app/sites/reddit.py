@@ -1,10 +1,10 @@
 from collections import namedtuple
 from typing import Any
 from urllib.parse import urlparse
-import aiofiles
 import aiohttp
 import os.path
 
+from app.utils.download import download_binary
 from app.utils.path import filename_normalize, mkdir
 import app.cache as cache
 
@@ -72,10 +72,8 @@ async def download_art(
 	if os.path.exists(filename):
 		return print(indent_str + 'Skip existing:', name)
 
-	async with session.get(url) as response:
-		async with aiofiles.open(filename, 'wb') as file:
-			await file.write(await response.read())
-			print(indent_str + 'Download:', name)
+	await download_binary(session, url, filename)
+	print(indent_str + 'Download:', name)
 
 async def download(urls: list[str], data_folder: str):
 	sep = ' - '

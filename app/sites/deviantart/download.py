@@ -1,15 +1,15 @@
 from collections import defaultdict
-import aiofiles
-import aiohttp
-import os
 from glob import glob
 from typing import Any
 from urllib.parse import urlparse
+import aiohttp
+import os
 
-import app.cache as cache
-from app.sites.deviantart.common import SLUG, make_cache_key
 from .service import DAService
+from app.sites.deviantart.common import SLUG, make_cache_key
+from app.utils.download import download_binary
 from app.utils.path import mkdir
+import app.cache as cache
 
 def parse_link(url: str) -> dict[str, str]:
 	parsed = urlparse(url)
@@ -41,15 +41,15 @@ def parse_link(url: str) -> dict[str, str]:
 # download images
 
 async def save_from_url(session: aiohttp.ClientSession, url: str, folder: str, name: str):
-	ext = os.path.splitext(urlparse(url).path)[1]
-	path = os.path.join(folder, name + ext)
-	if os.path.exists(path):
-		return print(' ', 'Skip existing:', name)
+	indent_str = '  '
 
-	async with session.get(url) as image:
-		async with aiofiles.open(path, 'wb') as file:
-			await file.write(await image.read())
-			print(' ', 'Download:', name)
+	ext = os.path.splitext(urlparse(url).path)[1]
+	filename = os.path.join(folder, name + ext)
+	if os.path.exists(filename):
+		return print(indent_str + 'Skip existing:', name)
+
+	await download_binary(session, url, filename)
+	print(indent_str + 'Download:', name)
 
 async def save_art(
 	service: DAService,

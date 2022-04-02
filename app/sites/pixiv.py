@@ -1,11 +1,11 @@
-import asyncio
 from collections import namedtuple
 from urllib.parse import parse_qs, urlparse
-import aiofiles
 import aiohttp
+import asyncio
 import json
 import os
 
+from app.utils.download import download_binary
 from app.utils.path import filename_normalize, filename_unhide, mkdir
 from app.utils.print import print_inline
 import app.cache as cache
@@ -67,14 +67,8 @@ async def download_art(session: aiohttp.ClientSession, info: dict, save_folder: 
 			print(' ', 'Skip existing:', filename)
 			continue
 
-		async with session.get(base_url + str(i) + ext) as response:
-			async with aiofiles.open(filename, 'wb') as file:
-				try:
-					await file.write(await response.read())
-				except:
-					print('REMOVING EMPTY FILE')
-					os.remove(filename)
-					raise
+		url = base_url + str(i) + ext
+		await download_binary(session, url, filename)
 
 async def download(urls: list[str], data_folder: str):
 	async with aiohttp.ClientSession(headers=HEADERS) as session:

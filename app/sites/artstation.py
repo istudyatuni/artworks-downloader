@@ -1,10 +1,10 @@
 from collections import defaultdict, namedtuple
 from functools import reduce
 from urllib.parse import urlparse
-import aiofiles
 import aiohttp
 import os
 
+from app.utils.download import download_binary
 from app.utils.path import mkdir
 
 BASE_URL = 'https://www.artstation.com'
@@ -38,7 +38,7 @@ async def fetch_project(session: aiohttp.ClientSession, project):
 		return (await response.json())
 
 async def fetch_asset(session: aiohttp.ClientSession, asset, save_folder, project = None):
-	print_level_prefix = ' ' * 2
+	indent_str = '  '
 
 	if asset['has_image'] is False:
 		return
@@ -56,13 +56,10 @@ async def fetch_asset(session: aiohttp.ClientSession, asset, save_folder, projec
 	filename = os.path.join(save_folder, name)
 
 	if os.path.exists(filename):
-		return print(print_level_prefix + 'Skip existing:', name)
+		return print(indent_str + 'Skip existing:', name)
 
-	async with session.get(asset['image_url']) as response:
-		if response.ok:
-			async with aiofiles.open(filename, 'wb') as file:
-				await file.write(await response.read())
-			print(print_level_prefix + 'Download:', name)
+	await download_binary(session, asset['image_url'], filename)
+	print(indent_str + 'Download:', name)
 
 async def download(urls: list[str], data_folder: str):
 	# { '<artist>': [Project(1), ...] }
