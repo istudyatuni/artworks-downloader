@@ -31,9 +31,20 @@ def parse_link(url: str):
 
 async def fetch_info(session: aiohttp.ClientSession, album_id: str) -> Any:
 	async with session.get(API_ALBUM_URL.format(id=album_id)) as response:
-		if response.ok:
-			return await response.json()
 		response.raise_for_status()
+		info = await response.json()
+	return {
+		'id': info['id'],
+		'title': info['title'],
+		'media': list({
+			'id': image['id'],
+			'url': image['url'],
+			'ext': image['ext'],
+			'metadata': {
+				'title': image['metadata']['title']
+			}
+		} for image in info['media'])
+	}
 
 async def download_art(
 	session: aiohttp.ClientSession,
@@ -69,17 +80,7 @@ async def download(urls: list[str], data_folder: str):
 
 			if cached is None:
 				info = await fetch_info(session, parsed.id)
-				cache_info = {
-					'id': info['id'],
-					'title': info['title'],
-					'media': list({
-						'id': image['id'],
-						'url': image['url'],
-						'ext': image['ext'],
-						'metadata': { 'title': image['metadata']['title'] }
-					} for image in info['media'])
-				}
-				cache.insert(SLUG, parsed.id, cache_info, as_json=True)
+				cache.insert(SLUG, parsed.id, info, as_json=True)
 			else:
 				info = cached
 

@@ -41,7 +41,23 @@ def parse_link(url: str) -> Parsed:
 async def fetch_data(session: aiohttp.ClientSession, url: str) -> Any:
 	async with session.get(url) as response:
 		response.raise_for_status()
-		return (await response.json())[0]['data']['children'][0]['data']
+		data = (await response.json())[0]['data']['children'][0]['data']
+
+	media_metadata = data.get('media_metadata')
+	data = {
+		'domain': data['domain'],
+		'is_gallery': data.get('is_gallery', False),
+		'is_video': data['is_video'],
+		'subreddit': data['subreddit'],
+		'title': data['title'],
+		'url': data['url'],
+	}
+	if data['is_gallery'] is True:
+		data['media_metadata'] = {
+			media_id: { 'm': info['m'] }
+			for media_id, info in media_metadata.items()
+		}
+	return data
 
 async def download_art(
 	session: aiohttp.ClientSession,
@@ -79,21 +95,6 @@ async def download(urls: list[str], data_folder: str):
 
 			if cached is None:
 				data = await fetch_data(session, JSON_URI.format(id=parsed.id))
-				media_metadata = data.get('media_metadata')
-				data = {
-					'domain': data['domain'],
-					'is_gallery': data.get('is_gallery', False),
-					'is_video': data['is_video'],
-					'subreddit': data['subreddit'],
-					'title': data['title'],
-					'url': data['url'],
-				}
-				if data['is_gallery'] is True:
-					data['media_metadata'] = {
-						media_id: { 'm': info['m'] }
-						for media_id, info in media_metadata.items()
-					}
-
 				cache.insert(SLUG, parsed.id + DATA_CACHE_POSTFIX, data, as_json=True)
 			else:
 				data = cache.select(SLUG, parsed.id + DATA_CACHE_POSTFIX, as_json=True)
