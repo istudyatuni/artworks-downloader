@@ -34,7 +34,7 @@ def parse_args():
 	return parser.parse_args()
 
 async def process_list(urls: list[str], folder: str):
-	if len(urls) == 1 and urls[0] == '':
+	if len(urls) == 0:
 		print('List is empty')
 		return
 
