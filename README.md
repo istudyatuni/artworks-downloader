@@ -4,6 +4,7 @@
 - deviantart.com [#usage](#deviantart)
 - imgur.com [#usage](#sites-with-simple-usage)
 - pixiv.net [#usage](#sites-with-simple-usage)
+  - zettai.moe
 - reddit.com [#usage](#sites-with-simple-usage)
 - wallhaven.cc [#usage](#sites-with-simple-usage) [#notes](#wallhaven)
 
@@ -102,6 +103,9 @@ python main.py --action wallhaven:key
   - `https://imgur.com/t/<tag>/<id>`
 - **pixiv.net**
   - `https://www.pixiv.net/<lang>/artworks/<id>`
+
+  - Other sites with the same content as pixiv:
+    - `https://zettai.moe/detail?id=<id>`
 - **reddit.com**
   - `https://redd.it/<id>`
   - `https://www.reddit.com/comments/<id>`

@@ -16,6 +16,7 @@ SLUGS = {
 	'www.deviantart.com': 'deviantart',
 	'www.pixiv.net': 'pixiv',
 	'www.reddit.com': 'reddit',
+	'zettai.moe': 'pixiv',
 }
 
 def detect_site(url: str) -> str | None:
