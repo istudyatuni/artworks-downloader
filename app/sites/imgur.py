@@ -5,7 +5,7 @@ import aiofiles
 import aiohttp
 import os.path
 
-from app.utils import filename_normalize, mkdir
+from app.utils.path import filename_normalize, mkdir
 import app.cache as cache
 
 # client_id just from devtools

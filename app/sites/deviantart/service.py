@@ -12,7 +12,7 @@ from .common import (
 )
 import app.cache as cache
 from app.creds import get_creds, save_creds
-from app.utils import print_inline
+from app.utils.print import print_inline
 
 API_URL = '/api/v1/oauth2'
 # start from 32 instead of 1 to skip small timeouts because

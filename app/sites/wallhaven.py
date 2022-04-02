@@ -9,7 +9,7 @@ import asyncio
 import os
 
 from app.creds import get_creds
-from app.utils import filename_normalize, filename_shortening, mkdir
+from app.utils.path import filename_normalize, filename_shortening, mkdir
 import app.cache as cache
 
 SLUG = 'wallhaven'

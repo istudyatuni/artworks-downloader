@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import app.cache as cache
 from app.sites.deviantart.common import SLUG, make_cache_key
 from .service import DAService
-from app.utils import mkdir
+from app.utils.path import mkdir
 
 def parse_link(url: str) -> dict[str, str]:
 	parsed = urlparse(url)

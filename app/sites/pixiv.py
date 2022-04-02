@@ -6,7 +6,8 @@ import aiohttp
 import json
 import os
 
-from app.utils import filename_normalize, filename_unhide, mkdir, print_inline
+from app.utils.path import filename_normalize, filename_unhide, mkdir
+from app.utils.print import print_inline
 import app.cache as cache
 
 SLUG = 'pixiv'
