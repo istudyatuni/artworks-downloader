@@ -110,6 +110,10 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 			if len(existing) == 1:
 				print('Skip existing:', parsed.id)
 				continue
+			elif len(existing) > 1:
+				print('Duplicated files for art', parsed.id)
+				continue
+
 			if url in retry_with_key:
 				print('Duplicate link:', url)
 				continue
