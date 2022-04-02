@@ -6,6 +6,7 @@ import os
 
 from app.utils.download import download_binary
 from app.utils.path import mkdir
+from app.utils.print import print_inline_end
 
 BASE_URL = 'https://www.artstation.com'
 USER_PROJECTS_URL = '/users/{user}/projects.json'
@@ -58,8 +59,9 @@ async def fetch_asset(session: aiohttp.ClientSession, asset, save_folder, projec
 	if os.path.exists(filename):
 		return print(indent_str + 'Skip existing:', name)
 
+	print_inline_end(indent_str + 'Download:', name)
 	await download_binary(session, asset['image_url'], filename)
-	print(indent_str + 'Download:', name)
+	print('OK')
 
 async def download(urls: list[str], data_folder: str):
 	# { '<artist>': [Project(1), ...] }

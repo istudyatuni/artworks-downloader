@@ -6,6 +6,7 @@ import os.path
 
 from app.utils.download import download_binary
 from app.utils.path import filename_normalize, mkdir
+from app.utils.print import print_inline_end
 import app.cache as cache
 
 # client_id just from devtools
@@ -58,8 +59,9 @@ async def download_art(
 	if os.path.exists(filename):
 		return print(indent_str + 'Skip existing:', name)
 
+	print_inline_end(indent_str + 'Download', name)
 	await download_binary(session, url, filename)
-	print(indent_str + 'Download', name)
+	print('OK')
 
 async def download(urls: list[str], data_folder: str):
 	sep = ' - '

@@ -10,6 +10,7 @@ import os
 from app.creds import get_creds
 from app.utils.download import download_binary
 from app.utils.path import filename_normalize, filename_shortening, mkdir
+from app.utils.print import print_inline_end
 import app.cache as cache
 
 SLUG = 'wallhaven'
@@ -66,10 +67,6 @@ async def fetch_data(
 				'tags': list(t['name'] for t in data['tags'])
 			}
 			return data, FetchDataAction.download
-
-async def fetch_image(session: aiohttp.ClientSession, url: str, name: str, folder: str):
-	await download_binary(session, url, os.path.join(folder, name))
-	print('OK')
 
 async def download(urls: list[str], data_folder: str, with_key = False):
 	mkdir(data_folder)
@@ -129,13 +126,16 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 			else:
 				data = cached
 
-			print('Download', data['id'], '', end='', flush=True)
+			print_inline_end('Download', data['id'])
 
 			full_url = data['path']
 			name = data['id'] + ' - ' + ', '.join(data['tags'])
 			name = filename_normalize(name) + os.path.splitext(full_url)[1]
 			name = filename_shortening(name, with_ext=True)
-			await fetch_image(session, full_url, name, data_folder)
+			filename = os.path.join(data_folder, name)
+
+			await download_binary(session, url, filename)
+			print('OK')
 
 	if len(retry_with_key) > 0:
 		return await download(retry_with_key, data_folder, True)

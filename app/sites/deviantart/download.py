@@ -9,6 +9,7 @@ from .service import DAService
 from app.sites.deviantart.common import SLUG, make_cache_key
 from app.utils.download import download_binary
 from app.utils.path import mkdir
+from app.utils.print import print_inline_end
 import app.cache as cache
 
 def parse_link(url: str) -> dict[str, str]:
@@ -48,8 +49,9 @@ async def save_from_url(session: aiohttp.ClientSession, url: str, folder: str, n
 	if os.path.exists(filename):
 		return print(indent_str + 'Skip existing:', name)
 
+	print_inline_end(indent_str + 'Download:', name)
 	await download_binary(session, url, filename)
-	print(indent_str + 'Download:', name)
+	print('OK')
 
 async def save_art(
 	service: DAService,

@@ -7,7 +7,7 @@ import os
 
 from app.utils.download import download_binary
 from app.utils.path import filename_normalize, filename_unhide, mkdir
-from app.utils.print import print_inline
+from app.utils.print import print_inline_end
 import app.cache as cache
 
 SLUG = 'pixiv'
@@ -52,23 +52,25 @@ async def fetch_info(session: aiohttp.ClientSession, parsed: Parsed):
 	}
 
 async def download_art(session: aiohttp.ClientSession, info: dict, save_folder: str):
+	indent_str = '  '
+
 	# https://i.pximg.net/img-original/img/.../xxx_p0.png
 	base_url, ext = os.path.splitext(info['first_url'])
 	base_url = base_url[:-1]
 
 	name = info['title'] + ext
-	print(' ', 'Download:', name)
 	for i in range(info['count']):
 		name = info['title'] + f'_p{i}' + ext
-		print_inline(' ', i + 1)
 
 		filename = os.path.join(save_folder, name)
 		if os.path.exists(filename):
-			print(' ', 'Skip existing:', filename)
+			print(indent_str + 'Skip existing:', filename)
 			continue
 
+		print_inline_end(indent_str + 'Download:', name, '/', i + 1)
 		url = base_url + str(i) + ext
 		await download_binary(session, url, filename)
+		print('OK')
 
 async def download(urls: list[str], data_folder: str):
 	async with aiohttp.ClientSession(headers=HEADERS) as session:

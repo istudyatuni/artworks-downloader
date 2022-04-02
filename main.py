@@ -46,13 +46,16 @@ async def process_list(urls: list[str], folder: str):
 			continue
 
 		mapping[site_slug].append(u)
+
+	print('Saving to', folder, '\n')
 	for slug, l in mapping.items():
 		if len(l) == 0:
 			continue
 
 		save_folder = os.path.join(folder, slug)
-		print('Saving to', save_folder)
+		print(slug.title(), '\n')
 		await download(slug)(l, save_folder)
+		print()
 
 def prepare() -> Optional[Tuple[list[str], str]]:
 	args = parse_args()
