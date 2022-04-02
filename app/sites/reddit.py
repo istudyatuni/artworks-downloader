@@ -53,8 +53,9 @@ async def fetch_data(session: aiohttp.ClientSession, url: str) -> Any:
 		'url': data['url'],
 	}
 	if data['is_gallery'] is True:
-		data['media_metadata'] = {
-			media_id: { 'm': info['m'] }
+		data['media_ext'] = {
+			# info['m'] is mime type
+			media_id: info['m'].split('/')[1]
 			for media_id, info in media_metadata.items()
 		}
 	return data
@@ -112,9 +113,8 @@ async def download(urls: list[str], data_folder: str):
 				mkdir(folder)
 				print(title)
 
-				for media_id, info in data['media_metadata'].items():
-					# info['m'] is mime type
-					url_filename = media_id + '.' + info['m'].split('/')[1]
+				for media_id, ext in data['media_ext'].items():
+					url_filename = media_id + '.' + ext
 					await download_art(
 						session,
 						IMAGE_URI + url_filename,
