@@ -104,7 +104,7 @@ async def download(urls: list[str], data_folder: str):
 
 			domain = data['domain']
 			if domain not in REDDIT_DOMAINS:
-				print('Media is from', domain, url)
+				print('Media is from', domain, url + ':', data['url'])
 				if domain == 'imgur.com':
 					can_retry_other_site.append(data['url'])
 				continue
