@@ -1,3 +1,4 @@
+from collections import namedtuple
 from enum import Enum
 from glob import glob
 from typing import Any, Tuple
@@ -9,6 +10,7 @@ import os
 
 from app.creds import get_creds
 from app.utils import filename_normalize, filename_shortening, mkdir
+import app.cache as cache
 
 SLUG = 'wallhaven'
 
@@ -19,6 +21,8 @@ class FetchDataAction(Enum):
 	retry_with_key = 1
 	skip = 2
 
+Parsed = namedtuple('Parsed', ['id'])
+
 def parse_link(url: str):
 	parsed = urlparse(url)
 	path = parsed.path.lstrip('/').split('/')
@@ -27,7 +31,7 @@ def parse_link(url: str):
 		# strip 'w'
 		path.pop(0)
 
-	return { 'id': path[0] }
+	return Parsed(path[0])
 
 async def fetch_data(
 	session: aiohttp.ClientSession,
@@ -55,7 +59,13 @@ async def fetch_data(
 				print('api_key not present, NSFW', img_id, '- skipping')
 				return None, FetchDataAction.skip
 
-			return (await response.json())['data'], FetchDataAction.download
+			data = (await response.json())['data']
+			data = {
+				'id': data['id'],
+				'path': data['path'],
+				'tags': list(t['name'] for t in data['tags'])
+			}
+			return data, FetchDataAction.download
 
 async def fetch_image(session: aiohttp.ClientSession, url: str, name: str, folder: str):
 	filename = os.path.join(folder, name)
@@ -88,7 +98,7 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 			print('Downloading with api_key')
 			params = { 'apikey': creds[SLUG]['api_key'] }
 		else:
-			print('Please add api_key')
+			print('You should add api_key')
 			return
 	else:
 		params = {}
@@ -96,35 +106,38 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 	async with aiohttp.ClientSession() as session:
 		for url in urls:
 			parsed = parse_link(url)
-			existing = glob(f'{data_folder}/{parsed["id"]} - *.*')
+			existing = glob(f'{data_folder}/{parsed.id} - *.*')
 			if len(existing) == 1:
-				print('Skip existing:', parsed['id'])
+				print('Skip existing:', parsed.id)
 				continue
 			if url in retry_with_key:
 				print('Duplicate link:', url)
 				continue
 
-			data, action = await fetch_data(
-				session,
-				parsed['id'],
-				params,
-				with_key,
-				has_api_key
-			)
+			cached = cache.select(SLUG, parsed.id, as_json=True)
 
-			if action == FetchDataAction.retry_with_key:
-				retry_with_key.append(url)
-			if action != FetchDataAction.download:
-				continue
+			if cached is None:
+				data, action = await fetch_data(
+					session,
+					parsed.id,
+					params,
+					with_key,
+					has_api_key
+				)
+
+				if action == FetchDataAction.retry_with_key:
+					retry_with_key.append(url)
+				if action != FetchDataAction.download:
+					continue
+
+				cache.insert(SLUG, parsed.id, data, as_json=True)
+			else:
+				data = cached
 
 			print('Download', data['id'], '', end='', flush=True)
 
 			full_url = data['path']
-			name = (
-				data['id']
-				+ ' - '
-				+ ', '.join(map(lambda tag: tag['name'], data['tags']))
-			)
+			name = data['id'] + ' - ' + ', '.join(data['tags'])
 			name = filename_normalize(name) + os.path.splitext(full_url)[1]
 			name = filename_shortening(name, with_ext=True)
 			await fetch_image(session, full_url, name, data_folder)
