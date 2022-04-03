@@ -41,9 +41,7 @@ async def fetch_info(session: aiohttp.ClientSession, album_id: str) -> Any:
 			'id': image['id'],
 			'url': image['url'],
 			'ext': image['ext'],
-			'metadata': {
-				'title': image['metadata']['title']
-			}
+			'title': image['metadata']['title']
 		} for image in info['media'])
 	}
 
@@ -98,7 +96,7 @@ async def download(urls: list[str], data_folder: str):
 			for image in media:
 				title = (
 					sep
-					.join([title, image['metadata']['title'], image['id']])
+					.join([title, image['title'], image['id']])
 					.strip(sep)
 					.replace(sep * 2, sep)
 				)
