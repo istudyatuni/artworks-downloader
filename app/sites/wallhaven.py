@@ -1,11 +1,11 @@
+from aiohttp import ClientSession
+from asyncio import sleep
 from collections import namedtuple
 from enum import Enum
 from glob import glob
 from typing import Any, Tuple
 from urllib.parse import urlparse
-import aiohttp
-import asyncio
-import os
+import os.path
 
 from app.creds import get_creds
 from app.utils.download import download_binary
@@ -35,7 +35,7 @@ def parse_link(url: str):
 	return Parsed(path[0])
 
 async def fetch_data(
-	session: aiohttp.ClientSession,
+	session: ClientSession,
 	img_id: str,
 	params: dict,
 	with_key: bool,
@@ -46,7 +46,7 @@ async def fetch_data(
 		async with session.get(API_URL + img_id, params=params) as response:
 			if response.status == 429:
 				print('To many requests, sleeping for 10 seconds')
-				await asyncio.sleep(10)
+				await sleep(10)
 				continue
 			elif response.status == 401:
 				if with_key:
@@ -91,7 +91,7 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 	else:
 		params = {}
 
-	async with aiohttp.ClientSession() as session:
+	async with ClientSession() as session:
 		for url in urls:
 			parsed = parse_link(url)
 			existing = glob(f'{data_folder}/{parsed.id} - *.*')

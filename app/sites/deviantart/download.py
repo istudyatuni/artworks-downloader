@@ -1,9 +1,9 @@
+from aiohttp import ClientSession
 from collections import defaultdict
 from glob import glob
 from typing import Any
 from urllib.parse import urlparse
-import aiohttp
-import os
+import os.path
 
 from .service import DAService
 from app.sites.deviantart.common import SLUG, make_cache_key
@@ -41,7 +41,7 @@ def parse_link(url: str) -> dict[str, str]:
 
 # download images
 
-async def save_from_url(session: aiohttp.ClientSession, url: str, folder: str, name: str):
+async def save_from_url(session: ClientSession, url: str, folder: str, name: str):
 	indent_str = '  '
 
 	ext = os.path.splitext(urlparse(url).path)[1]
@@ -55,7 +55,7 @@ async def save_from_url(session: aiohttp.ClientSession, url: str, folder: str, n
 
 async def save_art(
 	service: DAService,
-	session: aiohttp.ClientSession,
+	session: ClientSession,
 	art: Any,
 	folder: str
 ):
@@ -84,13 +84,13 @@ async def download_folder_by_id(
 	folder: str
 ):
 	# this session for downloading images
-	async with aiohttp.ClientSession() as session:
+	async with ClientSession() as session:
 		async for art in service.list_folder_arts(artist, folder):
 			await save_art(service, session, art, save_folder)
 
 async def download_art_by_id(service: DAService, deviationid: str, folder: str):
 	art = await service.get_art_info(deviationid)
-	async with aiohttp.ClientSession() as session:
+	async with ClientSession() as session:
 		await save_art(service, session, art, folder)
 
 # helpers
@@ -157,7 +157,7 @@ async def download(urls: list[str], data_folder: str):
 				await download_folder_by_id(service, save_folder, artist, folder['id'])
 
 	# save single arts
-	async with aiohttp.ClientSession() as session:
+	async with ClientSession() as session:
 		for artist, art_list in mapping_art.items():
 			all_urls = set(map(lambda a: a['url'], art_list))
 

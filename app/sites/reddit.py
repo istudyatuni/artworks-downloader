@@ -1,7 +1,7 @@
+from aiohttp import ClientSession
 from collections import namedtuple
 from typing import Any
 from urllib.parse import urlparse
-import aiohttp
 import os.path
 
 from app.utils.download import download_binary
@@ -39,7 +39,7 @@ def parse_link(url: str) -> Parsed:
 
 	return Parsed(id=None)
 
-async def fetch_data(session: aiohttp.ClientSession, url: str) -> Any:
+async def fetch_data(session: ClientSession, url: str) -> Any:
 	async with session.get(url) as response:
 		response.raise_for_status()
 		data = (await response.json())[0]['data']['children'][0]['data']
@@ -62,7 +62,7 @@ async def fetch_data(session: aiohttp.ClientSession, url: str) -> Any:
 	return data
 
 async def download_art(
-	session: aiohttp.ClientSession,
+	session: ClientSession,
 	url: str,
 	folder: str,
 	name: str,
@@ -82,7 +82,7 @@ async def download(urls: list[str], data_folder: str):
 
 	can_retry_other_site = []
 
-	async with aiohttp.ClientSession() as session:
+	async with ClientSession() as session:
 		for url in urls:
 			parsed = parse_link(url)
 

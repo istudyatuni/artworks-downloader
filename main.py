@@ -1,8 +1,8 @@
-import argparse
-import asyncio
-import os
+from argparse import ArgumentParser
+from asyncio import run as asyncio_run
 from typing import Optional, Tuple
 from urllib.parse import urlparse
+import os.path
 
 from app.creds import save_creds
 from app.sites import download, register
@@ -23,7 +23,7 @@ def detect_site(url: str) -> str | None:
 	return SLUGS.get(urlparse(url).netloc)
 
 def parse_args():
-	parser = argparse.ArgumentParser(description='Artworks downloader')
+	parser = ArgumentParser(description='Artworks downloader')
 
 	parser.add_argument('-u', '--url', type=str, help='URL to download')
 	parser.add_argument('-l', '--list', type=str, help='File with list of URLs to download', default=None)
@@ -93,7 +93,7 @@ def main():
 	if (result := prepare()) is None:
 		quit(0)
 
-	asyncio.run(process_list(*result))
+	asyncio_run(process_list(*result))
 
 if __name__ == '__main__':
 	try:

@@ -1,13 +1,13 @@
-import json
-import os
+from json import dump, load
+from os.path import exists
 from typing import Any
 
 CRED_FILE = 'credentials.json'
 
 def get_creds():
-	if os.path.exists(CRED_FILE):
+	if exists(CRED_FILE):
 		with open(CRED_FILE) as file:
-			return json.load(file)
+			return load(file)
 	return None
 
 def save_creds(obj: dict[str, Any]):
@@ -17,4 +17,4 @@ def save_creds(obj: dict[str, Any]):
 		data = {**obj}
 
 	with open(CRED_FILE, 'w') as file:
-		json.dump(data, file)
+		dump(data, file)

@@ -1,8 +1,8 @@
+from aiohttp import ClientSession
 from collections import defaultdict, namedtuple
 from functools import reduce
 from urllib.parse import urlparse
-import aiohttp
-import os
+import os.path
 
 from app.utils.download import download_binary
 from app.utils.path import mkdir
@@ -24,11 +24,11 @@ def parse_link(url: str):
 	# https://www.artstation.com/<artist>
 	return { 'type': 'all', 'artist': parsed.path.lstrip('/') }
 
-async def list_projects(session: aiohttp.ClientSession, user: str):
+async def list_projects(session: ClientSession, user: str):
 	async with session.get(USER_PROJECTS_URL.format(user=user)) as response:
 		return (await response.json())['data']
 
-async def fetch_project(session: aiohttp.ClientSession, project):
+async def fetch_project(session: ClientSession, project):
 	if isinstance(project, str):
 		project_hash = project
 	else:
@@ -38,7 +38,7 @@ async def fetch_project(session: aiohttp.ClientSession, project):
 		print('Add to queue: artwork', project_hash)
 		return (await response.json())
 
-async def fetch_asset(session: aiohttp.ClientSession, asset, save_folder, project = None):
+async def fetch_asset(session: ClientSession, asset, save_folder, project = None):
 	indent_str = '  '
 
 	if asset['has_image'] is False:
@@ -70,7 +70,7 @@ async def download(urls: list[str], data_folder: str):
 	for url in urls:
 		parsed = parse_link(url)
 
-		async with aiohttp.ClientSession(BASE_URL) as session:
+		async with ClientSession(BASE_URL) as session:
 			if parsed['type'] == 'all':
 				artist = parsed['artist']
 
@@ -101,7 +101,7 @@ async def download(urls: list[str], data_folder: str):
 	)
 
 	# download assets
-	async with aiohttp.ClientSession() as session:
+	async with ClientSession() as session:
 		for artist, projects_list in projects.items():
 			print('\nArtist', artist)
 			for project in projects_list:

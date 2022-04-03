@@ -1,5 +1,5 @@
-import asyncio
-import aiohttp
+from aiohttp import ClientSession
+from asyncio import sleep
 from copy import deepcopy
 from typing import Any, AsyncGenerator
 
@@ -59,7 +59,7 @@ class DAService():
 		if self.refresh_token is None:
 			return await self._fetch_access_token()
 
-		async with aiohttp.ClientSession(BASE_URL) as session:
+		async with ClientSession(BASE_URL) as session:
 			async with session.post('/api/v1/oauth2/placebo', params={
 				'access_token': self.access_token
 			}) as response:
@@ -98,7 +98,7 @@ class DAService():
 			'client_secret': self.client_secret,
 			**add_params,
 		}
-		async with aiohttp.ClientSession(BASE_URL) as session:
+		async with ClientSession(BASE_URL) as session:
 			async with session.post('/oauth2/token', params=params) as response:
 				data = await response.json()
 				if 'error' in data:
@@ -113,7 +113,7 @@ class DAService():
 
 	async def _pager(
 		self,
-		session: aiohttp.ClientSession,
+		session: ClientSession,
 		method: str,
 		url: str,
 		**kwargs
@@ -147,7 +147,7 @@ class DAService():
 						await self._ensure_access()
 
 					print_inline('Retrying in', rate_limit_sec, 'sec')
-					await asyncio.sleep(rate_limit_sec)
+					await sleep(rate_limit_sec)
 
 					rate_limit_sec *= 2
 					continue
@@ -175,7 +175,7 @@ class DAService():
 
 		params = { 'username': username }
 		url = f'{API_URL}/gallery/folders'
-		async with aiohttp.ClientSession(BASE_URL, headers=self._headers) as session:
+		async with ClientSession(BASE_URL, headers=self._headers) as session:
 			async for folder in self._pager(session, 'GET', url, params=params):
 				name = folder['name']
 				# i don't know what is this, so just tell about
@@ -192,7 +192,7 @@ class DAService():
 
 		params = { 'username': username }
 		url = f'{API_URL}/gallery/{folder}'
-		async with aiohttp.ClientSession(BASE_URL, headers=self._headers) as session:
+		async with ClientSession(BASE_URL, headers=self._headers) as session:
 			async for art in self._pager(session, 'GET', url, params=params):
 				if art is not None:
 					cache.insert(
@@ -206,7 +206,7 @@ class DAService():
 		await self._ensure_access()
 
 		url = f'{API_URL}/deviation/download/{deviationid}'
-		async with aiohttp.ClientSession(BASE_URL, headers=self._headers) as session:
+		async with ClientSession(BASE_URL, headers=self._headers) as session:
 			async with session.get(url) as response:
 				data = await response.json()
 				if 'error' in data:
@@ -218,11 +218,11 @@ class DAService():
 		await self._ensure_access()
 
 		url = f'{API_URL}/deviation/{deviationid}'
-		async with aiohttp.ClientSession(BASE_URL, headers=self._headers) as session:
+		async with ClientSession(BASE_URL, headers=self._headers) as session:
 			async with session.get(url) as response:
 				if response.status == 429:
 					print_inline('Rate limit reached, spleeping for', _rate_limit_sec, 'seconds')
-					await asyncio.sleep(_rate_limit_sec)
+					await sleep(_rate_limit_sec)
 					return await self.get_art_info(deviationid, _rate_limit_sec * 2)
 				elif _rate_limit_sec > DEFAULT_RATE_LIMIT_TIMEOUT:
 					print()

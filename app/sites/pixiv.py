@@ -1,9 +1,9 @@
+from aiohttp import ClientSession, ServerDisconnectedError
+from asyncio import sleep
 from collections import namedtuple
 from urllib.parse import parse_qs, urlparse
-import aiohttp
-import asyncio
 import json
-import os
+import os.path
 
 from app.utils.download import download_binary
 from app.utils.path import filename_normalize, filename_unhide, mkdir
@@ -33,7 +33,7 @@ def parse_link(url: str):
 
 	return Parsed(None)
 
-async def fetch_info(session: aiohttp.ClientSession, parsed: Parsed):
+async def fetch_info(session: ClientSession, parsed: Parsed):
 	url = URL + parsed.id
 	print('Fetching data for', url)
 	async with session.get(url) as response:
@@ -56,7 +56,7 @@ async def fetch_info(session: aiohttp.ClientSession, parsed: Parsed):
 		'title': filename_normalize(art['title']),
 	}
 
-async def download_art(session: aiohttp.ClientSession, info: dict, save_folder: str):
+async def download_art(session: ClientSession, info: dict, save_folder: str):
 	indent_str = '  '
 
 	# https://i.pximg.net/img-original/img/.../xxx_p0.png
@@ -78,7 +78,7 @@ async def download_art(session: aiohttp.ClientSession, info: dict, save_folder: 
 		print('OK')
 
 async def download(urls: list[str], data_folder: str):
-	async with aiohttp.ClientSession(headers=HEADERS) as session:
+	async with ClientSession(headers=HEADERS) as session:
 		for url in urls:
 			parsed = parse_link(url)
 			if parsed.id is None:
@@ -101,6 +101,6 @@ async def download(urls: list[str], data_folder: str):
 				try:
 					await download_art(session, info, save_folder)
 					break
-				except aiohttp.ServerDisconnectedError:
+				except ServerDisconnectedError:
 					print('Error, retrying in 5 seconds')
-					await asyncio.sleep(5)
+					await sleep(5)

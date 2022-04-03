@@ -1,5 +1,5 @@
+from json import dumps, loads
 from typing import Any
-import json
 import sqlite3 as sl
 
 CACHE_DB = '.cache.db'
@@ -29,7 +29,7 @@ def insert(slug: str, key: str, value: str | Any, as_json=False):
 
 	cursor.execute(INSERT_QUERY, {
 		'key': _key(slug, key),
-		'value': json.dumps(value) if as_json else value
+		'value': dumps(value) if as_json else value
 	})
 	conn.commit()
 
@@ -38,7 +38,7 @@ def select(slug: str, key: str, as_json=False):
 	if res is None:
 		return res
 	value = res['value']
-	return json.loads(value) if as_json else value
+	return loads(value) if as_json else value
 
 def delete(slug: str, key: str):
 	cursor.execute(DELETE_QUERY, (_key(slug, key),))

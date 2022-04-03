@@ -1,7 +1,7 @@
+from aiohttp import ClientSession
 from collections import namedtuple
 from typing import Any
 from urllib.parse import urlparse
-import aiohttp
 import os.path
 
 from app.utils.download import download_binary
@@ -30,7 +30,7 @@ def parse_link(url: str):
 
 	return Parsed(None)
 
-async def fetch_info(session: aiohttp.ClientSession, album_id: str) -> Any:
+async def fetch_info(session: ClientSession, album_id: str) -> Any:
 	async with session.get(API_ALBUM_URL.format(id=album_id)) as response:
 		response.raise_for_status()
 		info = await response.json()
@@ -46,7 +46,7 @@ async def fetch_info(session: aiohttp.ClientSession, album_id: str) -> Any:
 	}
 
 async def download_art(
-	session: aiohttp.ClientSession,
+	session: ClientSession,
 	url: str,
 	save_folder: str,
 	name: str,
@@ -64,7 +64,7 @@ async def download_art(
 async def download(urls: list[str], data_folder: str):
 	sep = ' - '
 
-	async with aiohttp.ClientSession() as session:
+	async with ClientSession() as session:
 		for url in urls:
 			parsed = parse_link(url)
 
