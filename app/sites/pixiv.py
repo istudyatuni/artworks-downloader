@@ -21,11 +21,16 @@ Parsed = namedtuple('Parsed', ['id'])
 def parse_link(url: str):
 	parsed = urlparse(url)
 	path = parsed.path.lstrip('/').split('/')
+
 	if parsed.netloc == 'zettai.moe':
+		# https://zettai.moe/detail?id=<id>
 		query = parse_qs(parsed.query)
 		return Parsed(query['id'][0])
+
 	if path[1] == 'artworks':
+		# https://www.pixiv.net/<lang>/artworks/<id>
 		return Parsed(path[2])
+
 	return Parsed(None)
 
 async def fetch_info(session: aiohttp.ClientSession, parsed: Parsed):

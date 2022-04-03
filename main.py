@@ -59,7 +59,7 @@ async def process_list(urls: list[str], folder: str):
 
 def prepare() -> Optional[Tuple[list[str], str]]:
 	args = parse_args()
-	# put to list for hanling single url as list when download
+	# put to list for handling single url as list when download
 	to_dl = [args.url]
 	urls_file = args.list
 	folder = os.path.abspath(args.folder)
