@@ -3,7 +3,8 @@
 	[
 		{
 			"path": ".",
-			"folder_exclude_patterns": ["__pycache__"]
+			"folder_exclude_patterns": ["__pycache__"],
+			"index_exclude_patterns": ["data"]
 		}
 	]
 }

@@ -10,3 +10,6 @@ credentials.json
 /art_dl.build
 /art_dl.bin
 /art_dl.exe
+
+# rust
+/target
