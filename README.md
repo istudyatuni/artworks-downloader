@@ -74,6 +74,16 @@ After that you can use it just like
 python main.py -u [URL here]
 ```
 
+### Proxy
+
+Copy `config.sample.json` to `config.json` and fill "proxy":
+
+```json
+{
+  "proxy": "proxy-url"
+}
+```
+
 ## Notes
 
 ### Wallhaven

@@ -1,4 +1,4 @@
-from aiohttp import ClientSession
+# from aiohttp import ClientSession
 from collections import defaultdict
 from glob import glob
 from typing import Any
@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 import os.path
 
 from .service import DAService
+from app.proxy import ClientSession, ProxyClientSession
 from app.sites.deviantart.common import SLUG, make_cache_key
 from app.utils.download import download_binary
 from app.utils.path import mkdir
@@ -84,13 +85,13 @@ async def download_folder_by_id(
 	folder: str
 ):
 	# this session for downloading images
-	async with ClientSession() as session:
+	async with ProxyClientSession() as session:
 		async for art in service.list_folder_arts(artist, folder):
 			await save_art(service, session, art, save_folder)
 
 async def download_art_by_id(service: DAService, deviationid: str, folder: str):
 	art = await service.get_art_info(deviationid)
-	async with ClientSession() as session:
+	async with ProxyClientSession() as session:
 		await save_art(service, session, art, folder)
 
 # helpers
@@ -157,7 +158,7 @@ async def download(urls: list[str], data_folder: str):
 				await download_folder_by_id(service, save_folder, artist, folder['id'])
 
 	# save single arts
-	async with ClientSession() as session:
+	async with ProxyClientSession() as session:
 		for artist, art_list in mapping_art.items():
 			all_urls = set(map(lambda a: a['url'], art_list))
 

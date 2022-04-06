@@ -2,5 +2,6 @@
 /venv
 __pycache__
 .cache.db
+config.json
 credentials.json
 *.sublime-workspace

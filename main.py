@@ -8,8 +8,10 @@ from app.creds import save_creds
 from app.sites import download, register
 
 SLUGS = {
+	'danbooru.donmai.us': 'danbooru',
 	'imgur.com': 'imgur',
 	'redd.it': 'reddit',
+	'safebooru.donmai.us': 'danbooru',
 	'wallhaven.cc': 'wallhaven',
 	'whvn.cc': 'wallhaven',
 	'www.artstation.com': 'artstation',
