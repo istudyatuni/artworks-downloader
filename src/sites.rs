@@ -1,9 +1,11 @@
 #![allow(unused)]
 
+use std::collections::HashMap;
+
 use phf::phf_map;
 use url::Url;
 
-pub mod imgur;
+mod imgur;
 
 static SLUGS: phf::Map<&'static str, &'static str> = phf_map! {
     "imgur.com" => "imgur",
@@ -18,17 +20,24 @@ fn detect_site(url: &str) -> Option<&str> {
     None
 }
 
-pub fn process_urls(urls: Vec<&str>, save_folder: String) {
+pub fn process_urls(urls: Vec<&str>, save_folder: &str) {
+    let mut map = HashMap::new();
     for u in urls {
         match detect_site(u) {
-            Some(slug) => println!("{}", slug),
+            Some(slug) => {
+                let list = map.entry(slug).or_insert(vec![]);
+                (*list).push(u);
+            }
             None => println!("Unsupported URL: {u}"),
         }
     }
+    for (slug, urls) in map {
+        download(slug, urls, save_folder)
+    }
 }
 
-fn download(slug: String, urls: Vec<String>, save_folder: String) {
-    match slug.as_str() {
+fn download(slug: &str, urls: Vec<&str>, save_folder: &str) {
+    match slug {
         "imgur" => imgur::download(urls, save_folder),
         _ => (),
     }

@@ -3,7 +3,7 @@
 use rusqlite::Connection;
 use serde_json::Value;
 
-const CACHE_DB: &str = ".cache.db";
+const CACHE_DB: &str = ".art-dl-cache.db";
 
 const INIT_QUERY: &str = "CREATE TABLE IF NOT EXISTS cache (
     key TEXT NOT NULL PRIMARY KEY,
