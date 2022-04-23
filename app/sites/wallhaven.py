@@ -134,7 +134,7 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 			name = filename_shortening(name, with_ext=True)
 			filename = os.path.join(data_folder, name)
 
-			await download_binary(session, url, filename)
+			await download_binary(session, full_url, filename)
 			print('OK')
 
 	if len(retry_with_key) > 0:

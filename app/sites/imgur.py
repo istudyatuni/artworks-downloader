@@ -10,7 +10,7 @@ from app.utils.print import print_inline_end
 import app.cache as cache
 
 # client_id just from devtools
-API_ALBUM_URL = 'https://api.imgur.com/post/v1/albums/{id}?client_id=546c25a59c58ad7&include=media'
+API_ALBUM_URL = 'https://api.imgur.com/post/v1/media/{id}?client_id=546c25a59c58ad7&include=media'
 SLUG = 'imgur'
 
 Parsed = namedtuple('Parsed', ['id'])
@@ -27,6 +27,10 @@ def parse_link(url: str):
 	if path[0] == 't':
 		# https://imgur.com/t/<tag>/<id>
 		return Parsed(path[2])
+
+	if len(path) == 1:
+		# https://imgur.com/<id>
+		return Parsed(path[0])
 
 	return Parsed(None)
 

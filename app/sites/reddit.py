@@ -107,14 +107,18 @@ async def download(urls: list[str], data_folder: str):
 				print('Media is from', domain, url + ':', data['url'])
 				if domain == 'imgur.com':
 					can_retry_other_site.append(data['url'])
+				elif domain == 'i.imgur.com':
+					fixed_url, _ = os.path.splitext(data['url'].split('/')[-1])
+					can_retry_other_site.append('https://imgur.com/' + fixed_url)
 				continue
 
 			save_folder = os.path.join(data_folder, data['subreddit'])
 			title = sep.join([data['title'], parsed.id])
+			title = filename_normalize(title)
 			is_gallery: bool = data.get('is_gallery', False)
 
 			if is_gallery:
-				folder = os.path.join(save_folder, filename_normalize(title))
+				folder = os.path.join(save_folder, title)
 				mkdir(folder)
 				print(title)
 
