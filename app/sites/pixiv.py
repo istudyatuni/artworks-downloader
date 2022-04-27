@@ -56,16 +56,16 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 		'title': filename_normalize(art['title']),
 	}
 
-async def download_art(session: ClientSession, info: dict, save_folder: str):
+async def download_art(session: ClientSession, art_id: str, info: dict, save_folder: str):
 	indent_str = '  '
 
 	# https://i.pximg.net/img-original/img/.../xxx_p0.png
 	base_url, ext = os.path.splitext(info['first_url'])
 	base_url = base_url[:-1]
 
-	name = info['title'] + ext
+	name_prefix = art_id + ' - ' + info['title']
 	for i in range(info['count']):
-		name = info['title'] + f'_p{i}' + ext
+		name = name_prefix + f'_p{i}' + ext
 
 		filename = os.path.join(save_folder, name)
 		if os.path.exists(filename):
@@ -94,12 +94,12 @@ async def download(urls: list[str], data_folder: str):
 				print(url)
 				info = cached
 
-			save_folder = os.path.join(data_folder, info['artist'], info['id'])
+			save_folder = os.path.join(data_folder, info['artist'])
 			mkdir(save_folder)
 
 			while True:
 				try:
-					await download_art(session, info, save_folder)
+					await download_art(session, parsed.id, info, save_folder)
 					break
 				except ServerDisconnectedError:
 					print('Error, retrying in 5 seconds')
