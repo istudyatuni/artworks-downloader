@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from asyncio import run as asyncio_run
+from asyncio import get_event_loop
 from typing import Optional, Tuple
 from urllib.parse import urlparse
 import os.path
@@ -95,7 +95,8 @@ def main():
 	if (result := prepare()) is None:
 		quit(0)
 
-	asyncio_run(process_list(*result))
+	loop = get_event_loop()
+	loop.run_until_complete(process_list(*result))
 
 if __name__ == '__main__':
 	try:
