@@ -8,6 +8,7 @@ import os.path
 from app.utils.download import download_binary
 from app.utils.path import filename_normalize, filename_unhide, mkdir
 from app.utils.print import print_inline_end
+from app.utils.url import parse_range
 import app.cache as cache
 
 SLUG = 'pixiv'
@@ -16,22 +17,28 @@ HEADERS = {
 }
 URL = 'https://www.pixiv.net/en/artworks/'
 
-Parsed = namedtuple('Parsed', ['id'])
+Parsed = namedtuple('Parsed', ['id', 'range'], defaults=[None, None])
 
 def parse_link(url: str):
 	parsed = urlparse(url)
 	path = parsed.path.lstrip('/').split('/')
 
+	imgs_range = parse_range(parsed.fragment)
+	if imgs_range is not None:
+		# convert pixiv indexing, which starts from 1,
+		# to indexing like range() function, which starts from 0
+		imgs_range = list(map(lambda i: i - 1, imgs_range))
+
 	if parsed.netloc == 'zettai.moe':
 		# https://zettai.moe/detail?id=<id>
 		query = parse_qs(parsed.query)
-		return Parsed(query['id'][0])
+		return Parsed(query['id'][0], imgs_range)
 
 	if path[1] == 'artworks':
 		# https://www.pixiv.net/<lang>/artworks/<id>
-		return Parsed(path[2])
+		return Parsed(path[2], imgs_range)
 
-	return Parsed(None)
+	return Parsed()
 
 async def fetch_info(session: ClientSession, parsed: Parsed):
 	url = URL + parsed.id
@@ -56,15 +63,23 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 		'title': filename_normalize(art['title']),
 	}
 
-async def download_art(session: ClientSession, art_id: str, info: dict, save_folder: str):
+async def download_art(session: ClientSession, art_info: Parsed, info: dict, save_folder: str):
 	indent_str = '  '
 
 	# https://i.pximg.net/img-original/img/.../xxx_p0.png
 	base_url, ext = os.path.splitext(info['first_url'])
 	base_url = base_url[:-1]
 
-	name_prefix = art_id + ' - ' + info['title']
-	for i in range(info['count']):
+	total_imgs_count = info['count']
+	ind_range = art_info.range or range(total_imgs_count)
+
+	name_prefix = art_info.id + ' - ' + info['title']
+	for i in ind_range:
+		if i >= total_imgs_count:
+			# prevent range bigger than images count
+			# equal because all images indexes are in [0, 'count' - 1]
+			break
+
 		name = name_prefix + f'_p{i}' + ext
 
 		filename = os.path.join(save_folder, name)
@@ -99,7 +114,7 @@ async def download(urls: list[str], data_folder: str):
 
 			while True:
 				try:
-					await download_art(session, parsed.id, info, save_folder)
+					await download_art(session, parsed, info, save_folder)
 					break
 				except ServerDisconnectedError:
 					print('Error, retrying in 5 seconds')

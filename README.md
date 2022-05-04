@@ -3,7 +3,7 @@
 - artstation.com [#usage](#sites-with-simple-usage)
 - deviantart.com [#usage](#deviantart)
 - imgur.com [#usage](#sites-with-simple-usage)
-- pixiv.net [#usage](#sites-with-simple-usage)
+- pixiv.net [#usage](#sites-with-simple-usage) [#notes](#pixiv)
   - zettai.moe
 - reddit.com [#usage](#sites-with-simple-usage)
 - wallhaven.cc [#usage](#sites-with-simple-usage) [#notes](#wallhaven)
@@ -85,6 +85,10 @@ Copy `config.sample.json` to `config.json` and fill "proxy":
 ```
 
 ## Notes
+
+### Pixiv
+
+If the artwork has more one image, you can specify which images should be downloaded, for example, if the artwork has 10 images and you want to download 1, 3, 4, 5 and 7 image, you can add `#1,3-5,7` to the link for that: `https://www.pixiv.net/<lang>/artworks/<id>#1,3-5,7`.
 
 ### Wallhaven
 
