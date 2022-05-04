@@ -7,6 +7,7 @@ import os.path
 from app.utils.download import download_binary
 from app.utils.path import filename_normalize, mkdir
 from app.utils.print import print_inline_end
+from app.utils.retry import retry
 import app.cache as cache
 
 SLUG = 'reddit'
@@ -80,8 +81,6 @@ async def download_art(
 async def download(urls: list[str], data_folder: str):
 	sep = ' - '
 
-	can_retry_other_site = []
-
 	async with ClientSession() as session:
 		for url in urls:
 			parsed = parse_link(url)
@@ -106,10 +105,10 @@ async def download(urls: list[str], data_folder: str):
 			if domain not in REDDIT_DOMAINS:
 				print('Media is from', domain, url + ':', data['url'])
 				if domain == 'imgur.com':
-					can_retry_other_site.append(data['url'])
+					retry.add(data['url'])
 				elif domain == 'i.imgur.com':
-					fixed_url, _ = os.path.splitext(data['url'].split('/')[-1])
-					can_retry_other_site.append('https://imgur.com/' + fixed_url)
+					imgur_id, _ = os.path.splitext(data['url'].split('/')[-1])
+					retry.add('https://imgur.com/' + imgur_id)
 				continue
 
 			save_folder = os.path.join(data_folder, data['subreddit'])
@@ -148,6 +147,3 @@ async def download(urls: list[str], data_folder: str):
 				filename = sep.join([title, media_id]) + ext
 				mkdir(save_folder)
 				await download_art(session, img_url, save_folder, filename)
-
-	if len(can_retry_other_site) > 0:
-		print('\nYou can rerun script for these urls:', *can_retry_other_site, sep='\n')

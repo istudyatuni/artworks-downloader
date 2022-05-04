@@ -6,6 +6,7 @@ import os.path
 
 from app.creds import save_creds
 from app.sites import download, register
+from app.utils.retry import retry
 
 SLUGS = {
 	'danbooru.donmai.us': 'danbooru',
@@ -91,13 +92,24 @@ def prepare() -> Optional[Tuple[list[str], str]]:
 
 	return to_dl, folder
 
+def run(urls: list[str], folder: str):
+	loop = new_event_loop()
+	set_event_loop(loop)
+	loop.run_until_complete(process_list(urls, folder))
+
 def main():
 	if (result := prepare()) is None:
 		quit(0)
 
-	loop = new_event_loop()
-	set_event_loop(loop)
-	loop.run_until_complete(process_list(*result))
+	urls, folder = result
+
+	run(urls, folder)
+	while (to_retry := retry.get()) is not None:
+		print('Retrying', len(to_retry), 'urls\n')
+		retry.clear()
+		run(to_retry, folder)
+
+	retry.clear(force=True)
 
 if __name__ == '__main__':
 	try:

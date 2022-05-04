@@ -19,10 +19,10 @@ cursor = conn.cursor()
 cursor.executescript(INIT_QUERY)
 conn.commit()
 
-def _key(slug: str, key: str):
-	return slug + ':' + key
+def _key(slug: str | None, key: str):
+	return key if slug is None else slug + ':' + key
 
-def insert(slug: str, key: str, value: str | Any, as_json=False):
+def insert(slug: str | None, key: str, value: str | Any, as_json=False):
 	# if not as json value should be string
 	if as_json is False and not isinstance(value, str):
 		raise Exception('Invalid value type')
@@ -33,13 +33,13 @@ def insert(slug: str, key: str, value: str | Any, as_json=False):
 	})
 	conn.commit()
 
-def select(slug: str, key: str, as_json=False):
+def select(slug: str | None, key: str, as_json=False):
 	res = cursor.execute(SELECT_QUERY, (_key(slug, key),)).fetchone()
 	if res is None:
 		return res
 	value = res['value']
 	return loads(value) if as_json else value
 
-def delete(slug: str, key: str):
+def delete(slug: str | None, key: str):
 	cursor.execute(DELETE_QUERY, (_key(slug, key),))
 	conn.commit()
