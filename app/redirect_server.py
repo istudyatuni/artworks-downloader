@@ -15,6 +15,7 @@ async def middleware(request: web.Request, handler: Handler):
 	await resp.prepare(request)
 	await resp.write_eof()
 
+	# now hardcoded for deviantart
 	if resp.status == 200:
 		saver_func({ 'code': request.query['code'] })
 		# stop server
