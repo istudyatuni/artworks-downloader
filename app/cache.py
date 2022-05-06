@@ -22,7 +22,7 @@ conn.commit()
 def _key(slug: str | None, key: str):
 	return key if slug is None else slug + ':' + key
 
-def insert(slug: str | None, key: str, value: str | Any, as_json=False):
+def insert(slug: str | None, key: str, value: str | Any, *, as_json=False):
 	# if not as json value should be string
 	if as_json is False and not isinstance(value, str):
 		raise Exception('Invalid value type')
@@ -33,7 +33,7 @@ def insert(slug: str | None, key: str, value: str | Any, as_json=False):
 	})
 	conn.commit()
 
-def select(slug: str | None, key: str, as_json=False):
+def select(slug: str | None, key: str, *, as_json=False):
 	res = cursor.execute(SELECT_QUERY, (_key(slug, key),)).fetchone()
 	if res is None:
 		return res
