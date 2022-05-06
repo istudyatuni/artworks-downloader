@@ -17,7 +17,24 @@ HEADERS = {
 }
 URL = 'https://www.pixiv.net/en/artworks/'
 
+LOG_PREFIX = f'[download][{SLUG}]'
+
+def log(*values: object, sep=None, end=' '):
+	print_inline_end('\r' + LOG_PREFIX, *values, sep=sep, end=end)
+
 Parsed = namedtuple('Parsed', ['id', 'range'], defaults=[None, None])
+
+class DownloadStats:
+	download = 0
+	skip = 0
+
+	def __add__(self, other: 'DownloadStats'):
+		self.download += other.download
+		self.skip += other.skip
+		return self
+
+	def __str__(self) -> str:
+	    return f'download: {self.download}, skip: {self.skip}'
 
 def parse_link(url: str):
 	parsed = urlparse(url)
@@ -42,7 +59,7 @@ def parse_link(url: str):
 
 async def fetch_info(session: ClientSession, parsed: Parsed):
 	url = URL + parsed.id
-	print('Fetching data for', url)
+	log('fetch info', parsed.id)
 	async with session.get(url) as response:
 		data = await response.text()
 
@@ -63,8 +80,13 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 		'title': filename_normalize(art['title']),
 	}
 
-async def download_art(session: ClientSession, art_info: Parsed, info: dict, save_folder: str):
-	indent_str = '  '
+async def download_art(
+	session: ClientSession,
+	art_info: Parsed,
+	info: dict,
+	save_folder: str
+) -> DownloadStats:
+	stats = DownloadStats()
 
 	# https://i.pximg.net/img-original/img/.../xxx_p0.png
 	base_url, ext = os.path.splitext(info['first_url'])
@@ -80,24 +102,32 @@ async def download_art(session: ClientSession, art_info: Parsed, info: dict, sav
 			# equal because all images indexes are in [0, 'count' - 1]
 			break
 
-		name = name_prefix + f'_p{i}' + ext
+		log_info = [art_info.id]
+		if total_imgs_count > 1:
+			# log image number only if more then one image
+			log_info.extend(['/', i + 1])
 
+		name = name_prefix + f'_p{i}' + ext
 		filename = os.path.join(save_folder, name)
 		if os.path.exists(filename):
-			print(indent_str + 'Skip existing:', filename)
+			stats.skip += 1
 			continue
 
-		print_inline_end(indent_str + 'Download:', name, '/', i + 1)
+		log('download', *log_info)
 		url = base_url + str(i) + ext
 		await download_binary(session, url, filename)
-		print('OK')
+		stats.download += 1
+
+	return stats
 
 async def download(urls: list[str], data_folder: str):
+	stats = DownloadStats()
+
 	async with ClientSession(headers=HEADERS) as session:
 		for url in urls:
 			parsed = parse_link(url)
 			if parsed.id is None:
-				print('Unsupported link:', url)
+				log('unsupported link:', url, end='\n')
 				continue
 
 			cached: dict = cache.select(SLUG, parsed.id, as_json=True)
@@ -106,7 +136,6 @@ async def download(urls: list[str], data_folder: str):
 				info = await fetch_info(session, parsed)
 				cache.insert(SLUG, parsed.id, info, as_json=True)
 			else:
-				print(url)
 				info = cached
 
 			save_folder = os.path.join(data_folder, info['artist'])
@@ -114,8 +143,11 @@ async def download(urls: list[str], data_folder: str):
 
 			while True:
 				try:
-					await download_art(session, parsed, info, save_folder)
+					dl_stats = await download_art(session, parsed, info, save_folder)
+					stats += dl_stats
 					break
 				except ServerDisconnectedError:
 					print('Error, retrying in 5 seconds')
 					await sleep(5)
+
+	log(stats)
