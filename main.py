@@ -1,3 +1,9 @@
+from sys import version_info
+
+if version_info < (3, 10):
+	print('Requires python 3.10+')
+	quit(1)
+
 from argparse import ArgumentParser
 from asyncio import new_event_loop, set_event_loop
 from typing import Optional, Tuple
@@ -39,6 +45,9 @@ def parse_args():
 async def process_list(urls: list[str], folder: str):
 	if len(urls) == 0:
 		print('List is empty')
+		return
+	elif len(urls) == 1 and urls[0] is None:
+		print('No link')
 		return
 
 	mapping = {s: [] for s in SLUGS.values()}
