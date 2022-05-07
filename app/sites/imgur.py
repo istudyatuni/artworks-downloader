@@ -1,3 +1,4 @@
+from enum import Enum
 from aiohttp import ClientSession
 from collections import namedtuple
 from typing import Any
@@ -9,11 +10,18 @@ from app.utils.path import filename_normalize, mkdir
 from app.utils.print import print_inline_end
 import app.cache as cache
 
-# client_id just from devtools
-API_ALBUM_URL = 'https://api.imgur.com/post/v1/media/{id}?client_id=546c25a59c58ad7&include=media'
 SLUG = 'imgur'
+API_URL = 'https://api.imgur.com/3/{type}/{id}'
+# client_id just from devtools
+HEADERS = {
+	'authorization': 'Client-ID 546c25a59c58ad7'
+}
 
-Parsed = namedtuple('Parsed', ['id'])
+Parsed = namedtuple('Parsed', ['id', 'type'], defaults=[None, None])
+
+class LinkType(str, Enum):
+	album = 'album'
+	image = 'image'
 
 def parse_link(url: str):
 	parsed = urlparse(url)
@@ -22,36 +30,42 @@ def parse_link(url: str):
 	if path[0] == 'a' or path[0] == 'gallery':
 		# https://imgur.com/a/<id>
 		# https://imgur.com/gallery/<id>
-		return Parsed(path[1])
+		return Parsed(path[1], LinkType.album)
 
 	if path[0] == 't':
 		# https://imgur.com/t/<tag>/<id>
-		return Parsed(path[2])
+		return Parsed(path[2], LinkType.album)
 
 	if len(path) == 1:
 		# https://imgur.com/<id>
-		return Parsed(path[0])
+		return Parsed(path[0], LinkType.image)
 
-	return Parsed(None)
+	return Parsed()
 
-async def fetch_info(session: ClientSession, album_id: str) -> Any:
-	async with session.get(API_ALBUM_URL.format(id=album_id)) as response:
+async def fetch_info(session: ClientSession, album: Parsed) -> Any:
+	url = API_URL.format(id=album.id, type=album.type)
+	async with session.get(url, headers=HEADERS) as response:
 		response.raise_for_status()
-		info = await response.json()
+		info = (await response.json())['data']
+
+	if info.get('is_album', False) is False:
+		# the same model, so just put to array
+		info['images'] = [info]
+
 	return {
 		'id': info['id'],
-		'title': info['title'],
-		'media': list({
+		'title': info['title'] or '',
+		'images': list({
 			'id': image['id'],
-			'url': image['url'],
-			'ext': image['ext'],
-			'title': image['metadata']['title']
-		} for image in info['media'])
+			'link': image['link'],
+			'ext': os.path.splitext(image['link'])[-1],
+			'title': image['title'] or '',
+		} for image in info['images']),
 	}
 
 async def download_art(
 	session: ClientSession,
-	url: str,
+	link: str,
 	save_folder: str,
 	name: str,
 	indent=False
@@ -62,7 +76,7 @@ async def download_art(
 		return print(indent_str + 'Skip existing:', name)
 
 	print_inline_end(indent_str + 'Download', name)
-	await download_binary(session, url, filename)
+	await download_binary(session, link, filename)
 	print('OK')
 
 async def download(urls: list[str], data_folder: str):
@@ -79,35 +93,36 @@ async def download(urls: list[str], data_folder: str):
 			cached = cache.select(SLUG, parsed.id, as_json=True)
 
 			if cached is None:
-				info = await fetch_info(session, parsed.id)
+				info = await fetch_info(session, parsed)
 				cache.insert(SLUG, parsed.id, info, as_json=True)
 			else:
 				info = cached
 
-			media = info['media']
-			one_media = len(media) == 1
-			title = sep.join([info['title'], info['id']]).strip(sep)
-			title = filename_normalize(title)
+			images = info['images']
+			one_image = len(images) == 1
+			title_prefix = sep.join([info['title'], info['id']]).strip(sep)
+			title_prefix = filename_normalize(title_prefix)
 
-			if one_media:
+			if one_image:
 				save_folder = data_folder
 			else:
-				print(title)
-				save_folder = os.path.join(data_folder, title)
-				title = ''
+				print(title_prefix)
+				# save to sub-folder
+				save_folder = os.path.join(data_folder, title_prefix)
+				title_prefix = ''
 			mkdir(save_folder)
 
-			for image in media:
+			for image in images:
 				title = (
 					sep
-					.join([title, image['title'], image['id']])
+					.join([title_prefix, image['title'], image['id']])
 					.strip(sep)
 					.replace(sep * 2, sep)
 				)
 				await download_art(
 					session,
-					image['url'],
+					image['link'],
 					save_folder,
-					title + '.' + image['ext'],
-					indent=not one_media
+					title + image['ext'],
+					indent=not one_image
 				)
