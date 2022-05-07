@@ -5,12 +5,12 @@ from typing import Any
 from urllib.parse import urlparse
 import os.path
 
-from app.utils.download import download_binary
-from app.utils.log import Logger, Progress
-from app.utils.path import filename_normalize, mkdir
-from app.utils.print import counter2str
-from app.utils.retry import retry
-import app.cache as cache
+from art_dl.utils.download import download_binary
+from art_dl.utils.log import Logger, Progress
+from art_dl.utils.path import filename_normalize, mkdir
+from art_dl.utils.print import counter2str
+from art_dl.utils.retry import retry
+import art_dl.cache as cache
 
 SLUG = 'reddit'
 

@@ -5,12 +5,12 @@ from urllib.parse import parse_qs, urlparse
 import json
 import os.path
 
-from app.utils.download import download_binary
-from app.utils.log import Logger, Progress
-from app.utils.path import filename_normalize, filename_unhide, mkdir
-from app.utils.print import counter2str
-from app.utils.url import parse_range
-import app.cache as cache
+from art_dl.utils.download import download_binary
+from art_dl.utils.log import Logger, Progress
+from art_dl.utils.path import filename_normalize, filename_unhide, mkdir
+from art_dl.utils.print import counter2str
+from art_dl.utils.url import parse_range
+import art_dl.cache as cache
 
 SLUG = 'pixiv'
 HEADERS = {

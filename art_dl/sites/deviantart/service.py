@@ -10,10 +10,10 @@ from .common import (
 	REDIRECT_URI,
 	SLUG,
 )
-import app.cache as cache
-from app.creds import get_creds, save_creds
-from app.proxy import ClientSession, ProxyClientSession
-from app.utils.print import print_inline
+import art_dl.cache as cache
+from art_dl.creds import get_creds, save_creds
+from art_dl.proxy import ClientSession, ProxyClientSession
+from art_dl.utils.print import print_inline
 
 API_URL = '/api/v1/oauth2'
 # start from 32 instead of 1 to skip small timeouts because

@@ -1,7 +1,7 @@
 from shutil import get_terminal_size
 from typing import Optional
 
-from app.utils.print import print_inline_end
+from art_dl.utils.print import print_inline_end
 
 verbose = False
 quiet = False

@@ -5,11 +5,11 @@ from typing import Any
 from urllib.parse import urlparse
 import os.path
 
-from app.utils.download import download_binary
-from app.utils.log import Logger, Progress
-from app.utils.path import filename_normalize, mkdir
-from app.utils.print import counter2str
-import app.cache as cache
+from art_dl.utils.download import download_binary
+from art_dl.utils.log import Logger, Progress
+from art_dl.utils.path import filename_normalize, mkdir
+from art_dl.utils.print import counter2str
+import art_dl.cache as cache
 
 SLUG = 'imgur'
 API_URL = 'https://api.imgur.com/3/{type}/{id}'

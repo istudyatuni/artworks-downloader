@@ -6,12 +6,12 @@ from urllib.parse import urlparse
 import os.path
 
 from .service import DAService
-from app.proxy import ClientSession, ProxyClientSession
-from app.sites.deviantart.common import SLUG, make_cache_key
-from app.utils.download import download_binary
-from app.utils.path import mkdir
-from app.utils.print import print_inline_end
-import app.cache as cache
+from art_dl.proxy import ClientSession, ProxyClientSession
+from art_dl.sites.deviantart.common import SLUG, make_cache_key
+from art_dl.utils.download import download_binary
+from art_dl.utils.path import mkdir
+from art_dl.utils.print import print_inline_end
+import art_dl.cache as cache
 
 def parse_link(url: str) -> dict[str, str]:
 	parsed = urlparse(url)

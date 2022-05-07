@@ -1,4 +1,4 @@
-import app.cache as cache
+import art_dl.cache as cache
 
 RETRY_KEY = 'RETRY'
 

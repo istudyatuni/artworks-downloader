@@ -5,11 +5,11 @@ from functools import reduce
 from urllib.parse import urlparse
 import os.path
 
-from app.utils.download import download_binary
-from app.utils.log import Logger, Progress
-from app.utils.path import mkdir
-from app.utils.print import counter2str
-import app.cache as cache
+from art_dl.utils.download import download_binary
+from art_dl.utils.log import Logger, Progress
+from art_dl.utils.path import mkdir
+from art_dl.utils.print import counter2str
+import art_dl.cache as cache
 
 SLUG = 'artstation'
 BASE_URL = 'https://www.artstation.com'

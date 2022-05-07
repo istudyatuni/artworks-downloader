@@ -1,8 +1,8 @@
 from urllib.parse import urlencode
 
 from .common import BASE_URL, OAUTH_KEY, REDIRECT_URI, SLUG
-from app.creds import get_creds
-from app.redirect_server import run as run_redirect_catch_server
+from art_dl.creds import get_creds
+from art_dl.redirect_server import run as run_redirect_catch_server
 
 AUTH_URL = BASE_URL + '/oauth2/authorize'
 

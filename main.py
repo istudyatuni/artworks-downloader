@@ -10,10 +10,10 @@ from typing import Optional, Tuple
 from urllib.parse import urlparse
 import os.path
 
-from app.creds import save_creds
-from app.sites import download, register
-from app.utils.log import set_verbosity
-from app.utils.retry import retry
+from art_dl.creds import save_creds
+from art_dl.sites import download, register
+from art_dl.utils.log import set_verbosity
+from art_dl.utils.retry import retry
 
 SLUGS = {
 	'danbooru.donmai.us': 'danbooru',

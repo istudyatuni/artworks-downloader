@@ -7,11 +7,11 @@ from typing import Any, Tuple
 from urllib.parse import urlparse
 import os.path
 
-from app.creds import get_creds
-from app.utils.download import download_binary
-from app.utils.path import filename_normalize, filename_shortening, mkdir
-from app.utils.print import print_inline_end
-import app.cache as cache
+from art_dl.creds import get_creds
+from art_dl.utils.download import download_binary
+from art_dl.utils.path import filename_normalize, filename_shortening, mkdir
+from art_dl.utils.print import print_inline_end
+import art_dl.cache as cache
 
 SLUG = 'wallhaven'
 
