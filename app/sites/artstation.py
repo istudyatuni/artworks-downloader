@@ -81,7 +81,7 @@ async def fetch_asset(
 	return DownloadResult.download
 
 async def download(urls: list[str], data_folder: str):
-	stats = Counter(art=0, artist=0)
+	stats = Counter()
 	progress.total = len(urls)
 
 	# { '<artist>': [Project(1), ...] }
@@ -118,7 +118,7 @@ async def download(urls: list[str], data_folder: str):
 
 	# download assets
 	logger.set_prefix(SLUG, 'download', inline=True)
-	stats = Counter(download=0, no_image=0, skip=0)
+	stats = Counter()
 	progress.i = 0
 	progress.total = sum(
 		reduce(lambda a, b: a + len(b.assets), p, 0)
