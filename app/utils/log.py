@@ -1,3 +1,6 @@
+from shutil import get_terminal_size
+from typing import Optional
+
 from app.utils.print import print_inline_end
 
 class Progress:
@@ -34,10 +37,19 @@ class Logger:
 		if inline:
 			self._log_prefix = '\r' + self._log_prefix
 
+	@staticmethod
+	def _term_width():
+		return get_terminal_size().columns
+
+	@staticmethod
+	def _make_print_str(*values: object, sep=None):
+		# this function is for reduce number of the same calculations
+		return (sep if sep else ' ').join(str(v) for v in values)
+
 	def _print(
 		self,
 		*values: object,
-		progress: Progress | None=None,
+		progress: Optional[Progress]=None,
 		sep=None,
 		end=None
 	):
@@ -46,13 +58,16 @@ class Logger:
 			to_print.insert(0, f'({progress})')
 		if self._log_prefix is not None:
 			to_print.insert(0, self._log_prefix)
+		to_print = self._make_print_str(*to_print, sep=sep)
 
-		self._print_func(*to_print, sep=sep, end=end)
+		# -1 to make cursor visible (subtract '\r')
+		spaces_offset = self._term_width() - len(to_print) - 1
+		self._print_func(to_print, ' ' * spaces_offset, sep=sep, end=end)
 
 	def info(
 		self,
 		*values: object,
-		progress: Progress | None=None,
+		progress: Optional[Progress]=None,
 		sep=None,
 		end=None,
 	):
