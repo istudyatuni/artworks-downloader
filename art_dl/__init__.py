@@ -1,9 +1,3 @@
-from sys import version_info
-
-if version_info < (3, 10):
-	print('Requires python 3.10+')
-	quit(1)
-
 from argparse import ArgumentParser
 from asyncio import new_event_loop, set_event_loop
 from typing import Optional, Tuple
