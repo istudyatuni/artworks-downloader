@@ -1,7 +1,5 @@
 from sys import version_info
 
-from app.utils.log import set_verbosity
-
 if version_info < (3, 10):
 	print('Requires python 3.10+')
 	quit(1)
@@ -14,6 +12,7 @@ import os.path
 
 from app.creds import save_creds
 from app.sites import download, register
+from app.utils.log import set_verbosity
 from app.utils.retry import retry
 
 SLUGS = {
