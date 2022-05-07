@@ -6,7 +6,7 @@ import json
 import os.path
 
 from app.utils.download import download_binary
-from app.utils.log import DownloadStats, Logger
+from app.utils.log import DownloadStats, Logger, Progress
 from app.utils.path import filename_normalize, filename_unhide, mkdir
 from app.utils.url import parse_range
 import app.cache as cache
@@ -18,6 +18,7 @@ HEADERS = {
 URL = 'https://www.pixiv.net/en/artworks/'
 
 logger = Logger(prefix=['download', SLUG], inline=True)
+progress = Progress()
 
 Parsed = namedtuple('Parsed', ['id', 'range'], defaults=[None, None])
 
@@ -44,7 +45,7 @@ def parse_link(url: str):
 
 async def fetch_info(session: ClientSession, parsed: Parsed):
 	url = URL + parsed.id
-	logger.info('fetch info', parsed.id)
+	logger.info('fetch info', parsed.id, progress=progress)
 	async with session.get(url) as response:
 		data = await response.text()
 
@@ -98,7 +99,7 @@ async def download_art(
 			stats.skip += 1
 			continue
 
-		logger.info('download', *log_info)
+		logger.info('download', *log_info, progress=progress)
 		url = base_url + str(i) + ext
 		await download_binary(session, url, filename)
 		stats.download += 1
@@ -107,9 +108,12 @@ async def download_art(
 
 async def download(urls: list[str], data_folder: str):
 	stats = DownloadStats()
+	progress.total = len(urls)
 
 	async with ClientSession(headers=HEADERS) as session:
 		for url in urls:
+			progress.i += 1
+
 			parsed = parse_link(url)
 			if parsed.id is None:
 				logger.info('unsupported link:', url, end='\n')

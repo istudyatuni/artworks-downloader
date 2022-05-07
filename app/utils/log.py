@@ -1,5 +1,12 @@
 from app.utils.print import print_inline_end
 
+class Progress:
+	i: int = 0
+	total: int = 0
+
+	def __str__(self) -> str:
+		return f'{self.i}/{self.total}'
+
 class DownloadStats:
 	download = 0
 	skip = 0
@@ -27,8 +34,24 @@ class Logger:
 		if inline:
 			self._log_prefix = '\r' + self._log_prefix
 
-	def _print(self, *values: object, sep=None, end=None):
-		self._print_func(self._log_prefix, *values, sep=sep, end=end)
+	def _print(
+		self,
+		*values: object,
+		progress: Progress | None=None,
+		sep=None,
+		end=None
+	):
+		to_print = list(values)
+		if progress is not None:
+			to_print.insert(0, f'({progress})')
 
-	def info(self, *values: object, sep=None, end=None):
-		self._print(*values, sep=sep, end=end)
+		self._print_func(self._log_prefix, *to_print, sep=sep, end=end)
+
+	def info(
+		self,
+		*values: object,
+		progress: Progress | None=None,
+		sep=None,
+		end=None,
+	):
+		self._print(*values, progress=progress, sep=sep, end=end)
