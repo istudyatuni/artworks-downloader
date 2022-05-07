@@ -1,11 +1,12 @@
 from aiohttp import ClientSession
 from collections import Counter, defaultdict, namedtuple
 from enum import Enum
+from functools import reduce
 from urllib.parse import urlparse
 import os.path
 
 from app.utils.download import download_binary
-from app.utils.log import Logger
+from app.utils.log import Logger, Progress
 from app.utils.path import mkdir
 from app.utils.print import counter2str
 
@@ -15,6 +16,7 @@ USER_PROJECTS_URL = '/users/{user}/projects.json'
 PROJECT_INFO_URL = '/projects/{hash}.json'
 
 logger = Logger(inline=True)
+progress = Progress()
 
 Project = namedtuple('Project', ['title', 'hash_id', 'assets'])
 
@@ -44,14 +46,15 @@ async def fetch_project(session: ClientSession, project):
 		project_hash = project['hash_id']
 
 	async with session.get(PROJECT_INFO_URL.format(hash=project_hash)) as response:
-		logger.info('add', project_hash)
+		logger.info('add', project_hash, progress=progress)
 		return (await response.json())
 
 async def fetch_asset(
 	session: ClientSession,
+	project_hash: str,
 	asset,
 	save_folder,
-	project = None
+	project_prefix = None
 ) -> DownloadResult:
 	if asset['has_image'] is False:
 		return DownloadResult.no_image
@@ -62,29 +65,32 @@ async def fetch_asset(
 	sep = ' - '
 	name = sep.join([
 		asset['title'] or '',
-		# if project is not empty, in collection only 1 image
+		# if project_prefix is not empty, in collection only 1 image
 		# project name written to file name
-		project or '',
+		project_prefix or '',
 		str(asset_id) + file_ext
 	]).strip(sep).replace(sep * 2, sep)
 	filename = os.path.join(save_folder, name)
 
 	if os.path.exists(filename):
-		logger.verbose('skip existing', asset_id)
+		logger.verbose('skip existing', project_hash, asset_id, progress=progress)
 		return DownloadResult.skip
 
-	logger.info('download', asset_id)
+	logger.info('download', project_hash, asset_id, progress=progress)
 	await download_binary(session, asset['image_url'], filename)
 	return DownloadResult.download
 
 async def download(urls: list[str], data_folder: str):
 	stats = Counter(art=0, artist=0)
+	progress.total = len(urls)
 
 	# { '<artist>': [Project(1), ...] }
 	projects: dict[str, list[Project]] = defaultdict(list)
 
 	logger.set_prefix(SLUG, 'queue', inline=True)
 	for url in urls:
+		progress.i += 1
+
 		parsed = parse_link(url)
 
 		async with ClientSession(BASE_URL) as session:
@@ -113,6 +119,11 @@ async def download(urls: list[str], data_folder: str):
 	# download assets
 	logger.set_prefix(SLUG, 'download', inline=True)
 	stats = Counter(download=0, no_image=0, skip=0)
+	progress.i = 0
+	progress.total = sum(
+		reduce(lambda a, b: a + len(b.assets), p, 0)
+		for p in projects.values()
+	)
 	async with ClientSession() as session:
 		for artist, projects_list in projects.items():
 			for project in projects_list:
@@ -128,12 +139,9 @@ async def download(urls: list[str], data_folder: str):
 					sub = None
 
 				for asset in assets:
-					res = await fetch_asset(session, asset, save_folder, sub)
-					if res is DownloadResult.download:
-						stats.update(download=1)
-					elif res is DownloadResult.skip:
-						stats.update(skip=1)
-					elif res is DownloadResult.no_image:
-						stats.update(no_image=1)
+					progress.i += 1
+
+					res = await fetch_asset(session, project.hash_id, asset, save_folder, sub)
+					stats.update({ res.value: 1 })
 
 	logger.info(counter2str(stats))
