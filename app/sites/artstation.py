@@ -9,6 +9,7 @@ from app.utils.download import download_binary
 from app.utils.log import Logger, Progress
 from app.utils.path import mkdir
 from app.utils.print import counter2str
+import app.cache as cache
 
 SLUG = 'artstation'
 BASE_URL = 'https://www.artstation.com'
@@ -39,15 +40,22 @@ async def list_projects(session: ClientSession, user: str):
 	async with session.get(USER_PROJECTS_URL.format(user=user)) as response:
 		return (await response.json())['data']
 
-async def fetch_project(session: ClientSession, project):
-	if isinstance(project, str):
-		project_hash = project
-	else:
-		project_hash = project['hash_id']
+async def fetch_project(session: ClientSession, project: str):
+	async with session.get(PROJECT_INFO_URL.format(hash=project)) as response:
+		logger.info('add', project, progress=progress)
+		result = await response.json()
 
-	async with session.get(PROJECT_INFO_URL.format(hash=project_hash)) as response:
-		logger.info('add', project_hash, progress=progress)
-		return (await response.json())
+	return {
+		'assets': list({
+			'has_image': a['has_image'],
+			'id': a['id'],
+			'image_url': a['image_url'],
+			'title': a['title'],
+		} for a in result['assets']),
+		'hash_id': result['hash_id'],
+		'title': result['title'],
+		'user': { 'username': result['user']['username'] },
+	}
 
 async def fetch_asset(
 	session: ClientSession,
@@ -108,7 +116,18 @@ async def download(urls: list[str], data_folder: str):
 				continue
 
 			for project in projects_list:
-				p = await fetch_project(session, project)
+				if isinstance(project, str):
+					project_hash = project
+				else:
+					project_hash = project['hash_id']
+
+				cached: dict = cache.select(SLUG, project_hash, as_json=True)
+				if cached is None:
+					p = await fetch_project(session, project_hash)
+					cache.insert(SLUG, project_hash, p, as_json=True)
+				else:
+					p = cached
+
 				artist = p['user']['username']
 				projects[artist].append(Project(p['title'], p['hash_id'], p['assets']))
 
@@ -130,16 +149,15 @@ async def download(urls: list[str], data_folder: str):
 			for project in projects_list:
 				save_folder = os.path.join(data_folder, artist)
 				sub = f"{project.title} - {project.hash_id}"
-				assets = project.assets
 
-				if len(assets) > 1:
+				if len(project.assets) > 1:
 					# save to sub-folder
 					save_folder = os.path.join(save_folder, sub)
 					mkdir(save_folder)
 					# do not append 'sub' to files names in sub-folder
 					sub = None
 
-				for asset in assets:
+				for asset in project.assets:
 					progress.i += 1
 
 					res = await fetch_asset(session, project.hash_id, asset, save_folder, sub)
