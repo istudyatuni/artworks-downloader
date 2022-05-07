@@ -96,6 +96,7 @@ async def download_art(
 		name = name_prefix + f'_p{i}' + ext
 		filename = os.path.join(save_folder, name)
 		if os.path.exists(filename):
+			logger.verbose('skip existing', *log_info, progress=progress)
 			stats.skip += 1
 			continue
 

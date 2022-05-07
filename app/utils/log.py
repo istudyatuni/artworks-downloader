@@ -3,6 +3,18 @@ from typing import Optional
 
 from app.utils.print import print_inline_end
 
+verbose = False
+quiet = False
+
+def set_verbosity(q: bool = False, v: bool = False):
+	global quiet
+	global verbose
+	quiet = q
+	verbose = v
+	if verbose and quiet:
+		# is it ok to do that?
+		raise Exception('log configuration error: both quiet and verbose are True')
+
 class Progress:
 	i: int = 0
 	total: int = 0
@@ -53,6 +65,11 @@ class Logger:
 		sep=None,
 		end=None
 	):
+		if quiet:
+			return
+		if verbose:
+			end = end if end else '\n'
+
 		to_print = list(values)
 		if progress is not None:
 			to_print.insert(0, f'({progress})')
@@ -71,4 +88,16 @@ class Logger:
 		sep=None,
 		end=None,
 	):
+		self._print(*values, progress=progress, sep=sep, end=end)
+
+	def verbose(
+		self,
+		*values: object,
+		progress: Optional[Progress]=None,
+		sep=None,
+		end=None,
+	):
+		if verbose is False:
+			return
+
 		self._print(*values, progress=progress, sep=sep, end=end)

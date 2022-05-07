@@ -1,5 +1,7 @@
 from sys import version_info
 
+from app.utils.log import set_verbosity
+
 if version_info < (3, 10):
 	print('Requires python 3.10+')
 	quit(1)
@@ -40,6 +42,9 @@ def parse_args():
 
 	parser.add_argument('--action', type=str, default=None)
 
+	parser.add_argument('-q', '--quiet', action='store_true', help='Do not show logs')
+	parser.add_argument('-v', '--verbose', action='store_true', help='Show more logs')
+
 	return parser.parse_args()
 
 async def process_list(urls: list[str], folder: str):
@@ -76,6 +81,11 @@ def prepare() -> Optional[Tuple[list[str], str]]:
 	urls_file = args.list
 	folder = os.path.abspath(args.folder)
 	action = tuple(args.action.split(':')) if args.action else None
+
+	if args.quiet and args.verbose:
+		print('You must specify either --verbose or --quiet, not both')
+		quit(1)
+	set_verbosity(args.quiet, args.verbose)
 
 	if action == ('deviantart', 'register'):
 		creds = register('deviantart')()
