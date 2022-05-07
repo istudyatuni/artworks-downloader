@@ -23,7 +23,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```
-usage: python main.py [-h] [-u URL] [-l LIST] [--folder FOLDER] [--action ACTION]
+usage: python -m art_dl [-h] [-u URL] [-l LIST] [--folder FOLDER] [--action ACTION] [-q] [-v]
 
 Artworks downloader
 
@@ -33,6 +33,8 @@ options:
   -l LIST, --list LIST  File with list of URLs to download
   --folder FOLDER       Folder to save artworks. Default folder - data
   --action ACTION
+  -q, --quiet           Do not show logs
+  -v, --verbose         Show more logs
 ```
 
 ### Sites with simple usage
@@ -40,7 +42,7 @@ options:
 Just run
 
 ```sh
-python main.py -u [URL here]
+python -m art_dl -u [URL here]
 ```
 
 ### DeviantArt
@@ -59,7 +61,7 @@ You should have deviantart.com account, login to it, then
   - run
 
   ```sh
-  python main.py --action deviantart:register
+  python -m art_dl --action deviantart:register
   ```
 
   - paste needed values
@@ -71,7 +73,7 @@ You should have deviantart.com account, login to it, then
 After that you can use it just like
 
 ```sh
-python main.py -u [URL here]
+python -m art_dl -u [URL here]
 ```
 
 ### Proxy
@@ -95,7 +97,7 @@ If the artwork has more one image, you can specify which images should be downlo
 NSFW images supported only with API key, to use it, get it from [account settings](https://wallhaven.cc/settings/account), then run
 
 ```sh
-python main.py --action wallhaven:key
+python -m art_dl --action wallhaven:key
 ```
 
 ## Supported URL types
