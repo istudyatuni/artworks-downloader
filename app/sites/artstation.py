@@ -1,18 +1,27 @@
 from aiohttp import ClientSession
-from collections import defaultdict, namedtuple
-from functools import reduce
+from collections import Counter, defaultdict, namedtuple
+from enum import Enum
 from urllib.parse import urlparse
 import os.path
 
 from app.utils.download import download_binary
+from app.utils.log import Logger
 from app.utils.path import mkdir
-from app.utils.print import print_inline_end
+from app.utils.print import counter2str
 
+SLUG = 'artstation'
 BASE_URL = 'https://www.artstation.com'
 USER_PROJECTS_URL = '/users/{user}/projects.json'
 PROJECT_INFO_URL = '/projects/{hash}.json'
 
+logger = Logger(inline=True)
+
 Project = namedtuple('Project', ['title', 'hash_id', 'assets'])
+
+class DownloadResult(str, Enum):
+	download = 'download'
+	no_image = 'no_image'
+	skip = 'skip'
 
 def parse_link(url: str):
 	parsed = urlparse(url)
@@ -35,15 +44,19 @@ async def fetch_project(session: ClientSession, project):
 		project_hash = project['hash_id']
 
 	async with session.get(PROJECT_INFO_URL.format(hash=project_hash)) as response:
-		print('Add to queue: artwork', project_hash)
+		logger.info('add', project_hash)
 		return (await response.json())
 
-async def fetch_asset(session: ClientSession, asset, save_folder, project = None):
-	indent_str = '  '
-
+async def fetch_asset(
+	session: ClientSession,
+	asset,
+	save_folder,
+	project = None
+) -> DownloadResult:
 	if asset['has_image'] is False:
-		return
+		return DownloadResult.no_image
 
+	asset_id = asset['id']
 	# https://cdna.artstation.com/p/assets/images/images/path/to/file.jpg?1593595729 -> .jpg
 	file_ext = os.path.splitext(urlparse(asset['image_url']).path.split('/')[-1])[1]
 	sep = ' - '
@@ -52,21 +65,25 @@ async def fetch_asset(session: ClientSession, asset, save_folder, project = None
 		# if project is not empty, in collection only 1 image
 		# project name written to file name
 		project or '',
-		str(asset['id']) + file_ext
+		str(asset_id) + file_ext
 	]).strip(sep).replace(sep * 2, sep)
 	filename = os.path.join(save_folder, name)
 
 	if os.path.exists(filename):
-		return print(indent_str + 'Skip existing:', name)
+		logger.verbose('skip existing', asset_id)
+		return DownloadResult.skip
 
-	print_inline_end(indent_str + 'Download:', name)
+	logger.info('download', asset_id)
 	await download_binary(session, asset['image_url'], filename)
-	print('OK')
+	return DownloadResult.download
 
 async def download(urls: list[str], data_folder: str):
+	stats = Counter(art=0, artist=0)
+
 	# { '<artist>': [Project(1), ...] }
 	projects: dict[str, list[Project]] = defaultdict(list)
 
+	logger.set_prefix(SLUG, 'queue', inline=True)
 	for url in urls:
 		parsed = parse_link(url)
 
@@ -78,44 +95,45 @@ async def download(urls: list[str], data_folder: str):
 				for project in await list_projects(session, artist):
 					p = await fetch_project(session, project)
 					projects[artist].append(Project(p['title'], p['hash_id'], p['assets']))
+
+				stats.update(artist=1)
 			elif parsed['type'] == 'art':
 				# about specified project
 				p = await fetch_project(session, parsed['project'])
 				name = p['user']['username']
 				projects[name].append(Project(p['title'], p['hash_id'], p['assets']))
 
+				stats.update(art=1)
+
 	for artist in projects.keys():
 		mkdir(os.path.join(data_folder, artist))
 
-	print(
-		'Started download',
-		# summary length of all arrays in projects
-		reduce(lambda a, b: a + len(b), projects.values(), 0),
-		'albums and',
-		# sum all 'assets' arrays lengths from projects
-		sum(
-			reduce(lambda a, b: a + len(b.assets), p, 0)
-			for p in projects.values()
-		),
-		'assets'
-	)
+	logger.info(counter2str(stats), end='\n')
 
 	# download assets
+	logger.set_prefix(SLUG, 'download', inline=True)
+	stats = Counter(download=0, no_image=0, skip=0)
 	async with ClientSession() as session:
 		for artist, projects_list in projects.items():
-			print('\nArtist', artist)
 			for project in projects_list:
 				save_folder = os.path.join(data_folder, artist)
 				sub = f"{project.title} - {project.hash_id}"
 				assets = project.assets
-				print('Download album:', sub)
 
 				if len(assets) > 1:
-					# if count of attachments more than 1, save to sub-folder
-					sub_folder = os.path.join(save_folder, sub)
-					mkdir(sub_folder)
+					# save to sub-folder
+					save_folder = os.path.join(save_folder, sub)
+					mkdir(save_folder)
+					# do not append 'sub' to files names in sub-folder
+					sub = None
 
-					for asset in assets:
-						await fetch_asset(session, asset, sub_folder)
-				elif len(assets) == 1:
-					await fetch_asset(session, assets[0], save_folder, sub)
+				for asset in assets:
+					res = await fetch_asset(session, asset, save_folder, sub)
+					if res is DownloadResult.download:
+						stats.update(download=1)
+					elif res is DownloadResult.skip:
+						stats.update(skip=1)
+					elif res is DownloadResult.no_image:
+						stats.update(no_image=1)
+
+	logger.info(counter2str(stats))
