@@ -44,8 +44,10 @@ class Logger:
 		to_print = list(values)
 		if progress is not None:
 			to_print.insert(0, f'({progress})')
+		if self._log_prefix is not None:
+			to_print.insert(0, self._log_prefix)
 
-		self._print_func(self._log_prefix, *to_print, sep=sep, end=end)
+		self._print_func(*to_print, sep=sep, end=end)
 
 	def info(
 		self,
