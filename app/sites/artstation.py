@@ -57,6 +57,7 @@ async def fetch_asset(
 	project_prefix = None
 ) -> DownloadResult:
 	if asset['has_image'] is False:
+		logger.info('no image', project_hash)
 		return DownloadResult.no_image
 
 	asset_id = asset['id']
@@ -96,20 +97,20 @@ async def download(urls: list[str], data_folder: str):
 		async with ClientSession(BASE_URL) as session:
 			if parsed['type'] == 'all':
 				artist = parsed['artist']
-
-				# fetch info about all projects
-				for project in await list_projects(session, artist):
-					p = await fetch_project(session, project)
-					projects[artist].append(Project(p['title'], p['hash_id'], p['assets']))
-
+				projects_list = await list_projects(session, artist)
 				stats.update(artist=1)
 			elif parsed['type'] == 'art':
-				# about specified project
-				p = await fetch_project(session, parsed['project'])
-				name = p['user']['username']
-				projects[name].append(Project(p['title'], p['hash_id'], p['assets']))
-
+				projects_list = [parsed['project']]
 				stats.update(art=1)
+			else:
+				# this should never be called
+				logger.verbose('error parsing')
+				continue
+
+			for project in projects_list:
+				p = await fetch_project(session, project)
+				artist = p['user']['username']
+				projects[artist].append(Project(p['title'], p['hash_id'], p['assets']))
 
 	for artist in projects.keys():
 		mkdir(os.path.join(data_folder, artist))
@@ -144,4 +145,5 @@ async def download(urls: list[str], data_folder: str):
 					res = await fetch_asset(session, project.hash_id, asset, save_folder, sub)
 					stats.update({ res.value: 1 })
 
+	logger.set_prefix(SLUG, inline=True)
 	logger.info(counter2str(stats))
