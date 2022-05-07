@@ -22,18 +22,6 @@ class Progress:
 	def __str__(self) -> str:
 		return f'{self.i}/{self.total}'
 
-class DownloadStats:
-	download = 0
-	skip = 0
-
-	def __add__(self, other: 'DownloadStats'):
-		self.download += other.download
-		self.skip += other.skip
-		return self
-
-	def __str__(self) -> str:
-		return f'download: {self.download}, skip: {self.skip}'
-
 class Logger:
 	_log_prefix = None
 	_print_func = print

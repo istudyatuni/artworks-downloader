@@ -1,13 +1,14 @@
 from aiohttp import ClientSession, ServerDisconnectedError
 from asyncio import sleep
-from collections import namedtuple
+from collections import Counter, namedtuple
 from urllib.parse import parse_qs, urlparse
 import json
 import os.path
 
 from app.utils.download import download_binary
-from app.utils.log import DownloadStats, Logger, Progress
+from app.utils.log import Logger, Progress
 from app.utils.path import filename_normalize, filename_unhide, mkdir
+from app.utils.print import counter2str
 from app.utils.url import parse_range
 import app.cache as cache
 
@@ -17,7 +18,7 @@ HEADERS = {
 }
 URL = 'https://www.pixiv.net/en/artworks/'
 
-logger = Logger(prefix=['download', SLUG], inline=True)
+logger = Logger(prefix=[SLUG, 'download'], inline=True)
 progress = Progress()
 
 Parsed = namedtuple('Parsed', ['id', 'range'], defaults=[None, None])
@@ -71,8 +72,8 @@ async def download_art(
 	art_info: Parsed,
 	info: dict,
 	save_folder: str
-) -> DownloadStats:
-	stats = DownloadStats()
+) -> Counter:
+	stats = Counter(download=0, skip=0)
 
 	# https://i.pximg.net/img-original/img/.../xxx_p0.png
 	base_url, ext = os.path.splitext(info['first_url'])
@@ -97,18 +98,18 @@ async def download_art(
 		filename = os.path.join(save_folder, name)
 		if os.path.exists(filename):
 			logger.verbose('skip existing', *log_info, progress=progress)
-			stats.skip += 1
+			stats.update(skip=1)
 			continue
 
 		logger.info('download', *log_info, progress=progress)
 		url = base_url + str(i) + ext
 		await download_binary(session, url, filename)
-		stats.download += 1
+		stats.update(download=1)
 
 	return stats
 
 async def download(urls: list[str], data_folder: str):
-	stats = DownloadStats()
+	stats = Counter(download=0, skip=0)
 	progress.total = len(urls)
 
 	async with ClientSession(headers=HEADERS) as session:
@@ -134,10 +135,10 @@ async def download(urls: list[str], data_folder: str):
 			while True:
 				try:
 					dl_stats = await download_art(session, parsed, info, save_folder)
-					stats += dl_stats
+					stats.update(dl_stats)
 					break
 				except ServerDisconnectedError:
 					logger.info('error, retrying in 5 seconds')
 					await sleep(5)
 
-	logger.info(stats)
+	logger.info(counter2str(stats))
