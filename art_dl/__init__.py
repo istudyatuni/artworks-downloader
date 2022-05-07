@@ -6,7 +6,7 @@ import os.path
 
 from art_dl.creds import save_creds
 from art_dl.sites import download, register
-from art_dl.utils.log import set_verbosity
+from art_dl.utils.log import Logger, set_verbosity
 from art_dl.utils.retry import retry
 
 SLUGS = {
@@ -22,6 +22,8 @@ SLUGS = {
 	'www.reddit.com': 'reddit',
 	'zettai.moe': 'pixiv',
 }
+
+logger = Logger(prefix=['main'])
 
 def detect_site(url: str) -> str | None:
 	return SLUGS.get(urlparse(url).netloc)
@@ -42,28 +44,27 @@ def parse_args():
 
 async def process_list(urls: list[str], folder: str):
 	if len(urls) == 0:
-		print('List is empty')
+		logger.info('list is empty')
 		return
 	elif len(urls) == 1 and urls[0] is None:
-		print('No link')
+		logger.info('no link')
 		return
 
 	mapping = {s: [] for s in SLUGS.values()}
 	for u in urls:
 		site_slug = detect_site(u)
 		if site_slug is None:
-			print('Unknown link', u)
+			logger.info('unknown link', u)
 			continue
 
 		mapping[site_slug].append(u)
 
-	print('Saving to', folder, '\n')
+	logger.info('saving to', folder)
 	for slug, l in mapping.items():
 		if len(l) == 0:
 			continue
 
 		save_folder = os.path.join(folder, slug)
-		print(slug.title(), '\n')
 		await download(slug)(l, save_folder)
 		print()
 
@@ -84,16 +85,16 @@ def prepare() -> Optional[Tuple[list[str], str]]:
 		creds = register('deviantart')()
 		if creds is not None:
 			save_creds(creds)
-			print('Authorized')
+			logger.info('authorized')
 		return
 	elif action == ('wallhaven', 'key'):
 		creds = register('wallhaven')()
 		if creds is not None:
 			save_creds(creds)
-			print('Saved')
+			logger.info('saved')
 		return
 	elif action is not None:
-		print('Unknown action:', args.action)
+		logger.info('unknown action:', args.action)
 		return
 
 	if urls_file is not None:
@@ -117,7 +118,7 @@ def main():
 
 	run(urls, folder)
 	while (to_retry := retry.get()) is not None:
-		print('Retrying', len(to_retry), 'urls\n')
+		logger.info('retrying', len(to_retry), 'urls\n')
 		retry.clear()
 		run(to_retry, folder)
 
