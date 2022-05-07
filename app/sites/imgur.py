@@ -1,13 +1,14 @@
-from enum import Enum
 from aiohttp import ClientSession
-from collections import namedtuple
+from collections import Counter, namedtuple
+from enum import Enum
 from typing import Any
 from urllib.parse import urlparse
 import os.path
 
 from app.utils.download import download_binary
+from app.utils.log import Logger, Progress
 from app.utils.path import filename_normalize, mkdir
-from app.utils.print import print_inline_end
+from app.utils.print import counter2str
 import app.cache as cache
 
 SLUG = 'imgur'
@@ -17,11 +18,18 @@ HEADERS = {
 	'authorization': 'Client-ID 546c25a59c58ad7'
 }
 
+logger = Logger(prefix=[SLUG, 'download'], inline=True)
+progress = Progress()
+
 Parsed = namedtuple('Parsed', ['id', 'type'], defaults=[None, None])
 
 class LinkType(str, Enum):
 	album = 'album'
 	image = 'image'
+
+class DownloadResult(str, Enum):
+	download = 'download'
+	skip = 'skip'
 
 def parse_link(url: str):
 	parsed = urlparse(url)
@@ -43,6 +51,8 @@ def parse_link(url: str):
 	return Parsed()
 
 async def fetch_info(session: ClientSession, album: Parsed) -> Any:
+	logger.verbose('fetch info', album.id, progress=progress)
+
 	url = API_URL.format(id=album.id, type=album.type)
 	async with session.get(url, headers=HEADERS) as response:
 		response.raise_for_status()
@@ -67,27 +77,31 @@ async def download_art(
 	session: ClientSession,
 	link: str,
 	save_folder: str,
-	name: str,
-	indent=False
-):
-	indent_str = '  ' if indent else ''
+	name: str
+) -> DownloadResult:
 	filename = os.path.join(save_folder, name)
 	if os.path.exists(filename):
-		return print(indent_str + 'Skip existing:', name)
+		logger.verbose('skip existing', name, progress=progress)
+		return DownloadResult.skip
 
-	print_inline_end(indent_str + 'Download', name)
+	logger.info('download', name, progress=progress)
 	await download_binary(session, link, filename)
-	print('OK')
+	return DownloadResult.download
 
 async def download(urls: list[str], data_folder: str):
+	stats = Counter()
+	progress.total = len(urls)
+
 	sep = ' - '
 
 	async with ClientSession() as session:
 		for url in urls:
+			progress.i += 1
+
 			parsed = parse_link(url)
 
 			if parsed.id is None:
-				print('Unsupported link', url)
+				logger.info('unsupported link', url, end='\n')
 				continue
 
 			cached = cache.select(SLUG, parsed.id, as_json=True)
@@ -106,7 +120,6 @@ async def download(urls: list[str], data_folder: str):
 			if one_image:
 				save_folder = data_folder
 			else:
-				print(title_prefix)
 				# save to sub-folder
 				save_folder = os.path.join(data_folder, title_prefix)
 				title_prefix = ''
@@ -119,10 +132,8 @@ async def download(urls: list[str], data_folder: str):
 					.strip(sep)
 					.replace(sep * 2, sep)
 				)
-				await download_art(
-					session,
-					image['link'],
-					save_folder,
-					title + image['ext'],
-					indent=not one_image
-				)
+				name = title + image['ext']
+				res = await download_art(session, image['link'], save_folder, name)
+				stats.update({ res.value: 1 })
+
+	logger.info(counter2str(stats))
