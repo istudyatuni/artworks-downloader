@@ -6,8 +6,8 @@ import json
 import os.path
 
 from app.utils.download import download_binary
+from app.utils.log import DownloadStats, Logger
 from app.utils.path import filename_normalize, filename_unhide, mkdir
-from app.utils.print import print_inline_end
 from app.utils.url import parse_range
 import app.cache as cache
 
@@ -17,24 +17,9 @@ HEADERS = {
 }
 URL = 'https://www.pixiv.net/en/artworks/'
 
-LOG_PREFIX = f'[download][{SLUG}]'
-
-def log(*values: object, sep=None, end=' '):
-	print_inline_end('\r' + LOG_PREFIX, *values, sep=sep, end=end)
+logger = Logger(prefix=['download', SLUG], inline=True)
 
 Parsed = namedtuple('Parsed', ['id', 'range'], defaults=[None, None])
-
-class DownloadStats:
-	download = 0
-	skip = 0
-
-	def __add__(self, other: 'DownloadStats'):
-		self.download += other.download
-		self.skip += other.skip
-		return self
-
-	def __str__(self) -> str:
-	    return f'download: {self.download}, skip: {self.skip}'
 
 def parse_link(url: str):
 	parsed = urlparse(url)
@@ -59,7 +44,7 @@ def parse_link(url: str):
 
 async def fetch_info(session: ClientSession, parsed: Parsed):
 	url = URL + parsed.id
-	log('fetch info', parsed.id)
+	logger.info('fetch info', parsed.id)
 	async with session.get(url) as response:
 		data = await response.text()
 
@@ -113,7 +98,7 @@ async def download_art(
 			stats.skip += 1
 			continue
 
-		log('download', *log_info)
+		logger.info('download', *log_info)
 		url = base_url + str(i) + ext
 		await download_binary(session, url, filename)
 		stats.download += 1
@@ -127,7 +112,7 @@ async def download(urls: list[str], data_folder: str):
 		for url in urls:
 			parsed = parse_link(url)
 			if parsed.id is None:
-				log('unsupported link:', url, end='\n')
+				logger.info('unsupported link:', url, end='\n')
 				continue
 
 			cached: dict = cache.select(SLUG, parsed.id, as_json=True)
@@ -147,7 +132,7 @@ async def download(urls: list[str], data_folder: str):
 					stats += dl_stats
 					break
 				except ServerDisconnectedError:
-					print('Error, retrying in 5 seconds')
+					logger.info('error, retrying in 5 seconds')
 					await sleep(5)
 
-	log(stats)
+	logger.info(stats)
