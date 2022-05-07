@@ -1,12 +1,14 @@
 from aiohttp import ClientSession
-from collections import namedtuple
+from collections import Counter, namedtuple
+from enum import Enum
 from typing import Any
 from urllib.parse import urlparse
 import os.path
 
 from app.utils.download import download_binary
+from app.utils.log import Logger, Progress
 from app.utils.path import filename_normalize, mkdir
-from app.utils.print import print_inline_end
+from app.utils.print import counter2str
 from app.utils.retry import retry
 import app.cache as cache
 
@@ -20,7 +22,14 @@ SKIP_CACHE_TAG = 'SKIP'
 
 REDDIT_DOMAINS = ['reddit.com', 'i.redd.it', 'v.redd.it']
 
+logger = Logger(prefix=[SLUG, 'download'], inline=True)
+progress = Progress()
+
 Parsed = namedtuple('Parsed', ['id'])
+
+class DownloadResult(str, Enum):
+	download = 'download'
+	skip = 'skip'
 
 def parse_link(url: str) -> Parsed:
 	parsed = urlparse(url)
@@ -67,32 +76,37 @@ async def download_art(
 	url: str,
 	folder: str,
 	name: str,
-	indent = False
-):
-	indent_str = '  ' if indent else ''
+) -> DownloadResult:
 	filename = os.path.join(folder, name)
 	if os.path.exists(filename):
-		return print(indent_str + 'Skip existing:', name)
+		logger.info('skip existing', name, progress=progress)
+		return DownloadResult.skip
 
-	print_inline_end(indent_str + 'Download:', name)
+	logger.info('download', name, progress=progress)
 	await download_binary(session, url, filename)
-	print('OK')
+	return DownloadResult.download
 
 async def download(urls: list[str], data_folder: str):
+	stats = Counter()
+	progress.total = len(urls)
+
 	sep = ' - '
 
 	async with ClientSession() as session:
 		for url in urls:
+			progress.i += 1
+
 			parsed = parse_link(url)
 
 			if parsed.id is None:
-				print('Unsupported link:', url)
+				logger.info('unsupported link', url, end='\n', progress=progress)
 				continue
 
 			cached = cache.select(SLUG, parsed.id)
 
 			if cached == SKIP_CACHE_TAG:
-				print('Skip cached:', url)
+				logger.verbose('skip', url, progress=progress)
+				stats.update(skip_video=1)
 				continue
 
 			if cached is None:
@@ -103,7 +117,14 @@ async def download(urls: list[str], data_folder: str):
 
 			domain = data['domain']
 			if domain not in REDDIT_DOMAINS:
-				print('Media is from', domain, url + ':', data['url'])
+				logger.info(
+					'media is from',
+					domain,
+					url + ':',
+					data['url'],
+					end='\n',
+					progress=progress
+				)
 				if domain == 'imgur.com':
 					retry.add(data['url'])
 				elif domain == 'i.imgur.com':
@@ -119,31 +140,30 @@ async def download(urls: list[str], data_folder: str):
 			if is_gallery:
 				folder = os.path.join(save_folder, title)
 				mkdir(folder)
-				print(title)
 
 				for media_id, ext in data['media_ext'].items():
 					url_filename = media_id + '.' + ext
-					await download_art(
-						session,
-						IMAGE_URI + url_filename,
-						folder,
-						url_filename,
-						indent=True
-					)
+					url = IMAGE_URI + url_filename
+					res = await download_art(session, url, folder, url_filename)
+					stats.update({ res.value: 1 })
 
 				if cached is None:
 					cache.insert(SLUG, parsed.id, 'gallery')
 			elif data['is_video'] is True:
-				print('Skip video:', url)
+				logger.verbose('skip video', url, progress=progress)
 				cache.insert(SLUG, parsed.id, SKIP_CACHE_TAG)
 				cache.delete(SLUG, parsed.id + DATA_CACHE_POSTFIX)
+				stats.update(skip_video=1)
 			else:
-				img_url = data['url']
-				url_filename = urlparse(img_url).path.lstrip('/')
+				url = data['url']
+				url_filename = urlparse(url).path.lstrip('/')
 				if cached is None:
 					cache.insert(SLUG, parsed.id, 'image')
 
 				media_id, ext = os.path.splitext(url_filename)
 				filename = sep.join([title, media_id]) + ext
 				mkdir(save_folder)
-				await download_art(session, img_url, save_folder, filename)
+				res = await download_art(session, url, save_folder, filename)
+				stats.update({ res.value: 1 })
+
+	logger.info(counter2str(stats))
