@@ -77,7 +77,7 @@ async def fetch_data(
 async def download(urls: list[str], data_folder: str, with_key = False):
 	mkdir(data_folder)
 
-	stats = Counter()
+	stats = Counter()  # type: ignore
 	progress.set(0, len(urls))
 
 	retry_with_key = []

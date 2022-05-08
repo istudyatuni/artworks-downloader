@@ -3,7 +3,7 @@ import art_dl.cache as cache
 class Retry:
 	KEY = 'RETRY'
 
-	_old_list = []
+	_old_list: list[str] = []
 
 	def get(self) -> list[str] | None:
 		return cache.select(None, self.KEY, as_json=True)

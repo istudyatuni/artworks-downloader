@@ -89,10 +89,10 @@ class Logger:
 			to_print.insert(0, f'({progress})')
 		if self._log_prefix is not None:
 			to_print.insert(0, self._log_prefix)
-		to_print = self._make_print_str(*to_print, sep=sep)
+		to_print_str = self._make_print_str(*to_print, sep=sep)
 
-		spaces_offset = self._term_width() - len(to_print)
-		self._print_func(to_print + ' ' * spaces_offset, end=end)
+		spaces_offset = self._term_width() - len(to_print_str)
+		self._print_func(to_print_str + ' ' * spaces_offset, end=end)
 
 		if prefix is not None:
 			self._restore_prefix()

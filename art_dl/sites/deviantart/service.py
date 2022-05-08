@@ -151,7 +151,7 @@ class DAService():
 					u = params['username']
 					logger.info(
 						f'rate limit in pager ({u}), offset',
-						params['offset'] + ',',
+						params['offset'],
 						'retrying in',
 						rate_limit_sec,
 						'sec',

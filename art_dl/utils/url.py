@@ -8,7 +8,7 @@ def parse_range(rng: str) -> list[int] | None:
 		return None
 
 	parts = rng.split(',')
-	result = set()
+	result: set[int] = set()
 	for p in parts:
 		if '-' in p:
 			[start, end] = p.split('-')

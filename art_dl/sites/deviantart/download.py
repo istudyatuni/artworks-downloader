@@ -90,7 +90,7 @@ def is_art_exists(folder: str, artist: str, name: str):
 # main functions
 
 async def download(urls: list[str], data_folder: str):
-	stats = Counter()
+	stats = Counter()  # type: ignore
 	progress.total = len(urls)
 
 	service = DAService()
@@ -179,7 +179,7 @@ async def download(urls: list[str], data_folder: str):
 
 			async for art in service.list_folder_arts(artist, 'all'):
 				url = art['url']
-				if any(filter(lambda a: a['url'] == url, art_list)):
+				if any(filter(lambda a: a['url'] == url, art_list)):  # type: ignore
 					await save_art(service, session, art, save_folder)
 
 					all_urls.remove(url)

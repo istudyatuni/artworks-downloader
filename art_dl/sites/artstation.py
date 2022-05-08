@@ -90,7 +90,7 @@ async def fetch_asset(
 	return DownloadResult.download
 
 async def download(urls: list[str], data_folder: str):
-	stats = Counter()
+	stats = Counter()  # type: ignore
 	progress.total = len(urls)
 
 	# { '<artist>': [Project(1), ...] }
@@ -155,7 +155,7 @@ async def download(urls: list[str], data_folder: str):
 					save_folder = os.path.join(save_folder, sub)
 					mkdir(save_folder)
 					# do not append 'sub' to files names in sub-folder
-					sub = None
+					sub = None  # type: ignore
 
 				for asset in project.assets:
 					progress.i += 1

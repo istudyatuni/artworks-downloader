@@ -73,7 +73,7 @@ async def download_art(
 	info: dict,
 	save_folder: str
 ) -> Counter:
-	stats = Counter()
+	stats = Counter()  # type: ignore
 
 	# https://i.pximg.net/img-original/img/.../xxx_p0.png
 	base_url, ext = os.path.splitext(info['first_url'])
@@ -109,7 +109,7 @@ async def download_art(
 	return stats
 
 async def download(urls: list[str], data_folder: str):
-	stats = Counter()
+	stats = Counter()  # type: ignore
 	progress.total = len(urls)
 
 	async with ClientSession(headers=HEADERS) as session:

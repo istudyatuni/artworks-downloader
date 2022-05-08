@@ -51,7 +51,7 @@ async def process_list(urls: list[str], folder: str):
 		logger.info('no link')
 		return
 
-	mapping = {s: [] for s in SLUGS.values()}
+	mapping: dict[str, list[str]] = {s: [] for s in SLUGS.values()}
 	for u in urls:
 		site_slug = detect_site(u)
 		if site_slug is None:
@@ -87,22 +87,21 @@ def prepare() -> Optional[Tuple[list[str], str]]:
 		if creds is not None:
 			save_creds(creds)
 			logger.info('authorized')
-		return
+		return None
 	elif action == ('wallhaven', 'key'):
 		creds = register('wallhaven')()
 		if creds is not None:
 			save_creds(creds)
 			logger.info('saved')
-		return
+		return None
 	elif action is not None:
 		logger.info('unknown action:', args.action)
-		return
+		return None
 
 	if urls_file is not None:
 		with open(urls_file) as file:
 			content = file.read().strip().split('\n')
-			to_dl = map(lambda s: s.strip(), filter(lambda e: bool(e), content))
-		to_dl = list(to_dl)
+			to_dl = list(map(lambda s: s.strip(), filter(lambda e: bool(e), content)))
 
 	return to_dl, folder
 

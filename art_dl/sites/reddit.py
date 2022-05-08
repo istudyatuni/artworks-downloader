@@ -87,7 +87,7 @@ async def download_art(
 	return DownloadResult.download
 
 async def download(urls: list[str], data_folder: str):
-	stats = Counter()
+	stats = Counter()  # type: ignore
 	progress.total = len(urls)
 
 	sep = ' - '
