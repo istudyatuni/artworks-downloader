@@ -19,6 +19,10 @@ class Progress:
 	i: int = 0
 	total: int = 0
 
+	def set(self, i: int, total: int):
+		self.i = i
+		self.total = total
+
 	def __str__(self) -> str:
 		return f'{self.i}/{self.total}'
 
