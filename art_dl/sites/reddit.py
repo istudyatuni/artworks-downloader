@@ -99,7 +99,7 @@ async def download(urls: list[str], data_folder: str):
 			parsed = parse_link(url)
 
 			if parsed.id is None:
-				logger.info('unsupported link', url, end='\n', progress=progress)
+				logger.warn('unsupported link', url, progress=progress)
 				continue
 
 			cached = cache.select(SLUG, parsed.id)
@@ -117,14 +117,7 @@ async def download(urls: list[str], data_folder: str):
 
 			domain = data['domain']
 			if domain not in REDDIT_DOMAINS:
-				logger.info(
-					'media is from',
-					domain,
-					url + ':',
-					data['url'],
-					end='\n',
-					progress=progress
-				)
+				logger.warn('media is from', domain, url + ':', data['url'], progress=progress)
 				if domain == 'imgur.com':
 					retry.add(data['url'])
 				elif domain == 'i.imgur.com':

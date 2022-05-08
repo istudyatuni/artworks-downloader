@@ -53,8 +53,6 @@ class Logger:
 		sep=None,
 		end=None
 	):
-		if quiet:
-			return
 		if verbose:
 			end = end if end else '\n'
 
@@ -76,6 +74,9 @@ class Logger:
 		sep=None,
 		end=None,
 	):
+		if quiet:
+			return
+
 		self._print(*values, progress=progress, sep=sep, end=end)
 
 	def verbose(
@@ -85,7 +86,16 @@ class Logger:
 		sep=None,
 		end=None,
 	):
-		if verbose is False:
+		if not verbose:
 			return
 
+		self._print(*values, progress=progress, sep=sep, end=end)
+
+	def warn(
+		self,
+		*values: object,
+		progress: Optional[Progress]=None,
+		sep=None,
+		end='\n',
+	):
 		self._print(*values, progress=progress, sep=sep, end=end)

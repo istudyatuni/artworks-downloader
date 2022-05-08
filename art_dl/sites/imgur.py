@@ -101,7 +101,7 @@ async def download(urls: list[str], data_folder: str):
 			parsed = parse_link(url)
 
 			if parsed.id is None:
-				logger.info('unsupported link', url, end='\n')
+				logger.warn('unsupported link', url)
 				continue
 
 			cached = cache.select(SLUG, parsed.id, as_json=True)
