@@ -1,12 +1,12 @@
 import art_dl.cache as cache
 
-RETRY_KEY = 'RETRY'
-
 class Retry:
+	KEY = 'RETRY'
+
 	_old_list = []
 
 	def get(self) -> list[str] | None:
-		return cache.select(None, RETRY_KEY, as_json=True)
+		return cache.select(None, self.KEY, as_json=True)
 
 	def add(self, to_retry: list[str] | str):
 		urls = self.get() or []
@@ -15,7 +15,7 @@ class Retry:
 		else:
 			urls.append(to_retry)
 
-		cache.insert(None, RETRY_KEY, urls, as_json=True)
+		cache.insert(None, self.KEY, urls, as_json=True)
 
 	def clear(self, *, force = False):
 		if force:
@@ -25,7 +25,7 @@ class Retry:
 			# replace old list instead of extend to not saving old urls
 			self._old_list = self.get() or []
 
-		cache.delete(None, RETRY_KEY)
+		cache.delete(None, self.KEY)
 
 	def __del__(self):
 		if len(self._old_list) > 0:
