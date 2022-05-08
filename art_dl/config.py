@@ -7,6 +7,7 @@ class Config():
 	def __init__(self):
 		if not exists(CONFIG_FILE):
 			self._config = {}
+			return
 
 		with open(CONFIG_FILE) as file:
 			self._config = load(file)
