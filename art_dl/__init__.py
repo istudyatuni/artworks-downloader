@@ -110,7 +110,7 @@ def run(urls: list[str], folder: str):
 	set_event_loop(loop)
 	loop.run_until_complete(process_list(urls, folder))
 
-def main():
+def _real_main():
 	if (result := prepare()) is None:
 		quit(0)
 
@@ -124,8 +124,11 @@ def main():
 
 	retry.clear(force=True)
 
-if __name__ == '__main__':
+def main():
 	try:
-		main()
+		_real_main()
 	except KeyboardInterrupt:
 		print('\nExiting')
+
+if __name__ == '__main__':
+	main()
