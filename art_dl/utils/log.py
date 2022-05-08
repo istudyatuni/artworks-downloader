@@ -1,5 +1,5 @@
 from shutil import get_terminal_size
-from typing import Optional
+from typing import Iterable, Optional
 
 from art_dl.utils.print import print_inline_end
 
@@ -28,12 +28,21 @@ class Progress:
 
 class Logger:
 	_log_prefix_str = None
+	_old_prefix_str = None
 	_inline = False
 
 	def __init__(self, *, prefix=None, inline=False) -> None:
 		self._inline = inline
 		if prefix is not None:
 			self.set_prefix(*prefix)
+
+	def _save_prefix(self, new_prefix: Iterable[str]):
+		self._old_prefix_str = self._log_prefix_str
+		self.set_prefix(*new_prefix)
+
+	def _restore_prefix(self):
+		self._log_prefix_str = self._old_prefix_str
+		self._old_prefix_str = None
 
 	def set_prefix(self, *parts: str, inline: bool | None=None):
 		if inline is not None:
@@ -56,7 +65,7 @@ class Logger:
 		return get_terminal_size().columns
 
 	@staticmethod
-	def _make_print_str(*values: object, sep=None):
+	def _make_print_str(*values: object, sep=None) -> str:
 		# this function is for reduce number of the same calculations
 		return (sep if sep else ' ').join(str(v) for v in values)
 
@@ -65,10 +74,14 @@ class Logger:
 		*values: object,
 		progress: Optional[Progress]=None,
 		sep=None,
-		end=None
+		end=None,
+		prefix:Iterable[str]|None=None,
 	):
 		if _verbose:
 			end = end if end else '\n'
+
+		if prefix is not None:
+			self._save_prefix(prefix)
 
 		to_print = list(values)
 		if progress is not None:
@@ -77,9 +90,11 @@ class Logger:
 			to_print.insert(0, self._log_prefix)
 		to_print = self._make_print_str(*to_print, sep=sep)
 
-		# -1 to make cursor visible (subtract '\r')
-		spaces_offset = self._term_width() - len(to_print) - 1
-		self._print_func(to_print, ' ' * spaces_offset, sep=sep, end=end)
+		spaces_offset = self._term_width() - len(to_print)
+		self._print_func(to_print + ' ' * spaces_offset, end=end)
+
+		if prefix is not None:
+			self._restore_prefix()
 
 	def info(
 		self,
@@ -87,11 +102,12 @@ class Logger:
 		progress: Optional[Progress]=None,
 		sep=None,
 		end=None,
+		prefix:Iterable[str]|None=None,
 	):
 		if _quiet:
 			return
 
-		self._print(*values, progress=progress, sep=sep, end=end)
+		self._print(*values, progress=progress, sep=sep, end=end, prefix=prefix)
 
 	def verbose(
 		self,
@@ -99,11 +115,12 @@ class Logger:
 		progress: Optional[Progress]=None,
 		sep=None,
 		end=None,
+		prefix:Iterable[str]|None=None,
 	):
 		if not _verbose:
 			return
 
-		self._print(*values, progress=progress, sep=sep, end=end)
+		self._print(*values, progress=progress, sep=sep, end=end, prefix=prefix)
 
 	def warn(
 		self,
@@ -111,8 +128,9 @@ class Logger:
 		progress: Optional[Progress]=None,
 		sep=None,
 		end='\n',
+		prefix:Iterable[str]|None=None,
 	):
-		self._print(*values, progress=progress, sep=sep, end=end)
+		self._print(*values, progress=progress, sep=sep, end=end, prefix=prefix)
 
 	@staticmethod
 	def newline(*, quiet = False, verbose = False, normal = False):
