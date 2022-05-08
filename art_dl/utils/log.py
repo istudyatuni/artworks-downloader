@@ -37,8 +37,9 @@ class Logger:
 			self._print_func = print_inline_end
 
 	def set_prefix(self, *parts: str, inline=False):
-		self._log_prefix = '[' + ']['.join(parts) + ']'
-		if inline:
+		if len(parts) > 0:
+			self._log_prefix = '[' + ']['.join(parts) + ']'
+		if inline and self._log_prefix is not None:
 			self._log_prefix = '\r' + self._log_prefix
 
 	@staticmethod

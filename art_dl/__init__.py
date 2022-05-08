@@ -6,6 +6,7 @@ import os.path
 
 from art_dl.creds import save_creds
 from art_dl.sites import download, register
+from art_dl.utils.cleanup import cleanup
 from art_dl.utils.log import Logger, set_verbosity
 from art_dl.utils.retry import retry
 
@@ -118,17 +119,20 @@ def _real_main():
 
 	run(urls, folder)
 	while (to_retry := retry.get()) is not None:
-		logger.info('retrying', len(to_retry), 'urls\n')
+		logger.info('retrying', len(to_retry), 'urls')
 		retry.clear()
 		run(to_retry, folder)
 
 	retry.clear(force=True)
 
 def main():
+	cleanup.clean()
 	try:
 		_real_main()
 	except KeyboardInterrupt:
-		print('\nExiting')
+		logger.set_prefix(inline=True)
+		logger.warn('interrupted by user, exiting')
+	cleanup.clean()
 
 if __name__ == '__main__':
 	main()
