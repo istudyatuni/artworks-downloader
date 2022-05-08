@@ -96,7 +96,7 @@ async def download(urls: list[str], data_folder: str):
 	# { '<artist>': [Project(1), ...] }
 	projects: dict[str, list[Project]] = defaultdict(list)
 
-	logger.set_prefix(SLUG, 'queue', inline=True)
+	logger.configure(prefix=[SLUG, 'queue'], inline=True)
 	for url in urls:
 		progress.i += 1
 
@@ -137,7 +137,7 @@ async def download(urls: list[str], data_folder: str):
 	logger.info(counter2str(stats), end='\n')
 
 	# download assets
-	logger.set_prefix(SLUG, 'download', inline=True)
+	logger.configure(prefix=[SLUG, 'download'], inline=True)
 	stats = Counter()
 	progress.i = 0
 	progress.total = sum(
@@ -163,5 +163,5 @@ async def download(urls: list[str], data_folder: str):
 					res = await fetch_asset(session, project.hash_id, asset, save_folder, sub)
 					stats.update({ res.value: 1 })
 
-	logger.set_prefix(SLUG, inline=True)
+	logger.configure(prefix=[SLUG], inline=True)
 	logger.info(counter2str(stats))

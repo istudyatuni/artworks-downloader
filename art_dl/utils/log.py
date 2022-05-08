@@ -1,5 +1,5 @@
 from shutil import get_terminal_size
-from typing import Iterable, Optional
+from typing import Optional
 
 def print_inline_end(*values: object, sep=None, end=None):
 	print(*values, sep=sep, end=end or '', flush=True)
@@ -35,21 +35,21 @@ class Logger:
 	def __init__(self, *, prefix=None, inline=False) -> None:
 		self._inline = inline
 		if prefix is not None:
-			self.set_prefix(*prefix)
+			self.configure(prefix=prefix)
 
-	def _save_prefix(self, new_prefix: Iterable[str]):
+	def _save_prefix(self, new_prefix: list[str]):
 		self._old_prefix_str = self._log_prefix_str
-		self.set_prefix(*new_prefix)
+		self.configure(prefix=new_prefix)
 
 	def _restore_prefix(self):
 		self._log_prefix_str = self._old_prefix_str
 		self._old_prefix_str = None
 
-	def set_prefix(self, *parts: str, inline: bool | None=None):
+	def configure(self, *, prefix: list[str] | None=None, inline: bool | None=None):
 		if inline is not None:
 			self._inline = inline
-		if len(parts) > 0:
-			self._log_prefix_str = '[' + ']['.join(parts) + ']'
+		if prefix and len(prefix) > 0:
+			self._log_prefix_str = '[' + ']['.join(prefix) + ']'
 
 	@property
 	def _print_func(self):
@@ -76,7 +76,7 @@ class Logger:
 		progress: Optional[Progress]=None,
 		sep=None,
 		end=None,
-		prefix:Iterable[str]|None=None,
+		prefix:list[str]|None=None,
 	):
 		if _verbose:
 			end = end if end else '\n'
@@ -103,7 +103,7 @@ class Logger:
 		progress: Optional[Progress]=None,
 		sep=None,
 		end=None,
-		prefix:Iterable[str]|None=None,
+		prefix:list[str]|None=None,
 	):
 		if _quiet:
 			return
@@ -116,7 +116,7 @@ class Logger:
 		progress: Optional[Progress]=None,
 		sep=None,
 		end=None,
-		prefix:Iterable[str]|None=None,
+		prefix:list[str]|None=None,
 	):
 		if not _verbose:
 			return
@@ -129,7 +129,7 @@ class Logger:
 		progress: Optional[Progress]=None,
 		sep=None,
 		end='\n',
-		prefix:Iterable[str]|None=None,
+		prefix:list[str]|None=None,
 	):
 		self._print(*values, progress=progress, sep=sep, end=end, prefix=prefix)
 

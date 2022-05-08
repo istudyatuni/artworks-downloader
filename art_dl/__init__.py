@@ -130,7 +130,7 @@ def main():
 	try:
 		_real_main()
 	except KeyboardInterrupt:
-		logger.set_prefix(inline=True)
+		logger.configure(inline=True)
 		logger.warn('interrupted by user, exiting')
 	cleanup.clean()
 
