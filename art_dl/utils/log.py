@@ -27,20 +27,29 @@ class Progress:
 		return f'{self.i}/{self.total}'
 
 class Logger:
-	_log_prefix = None
-	_print_func = print
+	_log_prefix_str = None
+	_inline = False
 
 	def __init__(self, *, prefix=None, inline=False) -> None:
+		self._inline = inline
 		if prefix is not None:
-			self.set_prefix(*prefix, inline=inline)
-		if inline:
-			self._print_func = print_inline_end
+			self.set_prefix(*prefix)
 
-	def set_prefix(self, *parts: str, inline=False):
+	def set_prefix(self, *parts: str, inline: bool | None=None):
+		if inline is not None:
+			self._inline = inline
 		if len(parts) > 0:
-			self._log_prefix = '[' + ']['.join(parts) + ']'
-		if inline and self._log_prefix is not None:
-			self._log_prefix = '\r' + self._log_prefix
+			self._log_prefix_str = '[' + ']['.join(parts) + ']'
+
+	@property
+	def _print_func(self):
+		return print_inline_end if self._inline else print
+
+	@property
+	def _log_prefix(self):
+		if self._log_prefix_str is not None:
+			prefix = '\r' if self._inline else ''
+			return prefix + self._log_prefix_str
 
 	@staticmethod
 	def _term_width():
