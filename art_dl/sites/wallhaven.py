@@ -92,7 +92,7 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 	if with_key:
 		# second check only for LSP (typechecking)
 		if has_api_key and creds is not None:
-			logger.info('using api_key')
+			logger.info('using api_key', end='\n')
 			params = { 'apikey': creds[SLUG]['api_key'] }
 		else:
 			logger.warn('you should add api_key')
@@ -159,6 +159,7 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 	logger.info(counter2str(stats))
 
 	if len(retry_with_key) > 0:
+		logger.newline(normal=True)
 		return await download(retry_with_key, data_folder, True)
 
 def register():
