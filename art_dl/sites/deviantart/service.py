@@ -5,15 +5,16 @@ from typing import Any, AsyncGenerator
 
 from .common import (
 	BASE_URL,
+	logger,
 	make_cache_key,
 	OAUTH_KEY,
+	progress,
 	REDIRECT_URI,
 	SLUG,
 )
-import art_dl.cache as cache
 from art_dl.creds import get_creds, save_creds
 from art_dl.proxy import ClientSession, ProxyClientSession
-from art_dl.utils.print import print_inline
+import art_dl.cache as cache
 
 API_URL = '/api/v1/oauth2'
 # start from 32 instead of 1 to skip small timeouts because
@@ -22,6 +23,8 @@ API_URL = '/api/v1/oauth2'
 # (I don't know why, maybe it not works everytime)
 DEFAULT_RATE_LIMIT_TIMEOUT = 32
 INVALID_CODE_MSG = 'Incorrect authorization code.'
+
+AUTH_LOG_PREFIX = [SLUG, 'auth']
 
 # TODO: add revoke
 # https://www.deviantart.com/developers/authentication
@@ -72,7 +75,7 @@ class DAService():
 	async def _fetch_access_token(self):
 		"""Fetch `access_token` using `authorization_code`"""
 		if self.code is None:
-			print('Authorize app first')
+			logger.warn('authorize app first', prefix=AUTH_LOG_PREFIX)
 			quit(1)
 
 		params = {
@@ -103,14 +106,19 @@ class DAService():
 			async with session.post('/oauth2/token', params=params) as response:
 				data = await response.json()
 				if 'error' in data:
-					print('An error occured during authorization\n ', data['error_description'])
+					logger.warn(
+						'an error occured during authorization:',
+						data['error_description'],
+						prefix=AUTH_LOG_PREFIX
+					)
 					quit(1)
 				elif response.ok:
 					self.access_token = data['access_token']
 					self.refresh_token = data['refresh_token']
 					self._save_tokens()
 				elif data['error_description'] == INVALID_CODE_MSG:
-					print('Please authorize again') # or refresh token instead
+					logger.warn('please authorize again', prefix=AUTH_LOG_PREFIX)
+					# or refresh token instead
 
 	async def _pager(
 		self,
@@ -135,19 +143,20 @@ class DAService():
 			) as response:
 				data = await response.json()
 
+				# Rate limit: https://www.deviantart.com/developers/errors
 				if response.status == 429:
-					# Rate limit: https://www.deviantart.com/developers/errors
-					if rate_limit_sec == DEFAULT_RATE_LIMIT_TIMEOUT:
-						print(
-							'Rate limit in pager (' +
-							params['username'] +
-							'), offset',
-							params['offset']
-						)
-					elif rate_limit_sec > 64 * 10:  # 10 min
+					if rate_limit_sec > 64 * 10:  # 10 min
 						await self._ensure_access()
 
-					print_inline('Retrying in', rate_limit_sec, 'sec')
+					u = params['username']
+					logger.info(
+						f'rate limit in pager ({u}), offset',
+						params['offset'] + ',',
+						'retrying in',
+						rate_limit_sec,
+						'sec',
+						progress=progress
+					)
 					await sleep(rate_limit_sec)
 
 					rate_limit_sec *= 2
@@ -155,10 +164,13 @@ class DAService():
 				elif rate_limit_sec != DEFAULT_RATE_LIMIT_TIMEOUT:
 					rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT
 					await self._ensure_access()
-					print()
 				elif 'error' in data:
-					print('An error occured during fetching', response.url)
-					print(' ', data['error_description'])
+					logger.warn(
+						'an error occured during fetching',
+						response.url,
+						progress=progress
+					)
+					logger.warn(' ', data['error_description'])
 					quit(1)
 
 				response.raise_for_status()
@@ -181,18 +193,18 @@ class DAService():
 				name = folder['name']
 				# i don't know what is this, so just tell about
 				if folder['has_subfolders'] is True:
-					print('Folder', name, 'has subfolders, but this feature currently not supported')
+					logger.warn('folder', name, 'has subfolders, but this feature currently not supported')
 				yield {
 					'id': folder['folderid'],
 					'name': name.lower().replace(' ', '-'),
 					'pretty_name': name,
 				}
 
-	async def list_folder_arts(self, username: str, folder: str) -> AsyncGenerator[Any, None]:
+	async def list_folder_arts(self, username: str, folder_id: str) -> AsyncGenerator[Any, None]:
 		await self._ensure_access()
 
 		params = { 'username': username }
-		url = f'{API_URL}/gallery/{folder}'
+		url = f'{API_URL}/gallery/{folder_id}'
 		async with ProxyClientSession(BASE_URL, headers=self._headers) as session:
 			async for art in self._pager(session, 'GET', url, params=params):
 				if art is not None:
@@ -211,8 +223,11 @@ class DAService():
 			async with session.get(url) as response:
 				data = await response.json()
 				if 'error' in data:
-					print('Error when getting download link:', data['error_description'])
-					return None
+					logger.warn(
+						'error when getting download link:', data['error_description'],
+						progress=progress
+					)
+					return
 				return data['src']
 
 	async def get_art_info(self, deviationid: str, _rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT):
@@ -222,14 +237,20 @@ class DAService():
 		async with ProxyClientSession(BASE_URL, headers=self._headers) as session:
 			async with session.get(url) as response:
 				if response.status == 429:
-					print_inline('Rate limit reached, spleeping for', _rate_limit_sec, 'seconds')
+					logger.info(
+						'rate limit reached, spleeping for', _rate_limit_sec, 'seconds',
+						progress=progress
+					)
 					await sleep(_rate_limit_sec)
 					return await self.get_art_info(deviationid, _rate_limit_sec * 2)
 				elif _rate_limit_sec > DEFAULT_RATE_LIMIT_TIMEOUT:
-					print()
+					pass
 
 				data = await response.json()
 				if 'error' in data:
-					print('Error when getting art info:', data['error_description'])
-					return None
+					logger.warn(
+						'error when getting art info:', data['error_description'],
+						progress=progress
+					)
+					return
 				return data

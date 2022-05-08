@@ -1,16 +1,17 @@
 # from aiohttp import ClientSession
-from collections import defaultdict
+from collections import Counter, defaultdict
 from glob import glob
 from typing import Any
 from urllib.parse import urlparse
 import os.path
 
+from .common import logger, progress
 from .service import DAService
 from art_dl.proxy import ClientSession, ProxyClientSession
 from art_dl.sites.deviantart.common import SLUG, make_cache_key
 from art_dl.utils.download import download_binary
 from art_dl.utils.path import mkdir
-from art_dl.utils.print import print_inline_end
+from art_dl.utils.print import counter2str
 import art_dl.cache as cache
 
 def parse_link(url: str) -> dict[str, str]:
@@ -37,34 +38,26 @@ def parse_link(url: str) -> dict[str, str]:
 		# https://www.deviantart.com/<artist>/art/<name>
 		return { 'type': 'art', 'url': url, 'artist': artist, 'name': path[2] }
 
-	print('Unsupported link:', url)
 	return { 'type': 'unknown', 'artist': artist }
 
 # download images
 
 async def save_from_url(session: ClientSession, url: str, folder: str, name: str):
-	indent_str = '  '
-
 	ext = os.path.splitext(urlparse(url).path)[1]
 	filename = os.path.join(folder, name + ext)
 	if os.path.exists(filename):
-		return print(indent_str + 'Skip existing:', name)
+		return logger.info('skip existing file', name, progress=progress)
 
-	print_inline_end(indent_str + 'Download:', name)
+	logger.info('download file', name, progress=progress)
 	await download_binary(session, url, filename)
-	print('OK')
 
-async def save_art(
-	service: DAService,
-	session: ClientSession,
-	art: Any,
-	folder: str
-):
-	name = art['url'].split('/')[-1]
+async def save_art(service: DAService, session: ClientSession, art: Any, folder: str):
+	url: str = art['url']
+	name = url.rsplit('/', 1)[-1]
 
 	if (premium_folder_data := art.get('premium_folder_data')) is not None:
 		if premium_folder_data['has_access'] is False:
-			print('  No access to', name + ':', 'downloading preview')
+			logger.warn('no access to', name + ',', 'downloading preview', progress=progress)
 
 	if (
 		art['is_downloadable'] is False or
@@ -78,15 +71,10 @@ async def save_art(
 
 # wrappers for common actions
 
-async def download_folder_by_id(
-	service: DAService,
-	save_folder: str,
-	artist: str,
-	folder: str
-):
+async def download_folder_by_id(service: DAService, save_folder: str, artist: str, folder_id: str):
 	# this session for downloading images
 	async with ProxyClientSession() as session:
-		async for art in service.list_folder_arts(artist, folder):
+		async for art in service.list_folder_arts(artist, folder_id):
 			await save_art(service, session, art, save_folder)
 
 async def download_art_by_id(service: DAService, deviationid: str, folder: str):
@@ -102,6 +90,9 @@ def is_art_exists(folder: str, artist: str, name: str):
 # main functions
 
 async def download(urls: list[str], data_folder: str):
+	stats = Counter()
+	progress.total = len(urls)
+
 	service = DAService()
 
 	# ['artist1', ...]
@@ -123,48 +114,68 @@ async def download(urls: list[str], data_folder: str):
 		elif t == 'art':
 			n = parsed['name']
 			if is_art_exists(data_folder, a, n):
-				print('Skip existing:', a + '/' + n)
+				stats.update(skip=1)
+				progress.i += 1
+
+				logger.info('skip existing', a + '/' + n, progress=progress)
 				continue
 
 			deviationid = cache.select(SLUG, make_cache_key(a, u))
 			if deviationid is not None:
-				print('Download cached:', a + '/' + n)
+				stats.update(download=1)
+				progress.i += 1
+
+				logger.info('download cached', a + '/' + n, progress=progress)
 				save_folder = os.path.join(data_folder, a)
 				mkdir(save_folder)
 				await download_art_by_id(service, deviationid, save_folder)
 				continue
 
 			mapping_art[a].append({ 'name': n, 'url': u })
+		elif t == 'unknown':
+			stats.update(skip=1)
+			progress.i += 1
+
+			logger.warn('unsupported link', u, progress=progress)
+			continue
 
 	# process
 
 	# save artists all arts
 	for artist in mapping_all:
+		stats.update(download=1)
+		progress.i += 1
+
 		save_folder = os.path.join(data_folder, artist)
 		mkdir(save_folder)
-		print('\nArtist', artist)
+		logger.info('artist', artist, progress=progress)
 
 		await download_folder_by_id(service, save_folder, artist, 'all')
 
 	# save collections
 	for artist, folder_list in mapping_folder.items():
+		stats.update(download=1)
+		progress.i += 1
+
 		save_folder = os.path.join(data_folder, artist)
 		mkdir(save_folder)
-		print('\nArtist', artist)
+		logger.info('artist', artist, progress=progress)
 
 		async for folder in service.list_folders(artist):
 			if folder['name'] in folder_list:
-				print('Gallery', folder['pretty_name'])
+				logger.info('gallery', folder['pretty_name'], progress=progress)
 				await download_folder_by_id(service, save_folder, artist, folder['id'])
 
 	# save single arts
 	async with ProxyClientSession() as session:
 		for artist, art_list in mapping_art.items():
+			progress.i += 1
+
 			all_urls = set(map(lambda a: a['url'], art_list))
 
 			save_folder = os.path.join(data_folder, artist)
 			mkdir(save_folder)
-			print('\nArtist', artist)
+			logger.info('artist', artist, progress=progress)
 
 			async for art in service.list_folder_arts(artist, 'all'):
 				url = art['url']
@@ -176,6 +187,11 @@ async def download(urls: list[str], data_folder: str):
 						break
 
 			if len(all_urls) > 0:
-				print('Not found', len(all_urls), 'arts (' + artist + '):')
+				stats.update(partial_download=1)
+				logger.warn('not found', len(all_urls), f'arts ({artist}):', progress=progress)
 				for u in all_urls:
-					print(' ', u)
+					logger.warn(' ', u)
+			else:
+				stats.update(download=1)
+
+	logger.info(counter2str(stats))

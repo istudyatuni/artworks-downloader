@@ -1,7 +1,8 @@
 from shutil import get_terminal_size
 from typing import Iterable, Optional
 
-from art_dl.utils.print import print_inline_end
+def print_inline_end(*values: object, sep=None, end=None):
+	print(*values, sep=sep, end=end or '', flush=True)
 
 _verbose = False
 _quiet = False
