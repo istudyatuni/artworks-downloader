@@ -3,15 +3,15 @@ from typing import Optional
 
 from art_dl.utils.print import print_inline_end
 
-verbose = False
-quiet = False
+_verbose = False
+_quiet = False
 
 def set_verbosity(q: bool = False, v: bool = False):
-	global quiet
-	global verbose
-	quiet = q
-	verbose = v
-	if verbose and quiet:
+	global _quiet
+	global _verbose
+	_quiet = q
+	_verbose = v
+	if _verbose and _quiet:
 		# is it ok to do that?
 		raise Exception('log configuration error: both quiet and verbose are True')
 
@@ -57,7 +57,7 @@ class Logger:
 		sep=None,
 		end=None
 	):
-		if verbose:
+		if _verbose:
 			end = end if end else '\n'
 
 		to_print = list(values)
@@ -78,7 +78,7 @@ class Logger:
 		sep=None,
 		end=None,
 	):
-		if quiet:
+		if _quiet:
 			return
 
 		self._print(*values, progress=progress, sep=sep, end=end)
@@ -90,7 +90,7 @@ class Logger:
 		sep=None,
 		end=None,
 	):
-		if not verbose:
+		if not _verbose:
 			return
 
 		self._print(*values, progress=progress, sep=sep, end=end)
@@ -103,3 +103,16 @@ class Logger:
 		end='\n',
 	):
 		self._print(*values, progress=progress, sep=sep, end=end)
+
+	@staticmethod
+	def newline(*, quiet = False, verbose = False, normal = False):
+		"""
+		Pass `quiet=True` to print when quiet enabled, `verbose=True` to print
+		when verbose enabled, `normal=True` when not quiet and not verbose enabled
+		"""
+		if (
+			quiet and _quiet or
+			verbose and _verbose or
+			normal and _quiet is False and _verbose is False
+		):
+			print()

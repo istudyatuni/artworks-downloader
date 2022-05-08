@@ -66,7 +66,7 @@ async def process_list(urls: list[str], folder: str):
 
 		save_folder = os.path.join(folder, slug)
 		await download(slug)(l, save_folder)
-		print()
+		logger.newline(normal=True)
 
 def prepare() -> Optional[Tuple[list[str], str]]:
 	args = parse_args()
