@@ -6,12 +6,12 @@ from art_dl.redirect_server import run as run_redirect_catch_server
 
 AUTH_URL = BASE_URL + '/oauth2/authorize'
 
+
 def ask_app_creds():
 	creds = get_creds()
 	if (
-		creds is not None and
-		creds.get(SLUG) is not None and
-		creds[SLUG].get('client_id') is not None
+		creds is not None and creds.get(SLUG) is not None
+		and creds[SLUG].get('client_id') is not None
 	):
 		ans = input('Application data already saved, again? [y/N] ')
 		if ans.lower() in ['n', '']:
@@ -27,12 +27,15 @@ def ask_app_creds():
 		'client_secret': input('Enter client_secret: ')
 	}
 
+
 def register():
 	"""Authorize application"""
 	creds = {
 		SLUG: {
 			**ask_app_creds(),
-			OAUTH_KEY: { 'code': None },
+			OAUTH_KEY: {
+				'code': None
+			},
 		}
 	}
 

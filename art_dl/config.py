@@ -3,7 +3,9 @@ from os.path import exists
 
 CONFIG_FILE = 'config.json'
 
+
 class Config():
+
 	def __init__(self):
 		if not exists(CONFIG_FILE):
 			self._config = {}
@@ -14,5 +16,6 @@ class Config():
 
 	def get(self, key: str, default=None):
 		return self._config.get(key, default)
+
 
 config = Config()

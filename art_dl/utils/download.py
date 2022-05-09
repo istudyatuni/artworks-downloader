@@ -3,6 +3,7 @@ from aiohttp import ClientSession
 
 from art_dl.utils.cleanup import cleanup
 
+
 async def download_binary(session: ClientSession, url: str, filename: str):
 	async with session.get(url, raise_for_status=True) as response:
 		cleanup.set(filename)

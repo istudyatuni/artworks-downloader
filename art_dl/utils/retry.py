@@ -1,5 +1,6 @@
 import art_dl.cache as cache
 
+
 class Retry:
 	KEY = 'RETRY'
 
@@ -17,7 +18,7 @@ class Retry:
 
 		cache.insert(None, self.KEY, urls, as_json=True)
 
-	def clear(self, *, force = False):
+	def clear(self, *, force=False):
 		if force:
 			self._old_list = []
 		else:
@@ -30,5 +31,6 @@ class Retry:
 	def __del__(self):
 		if len(self._old_list) > 0:
 			self.add(self._old_list)
+
 
 retry = Retry()

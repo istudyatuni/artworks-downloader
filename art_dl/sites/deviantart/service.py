@@ -26,10 +26,12 @@ INVALID_CODE_MSG = 'Incorrect authorization code.'
 
 AUTH_LOG_PREFIX = [SLUG, 'auth']
 
+
 # TODO: add revoke
 # https://www.deviantart.com/developers/authentication
 class DAService():
 	"""Perform almost all work with auth and API"""
+
 	def __init__(self):
 		self.creds = get_creds() or {}
 		if self.creds is None:
@@ -50,7 +52,9 @@ class DAService():
 
 	@property
 	def _headers(self):
-		return { 'authorization': self._auth_header }
+		return {
+			'authorization': self._auth_header
+		}
 
 	def _save_tokens(self):
 		creds = deepcopy(self.creds)
@@ -64,9 +68,9 @@ class DAService():
 			return await self._fetch_access_token()
 
 		async with ProxyClientSession(BASE_URL) as session:
-			async with session.post('/api/v1/oauth2/placebo', params={
-				'access_token': self.access_token
-			}) as response:
+			async with session.post(
+				'/api/v1/oauth2/placebo', params={ 'access_token': self.access_token }
+			) as response:
 				if (await response.json())['status'] == 'success':
 					return
 
@@ -120,13 +124,8 @@ class DAService():
 					logger.warn('please authorize again', prefix=AUTH_LOG_PREFIX)
 					# or refresh token instead
 
-	async def _pager(
-		self,
-		session: ClientSession,
-		method: str,
-		url: str,
-		**kwargs
-	) -> AsyncGenerator[Any, None]:
+	async def _pager(self, session: ClientSession, method: str, url: str,
+						**kwargs) -> AsyncGenerator[Any, None]:
 		rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT
 		params = {
 			**kwargs.pop('params', {}),
@@ -135,12 +134,7 @@ class DAService():
 			'mature_content': 'true',
 		}
 		while True:
-			async with session.request(
-				method,
-				url,
-				params=params,
-				**kwargs
-			) as response:
+			async with session.request(method, url, params=params, **kwargs) as response:
 				data = await response.json()
 
 				# Rate limit: https://www.deviantart.com/developers/errors
@@ -165,11 +159,7 @@ class DAService():
 					rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT
 					await self._ensure_access()
 				elif 'error' in data:
-					logger.warn(
-						'an error occured during fetching',
-						response.url,
-						progress=progress
-					)
+					logger.warn('an error occured during fetching', response.url, progress=progress)
 					logger.warn(' ', data['error_description'])
 					quit(1)
 
@@ -186,14 +176,18 @@ class DAService():
 	async def list_folders(self, username: str) -> AsyncGenerator[Any, None]:
 		await self._ensure_access()
 
-		params = { 'username': username }
+		params = {
+			'username': username
+		}
 		url = f'{API_URL}/gallery/folders'
 		async with ProxyClientSession(BASE_URL, headers=self._headers) as session:
 			async for folder in self._pager(session, 'GET', url, params=params):
 				name = folder['name']
 				# i don't know what is this, so just tell about
 				if folder['has_subfolders'] is True:
-					logger.warn('folder', name, 'has subfolders, but this feature currently not supported')
+					logger.warn(
+						'folder', name, 'has subfolders, but this feature currently not supported'
+					)
 				yield {
 					'id': folder['folderid'],
 					'name': name.lower().replace(' ', '-'),
@@ -203,14 +197,15 @@ class DAService():
 	async def list_folder_arts(self, username: str, folder_id: str) -> AsyncGenerator[Any, None]:
 		await self._ensure_access()
 
-		params = { 'username': username }
+		params = {
+			'username': username
+		}
 		url = f'{API_URL}/gallery/{folder_id}'
 		async with ProxyClientSession(BASE_URL, headers=self._headers) as session:
 			async for art in self._pager(session, 'GET', url, params=params):
 				if art is not None:
 					cache.insert(
-						SLUG,
-						make_cache_key(art['author']['username'], art['url']),
+						SLUG, make_cache_key(art['author']['username'], art['url']),
 						art['deviationid']
 					)
 				yield art
@@ -224,13 +219,14 @@ class DAService():
 				data = await response.json()
 				if 'error' in data:
 					logger.warn(
-						'error when getting download link:', data['error_description'],
+						'error when getting download link:',
+						data['error_description'],
 						progress=progress
 					)
 					return
 				return data['src']
 
-	async def get_art_info(self, deviationid: str, _rate_limit_sec = DEFAULT_RATE_LIMIT_TIMEOUT):
+	async def get_art_info(self, deviationid: str, _rate_limit_sec=DEFAULT_RATE_LIMIT_TIMEOUT):
 		await self._ensure_access()
 
 		url = f'{API_URL}/deviation/{deviationid}'
@@ -238,7 +234,9 @@ class DAService():
 			async with session.get(url) as response:
 				if response.status == 429:
 					logger.info(
-						'rate limit reached, spleeping for', _rate_limit_sec, 'seconds',
+						'rate limit reached, spleeping for',
+						_rate_limit_sec,
+						'seconds',
 						progress=progress
 					)
 					await sleep(_rate_limit_sec)
@@ -249,7 +247,8 @@ class DAService():
 				data = await response.json()
 				if 'error' in data:
 					logger.warn(
-						'error when getting art info:', data['error_description'],
+						'error when getting art info:',
+						data['error_description'],
 						progress=progress
 					)
 					return

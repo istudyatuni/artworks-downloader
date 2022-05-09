@@ -26,15 +26,21 @@ SLUGS = {
 
 logger = Logger(prefix=['main'])
 
+
 def detect_site(url: str) -> str | None:
 	return SLUGS.get(urlparse(url).netloc)
+
 
 def parse_args():
 	parser = ArgumentParser(description='Artworks downloader')
 
 	parser.add_argument('-u', '--url', type=str, help='URL to download')
-	parser.add_argument('-l', '--list', type=str, help='File with list of URLs to download', default=None)
-	parser.add_argument('--folder', type=str, help='Folder to save artworks. Default folder - data', default='data')
+	parser.add_argument(
+		'-l', '--list', type=str, help='File with list of URLs to download', default=None
+	)
+	parser.add_argument(
+		'--folder', type=str, help='Folder to save artworks. Default folder - data', default='data'
+	)
 
 	parser.add_argument('--action', type=str, default=None)
 
@@ -42,6 +48,7 @@ def parse_args():
 	parser.add_argument('-v', '--verbose', action='store_true', help='Show more logs')
 
 	return parser.parse_args()
+
 
 async def process_list(urls: list[str], folder: str):
 	if len(urls) == 0:
@@ -51,7 +58,8 @@ async def process_list(urls: list[str], folder: str):
 		logger.info('no link')
 		return
 
-	mapping: dict[str, list[str]] = {s: [] for s in SLUGS.values()}
+	mapping: dict[str, list[str]] = { s: []
+										for s in SLUGS.values() }
 	for u in urls:
 		site_slug = detect_site(u)
 		if site_slug is None:
@@ -68,6 +76,7 @@ async def process_list(urls: list[str], folder: str):
 		save_folder = os.path.join(folder, slug)
 		await download(slug)(l, save_folder)
 		logger.newline(normal=True)
+
 
 def prepare() -> Optional[Tuple[list[str], str]]:
 	args = parse_args()
@@ -105,10 +114,12 @@ def prepare() -> Optional[Tuple[list[str], str]]:
 
 	return to_dl, folder
 
+
 def run(urls: list[str], folder: str):
 	loop = new_event_loop()
 	set_event_loop(loop)
 	loop.run_until_complete(process_list(urls, folder))
+
 
 def _real_main():
 	if (result := prepare()) is None:
@@ -124,6 +135,7 @@ def _real_main():
 
 	retry.clear(force=True)
 
+
 def main():
 	cleanup.clean()
 	try:
@@ -132,6 +144,7 @@ def main():
 		logger.configure(inline=True)
 		logger.warn('interrupted by user, exiting')
 	cleanup.clean()
+
 
 if __name__ == '__main__':
 	main()

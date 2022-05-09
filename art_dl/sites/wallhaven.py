@@ -21,12 +21,15 @@ API_URL = 'https://wallhaven.cc/api/v1/w/'
 logger = Logger(prefix=[SLUG, 'download'], inline=True)
 progress = Progress()
 
+
 class FetchDataAction(Enum):
 	download = 0
 	retry_with_key = 1
 	skip = 2
 
+
 Parsed = namedtuple('Parsed', ['id'])
+
 
 def parse_link(url: str):
 	parsed = urlparse(url)
@@ -39,6 +42,7 @@ def parse_link(url: str):
 
 	# https://whvn.cc/<id>
 	return Parsed(path[0])
+
 
 async def fetch_data(
 	session: ClientSession,
@@ -74,7 +78,8 @@ async def fetch_data(
 			}
 			return data, FetchDataAction.download
 
-async def download(urls: list[str], data_folder: str, with_key = False):
+
+async def download(urls: list[str], data_folder: str, with_key=False):
 	mkdir(data_folder)
 
 	stats = Counter()  # type: ignore
@@ -84,16 +89,16 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 
 	creds = get_creds()
 	has_api_key = not (
-		creds is None or
-		creds.get(SLUG) is None or
-		creds[SLUG].get('api_key') is None
+		creds is None or creds.get(SLUG) is None or creds[SLUG].get('api_key') is None
 	)
 
 	if with_key:
 		# second check only for LSP (typechecking)
 		if has_api_key and creds is not None:
 			logger.info('using api_key', end='\n')
-			params = { 'apikey': creds[SLUG]['api_key'] }
+			params = {
+				'apikey': creds[SLUG]['api_key']
+			}
 		else:
 			logger.warn('you should add api_key')
 			return
@@ -125,13 +130,7 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 			cached = cache.select(SLUG, parsed.id, as_json=True)
 
 			if cached is None:
-				data, action = await fetch_data(
-					session,
-					parsed.id,
-					params,
-					with_key,
-					has_api_key
-				)
+				data, action = await fetch_data(session, parsed.id, params, with_key, has_api_key)
 
 				if action == FetchDataAction.retry_with_key:
 					stats.update(will_retry=1)
@@ -162,22 +161,25 @@ async def download(urls: list[str], data_folder: str, with_key = False):
 		logger.newline(normal=True)
 		return await download(retry_with_key, data_folder, True)
 
+
 def register():
 	"""Ask key"""
 	creds = get_creds()
 	if (
-		creds is not None and
-		creds.get(SLUG) is not None and
-		creds[SLUG].get('api_key') is not None
+		creds is not None and creds.get(SLUG) is not None and creds[SLUG].get('api_key') is not None
 	):
 		ans = input('Key already saved, again? [y/N] ')
 		if ans.lower() in ['n', '']:
 			return {
-				SLUG: { 'api_key': creds[SLUG]['api_key'] }
+				SLUG: {
+					'api_key': creds[SLUG]['api_key']
+				}
 			}
 		elif ans.lower() != 'y':
 			print('What?')
 			quit(1)
 	return {
-		SLUG: { 'api_key': input('Enter api_key: ') }
+		SLUG: {
+			'api_key': input('Enter api_key: ')
+		}
 	}

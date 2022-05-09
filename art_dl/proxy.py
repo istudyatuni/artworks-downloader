@@ -5,10 +5,13 @@ from art_dl.config import config
 
 __all__ = ['ClientSession', 'ProxyClientSession']
 
+
 def _can_use_proxy_url(url: str | None):
 	return url is not None and url != ''
 
+
 class ProxyClientSession(ClientSession):
+
 	def __init__(self, *args, **kwargs):
 		proxy_url = config.get('proxy')
 		if kwargs.get('connector') is None and _can_use_proxy_url(proxy_url):

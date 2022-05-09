@@ -8,6 +8,7 @@ from typing import Any, Callable
 
 saver_func = lambda _: None
 
+
 @web.middleware
 async def middleware(request: web.Request, handler: Handler):
 	resp = await handler(request)
@@ -23,14 +24,15 @@ async def middleware(request: web.Request, handler: Handler):
 
 	return resp
 
+
 async def redirect_handler(request: web.Request):
 	if 'error' in request.query:
 		return web.Response(
-			text='An error occurred: ' + request.query['error_description'],
-			status=400
+			text='An error occurred: ' + request.query['error_description'], status=400
 		)
 	else:
 		return web.Response(text='Authorized', status=200)
+
 
 def run(url: str, saver: Callable[[Any], None]):
 	global saver_func
@@ -41,6 +43,7 @@ def run(url: str, saver: Callable[[Any], None]):
 	app = web.Application(middlewares=[middleware])
 	app.router.add_get('/', redirect_handler)
 	web.run_app(app, host='localhost', port=23445)
+
 
 if __name__ == '__main__':
 	print('Do not run this directly')

@@ -14,6 +14,7 @@ from art_dl.utils.path import mkdir
 from art_dl.utils.print import counter2str
 import art_dl.cache as cache
 
+
 def parse_link(url: str) -> dict[str, str]:
 	parsed = urlparse(url)
 	path = parsed.path.lstrip('/').split('/')
@@ -22,25 +23,46 @@ def parse_link(url: str) -> dict[str, str]:
 	if len(path) == 1 or (len(path) > 2 and path[2] == 'all'):
 		# https://www.deviantart.com/<artist>
 		# https://www.deviantart.com/<artist>/gallery/all
-		return { 'type': 'all', 'artist': artist }
+		return {
+			'type': 'all',
+			'artist': artist
+		}
 
 	if len(path) == 2 and path[1] == 'gallery':
 		# https://www.deviantart.com/<artist>/gallery
 		# it's "Featured" collection
-		return { 'type': 'folder', 'folder': 'featured', 'artist': artist }
+		return {
+			'type': 'folder',
+			'folder': 'featured',
+			'artist': artist
+		}
 
 	if path[1] == 'gallery':
 		# https://www.deviantart.com/<artist>/gallery/<some number>/<gallery name>
 		# gallery name in format one-two-etc
-		return { 'type': 'folder', 'folder': path[3], 'artist': artist }
+		return {
+			'type': 'folder',
+			'folder': path[3],
+			'artist': artist
+		}
 
 	if path[1] == 'art':
 		# https://www.deviantart.com/<artist>/art/<name>
-		return { 'type': 'art', 'url': url, 'artist': artist, 'name': path[2] }
+		return {
+			'type': 'art',
+			'url': url,
+			'artist': artist,
+			'name': path[2]
+		}
 
-	return { 'type': 'unknown', 'artist': artist }
+	return {
+		'type': 'unknown',
+		'artist': artist
+	}
+
 
 # download images
+
 
 async def save_from_url(session: ClientSession, url: str, folder: str, name: str):
 	ext = os.path.splitext(urlparse(url).path)[1]
@@ -51,6 +73,7 @@ async def save_from_url(session: ClientSession, url: str, folder: str, name: str
 	logger.info('download file', name, progress=progress)
 	await download_binary(session, url, filename)
 
+
 async def save_art(service: DAService, session: ClientSession, art: Any, folder: str):
 	url: str = art['url']
 	name = url.rsplit('/', 1)[-1]
@@ -59,17 +82,16 @@ async def save_art(service: DAService, session: ClientSession, art: Any, folder:
 		if premium_folder_data['has_access'] is False:
 			logger.warn('no access to', name + ',', 'downloading preview', progress=progress)
 
-	if (
-		art['is_downloadable'] is False or
-		art['download_filesize'] == art['content']['filesize']
-	):
+	if (art['is_downloadable'] is False or art['download_filesize'] == art['content']['filesize']):
 		return await save_from_url(session, art['content']['src'], folder, name)
 
 	original_url = await service.get_download(art['deviationid'])
 	if original_url is not None:
 		await save_from_url(session, original_url, folder, name)
 
+
 # wrappers for common actions
+
 
 async def download_folder_by_id(service: DAService, save_folder: str, artist: str, folder_id: str):
 	# this session for downloading images
@@ -77,17 +99,22 @@ async def download_folder_by_id(service: DAService, save_folder: str, artist: st
 		async for art in service.list_folder_arts(artist, folder_id):
 			await save_art(service, session, art, save_folder)
 
+
 async def download_art_by_id(service: DAService, deviationid: str, folder: str):
 	art = await service.get_art_info(deviationid)
 	async with ProxyClientSession() as session:
 		await save_art(service, session, art, folder)
 
+
 # helpers
+
 
 def is_art_exists(folder: str, artist: str, name: str):
 	return len(glob(f'{folder}/{artist}/{name}.*')) > 0
 
+
 # main functions
+
 
 async def download(urls: list[str], data_folder: str):
 	stats = Counter()  # type: ignore
@@ -131,7 +158,10 @@ async def download(urls: list[str], data_folder: str):
 				await download_art_by_id(service, deviationid, save_folder)
 				continue
 
-			mapping_art[a].append({ 'name': n, 'url': u })
+			mapping_art[a].append({
+				'name': n,
+				'url': u
+			})
 		elif t == 'unknown':
 			stats.update(skip=1)
 			progress.i += 1

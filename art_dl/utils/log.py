@@ -1,11 +1,14 @@
 from shutil import get_terminal_size
 from typing import Optional
 
+
 def print_inline_end(*values: object, sep=None, end=None):
 	print(*values, sep=sep, end=end or '', flush=True)
 
+
 _verbose = False
 _quiet = False
+
 
 def set_verbosity(q: bool = False, v: bool = False):
 	global _quiet
@@ -15,6 +18,7 @@ def set_verbosity(q: bool = False, v: bool = False):
 	if _verbose and _quiet:
 		# is it ok to do that?
 		raise Exception('log configuration error: both quiet and verbose are True')
+
 
 class Progress:
 	i: int = 0
@@ -26,6 +30,7 @@ class Progress:
 
 	def __str__(self) -> str:
 		return f'{self.i}/{self.total}'
+
 
 class Logger:
 	_log_prefix_str = None
@@ -45,7 +50,7 @@ class Logger:
 		self._log_prefix_str = self._old_prefix_str
 		self._old_prefix_str = None
 
-	def configure(self, *, prefix: list[str] | None=None, inline: bool | None=None):
+	def configure(self, *, prefix: list[str] | None = None, inline: bool | None = None):
 		if inline is not None:
 			self._inline = inline
 		if prefix and len(prefix) > 0:
@@ -73,10 +78,10 @@ class Logger:
 	def _print(
 		self,
 		*values: object,
-		progress: Optional[Progress]=None,
+		progress: Optional[Progress] = None,
 		sep=None,
 		end=None,
-		prefix:list[str]|None=None,
+		prefix: list[str] | None = None,
 	):
 		if _verbose:
 			end = end if end else '\n'
@@ -100,10 +105,10 @@ class Logger:
 	def info(
 		self,
 		*values: object,
-		progress: Optional[Progress]=None,
+		progress: Optional[Progress] = None,
 		sep=None,
 		end=None,
-		prefix:list[str]|None=None,
+		prefix: list[str] | None = None,
 	):
 		if _quiet:
 			return
@@ -113,10 +118,10 @@ class Logger:
 	def verbose(
 		self,
 		*values: object,
-		progress: Optional[Progress]=None,
+		progress: Optional[Progress] = None,
 		sep=None,
 		end=None,
-		prefix:list[str]|None=None,
+		prefix: list[str] | None = None,
 	):
 		if not _verbose:
 			return
@@ -126,22 +131,19 @@ class Logger:
 	def warn(
 		self,
 		*values: object,
-		progress: Optional[Progress]=None,
+		progress: Optional[Progress] = None,
 		sep=None,
 		end='\n',
-		prefix:list[str]|None=None,
+		prefix: list[str] | None = None,
 	):
 		self._print(*values, progress=progress, sep=sep, end=end, prefix=prefix)
 
 	@staticmethod
-	def newline(*, quiet = False, verbose = False, normal = False):
+	def newline(*, quiet=False, verbose=False, normal=False):
 		"""
 		Pass `quiet=True` to print when quiet enabled, `verbose=True` to print
 		when verbose enabled, `normal=True` when not quiet and not verbose enabled
 		"""
-		if (
-			quiet and _quiet or
-			verbose and _verbose or
-			normal and _quiet is False and _verbose is False
-		):
+		if ((quiet and _quiet) or (verbose and _verbose)
+			or (normal and _quiet is False and _verbose is False)):
 			print()

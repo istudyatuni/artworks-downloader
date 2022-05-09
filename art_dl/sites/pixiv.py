@@ -23,6 +23,7 @@ progress = Progress()
 
 Parsed = namedtuple('Parsed', ['id', 'range'], defaults=[None, None])
 
+
 def parse_link(url: str):
 	parsed = urlparse(url)
 	path = parsed.path.lstrip('/').split('/')
@@ -43,6 +44,7 @@ def parse_link(url: str):
 		return Parsed(path[2], imgs_range)
 
 	return Parsed()
+
 
 async def fetch_info(session: ClientSession, parsed: Parsed):
 	url = URL + parsed.id
@@ -67,11 +69,9 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 		'title': filename_normalize(art['title']),
 	}
 
+
 async def download_art(
-	session: ClientSession,
-	art_info: Parsed,
-	info: dict,
-	save_folder: str
+	session: ClientSession, art_info: Parsed, info: dict, save_folder: str
 ) -> Counter:
 	stats = Counter()  # type: ignore
 
@@ -107,6 +107,7 @@ async def download_art(
 		stats.update(download=1)
 
 	return stats
+
 
 async def download(urls: list[str], data_folder: str):
 	stats = Counter()  # type: ignore

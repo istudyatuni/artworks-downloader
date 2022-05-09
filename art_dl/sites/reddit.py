@@ -27,9 +27,11 @@ progress = Progress()
 
 Parsed = namedtuple('Parsed', ['id'])
 
+
 class DownloadResult(str, Enum):
 	download = 'download'
 	skip = 'skip'
+
 
 def parse_link(url: str) -> Parsed:
 	parsed = urlparse(url)
@@ -48,6 +50,7 @@ def parse_link(url: str) -> Parsed:
 		return Parsed(id=path[3])
 
 	return Parsed(id=None)
+
 
 async def fetch_data(session: ClientSession, url: str) -> Any:
 	async with session.get(url) as response:
@@ -71,6 +74,7 @@ async def fetch_data(session: ClientSession, url: str) -> Any:
 		}
 	return data
 
+
 async def download_art(
 	session: ClientSession,
 	url: str,
@@ -85,6 +89,7 @@ async def download_art(
 	logger.info('download', name, progress=progress)
 	await download_binary(session, url, filename)
 	return DownloadResult.download
+
 
 async def download(urls: list[str], data_folder: str):
 	stats = Counter()  # type: ignore
@@ -138,7 +143,7 @@ async def download(urls: list[str], data_folder: str):
 					url_filename = media_id + '.' + ext
 					url = IMAGE_URI + url_filename
 					res = await download_art(session, url, folder, url_filename)
-					stats.update({ res.value: 1 })
+					stats.update({res.value: 1})
 
 				if cached is None:
 					cache.insert(SLUG, parsed.id, 'gallery')
@@ -157,6 +162,6 @@ async def download(urls: list[str], data_folder: str):
 				filename = sep.join([title, media_id]) + ext
 				mkdir(save_folder)
 				res = await download_art(session, url, save_folder, filename)
-				stats.update({ res.value: 1 })
+				stats.update({res.value: 1})
 
 	logger.info(counter2str(stats))

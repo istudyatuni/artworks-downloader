@@ -23,13 +23,16 @@ progress = Progress()
 
 Parsed = namedtuple('Parsed', ['id', 'type'], defaults=[None, None])
 
+
 class LinkType(str, Enum):
 	album = 'album'
 	image = 'image'
 
+
 class DownloadResult(str, Enum):
 	download = 'download'
 	skip = 'skip'
+
 
 def parse_link(url: str):
 	parsed = urlparse(url)
@@ -49,6 +52,7 @@ def parse_link(url: str):
 		return Parsed(path[0], LinkType.image)
 
 	return Parsed()
+
 
 async def fetch_info(session: ClientSession, album: Parsed) -> Any:
 	logger.verbose('fetch info', album.id, progress=progress)
@@ -73,11 +77,9 @@ async def fetch_info(session: ClientSession, album: Parsed) -> Any:
 		} for image in info['images']),
 	}
 
+
 async def download_art(
-	session: ClientSession,
-	link: str,
-	save_folder: str,
-	name: str
+	session: ClientSession, link: str, save_folder: str, name: str
 ) -> DownloadResult:
 	filename = os.path.join(save_folder, name)
 	if os.path.exists(filename):
@@ -87,6 +89,7 @@ async def download_art(
 	logger.info('download', name, progress=progress)
 	await download_binary(session, link, filename)
 	return DownloadResult.download
+
 
 async def download(urls: list[str], data_folder: str):
 	stats = Counter()  # type: ignore
@@ -127,13 +130,11 @@ async def download(urls: list[str], data_folder: str):
 
 			for image in images:
 				title = (
-					sep
-					.join([title_prefix, image['title'], image['id']])
-					.strip(sep)
-					.replace(sep * 2, sep)
+					sep.join([title_prefix, image['title'],
+								image['id']]).strip(sep).replace(sep * 2, sep)
 				)
 				name = title + image['ext']
 				res = await download_art(session, image['link'], save_folder, name)
-				stats.update({ res.value: 1 })
+				stats.update({res.value: 1})
 
 	logger.info(counter2str(stats))

@@ -21,24 +21,34 @@ progress = Progress()
 
 Project = namedtuple('Project', ['title', 'hash_id', 'assets'])
 
+
 class DownloadResult(str, Enum):
 	download = 'download'
 	no_image = 'no_image'
 	skip = 'skip'
+
 
 def parse_link(url: str):
 	parsed = urlparse(url)
 
 	if parsed.path.startswith('/artwork/'):
 		# https://www.artstation.com/artwork/<hash>
-		return { 'type': 'art', 'project': parsed.path.split('/')[-1] }
+		return {
+			'type': 'art',
+			'project': parsed.path.split('/')[-1]
+		}
 
 	# https://www.artstation.com/<artist>
-	return { 'type': 'all', 'artist': parsed.path.lstrip('/') }
+	return {
+		'type': 'all',
+		'artist': parsed.path.lstrip('/')
+	}
+
 
 async def list_projects(session: ClientSession, user: str):
 	async with session.get(USER_PROJECTS_URL.format(user=user)) as response:
 		return (await response.json())['data']
+
 
 async def fetch_project(session: ClientSession, project: str):
 	async with session.get(PROJECT_INFO_URL.format(hash=project)) as response:
@@ -54,15 +64,18 @@ async def fetch_project(session: ClientSession, project: str):
 		} for a in result['assets']),
 		'hash_id': result['hash_id'],
 		'title': result['title'],
-		'user': { 'username': result['user']['username'] },
+		'user': {
+			'username': result['user']['username']
+		},
 	}
+
 
 async def fetch_asset(
 	session: ClientSession,
 	project_hash: str,
 	asset,
 	save_folder,
-	project_prefix = None
+	project_prefix=None
 ) -> DownloadResult:
 	if asset['has_image'] is False:
 		logger.info('no image', project_hash)
@@ -88,6 +101,7 @@ async def fetch_asset(
 	logger.info('download', project_hash, asset_id, progress=progress)
 	await download_binary(session, asset['image_url'], filename)
 	return DownloadResult.download
+
 
 async def download(urls: list[str], data_folder: str):
 	stats = Counter()  # type: ignore
@@ -140,10 +154,7 @@ async def download(urls: list[str], data_folder: str):
 	logger.configure(prefix=[SLUG, 'download'], inline=True)
 	stats = Counter()
 	progress.i = 0
-	progress.total = sum(
-		reduce(lambda a, b: a + len(b.assets), p, 0)
-		for p in projects.values()
-	)
+	progress.total = sum(reduce(lambda a, b: a + len(b.assets), p, 0) for p in projects.values())
 	async with ClientSession() as session:
 		for artist, projects_list in projects.items():
 			for project in projects_list:
@@ -161,7 +172,7 @@ async def download(urls: list[str], data_folder: str):
 					progress.i += 1
 
 					res = await fetch_asset(session, project.hash_id, asset, save_folder, sub)
-					stats.update({ res.value: 1 })
+					stats.update({res.value: 1})
 
 	logger.configure(prefix=[SLUG], inline=True)
 	logger.info(counter2str(stats))

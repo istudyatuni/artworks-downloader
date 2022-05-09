@@ -2,6 +2,7 @@ import os
 
 import art_dl.cache as cache
 
+
 class Cleanup:
 	KEY = 'CLEANUP'
 
@@ -18,5 +19,6 @@ class Cleanup:
 		if os.path.exists(filename):
 			os.remove(filename)
 		self.remove()
+
 
 cleanup = Cleanup()

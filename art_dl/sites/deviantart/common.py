@@ -8,6 +8,7 @@ REDIRECT_URI = 'http://localhost:23445'
 logger = Logger(prefix=[SLUG, 'download'], inline=True)
 progress = Progress()
 
+
 def make_cache_key(username: str, url: str):
 	return ':'.join([
 		'art',
