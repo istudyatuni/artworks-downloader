@@ -105,6 +105,7 @@ async def download(urls: list[str], data_folder: str):
 
 			if parsed.id is None:
 				logger.warn('unsupported link', url, progress=progress)
+				stats.update(skip=1)
 				continue
 
 			cached = cache.select(SLUG, parsed.id)
@@ -125,9 +126,13 @@ async def download(urls: list[str], data_folder: str):
 				logger.warn('media is from', domain, url + ':', data['url'], progress=progress)
 				if domain == 'imgur.com':
 					retry.add(data['url'])
+					stats.update(will_retry=1)
 				elif domain == 'i.imgur.com':
 					imgur_id, _ = os.path.splitext(data['url'].split('/')[-1])
 					retry.add('https://imgur.com/' + imgur_id)
+					stats.update(will_retry=1)
+				else:
+					stats.update(skip=1)
 				continue
 
 			save_folder = os.path.join(data_folder, data['subreddit'])
