@@ -13,6 +13,12 @@ import art_dl.cache as cache
 
 SLUG = 'twitter'
 BASE_URL = 'https://nitter.net'
+COOKIES = {
+	# hide replies and images in replies
+	'hideReplies': 'on',
+	# just reduce response a little
+	'hideTweetStats': 'on',
+}
 
 Parsed = namedtuple('Parsed', ['id', 'account', 'path'], defaults=[None, None])
 
@@ -49,7 +55,13 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 
 	return {
 		'description': description,
-		'images': [urlparse(unquote(i)).path for i in images],
+		'images': [{
+			# save original url (non unquoted) bc when make request like /pic/media/...?name=orig
+			# it will return not original image, but if make request /pic/media%2F...%3Fname%3Dorig
+			# it will return original image
+			'url': i,
+			'ext': os.path.splitext(urlparse(unquote(i)).path)[1],
+		} for i in images],
 		'count': len(images),
 	}
 
@@ -63,7 +75,7 @@ async def download_image(
 		return DownloadResult.skip
 
 	logger.info('download', log_info)
-	await download_binary(session, url, filename)
+	await download_binary(session, url + '?name=orig', filename)
 	return DownloadResult.download
 
 
@@ -99,16 +111,15 @@ async def download(urls: list[str], data_folder: str):
 			mkdir(save_folder)
 
 			i = 0
-			for image_url in info['images']:
-				_, ext = os.path.splitext(image_url)
+			for image in info['images']:
 				filename = (title_prefix + sep + str(i)) if add_index else title_prefix
-				filename = filename_shortening(filename + ext, with_ext=True)
+				filename = filename_shortening(filename + image['ext'], with_ext=True)
 				i += 1
 
 				log_info = f'{parsed.account}/{parsed.id}'
 				if add_index:
 					log_info += sep + str(i)
-				res = await download_image(session, image_url, save_folder, filename, log_info)
+				res = await download_image(session, image['url'], save_folder, filename, log_info)
 				stats.update({res.value: 1})
 
 	logger.info(counter2str(stats))
