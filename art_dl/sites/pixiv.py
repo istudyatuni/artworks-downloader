@@ -1,6 +1,7 @@
 from aiohttp import ServerDisconnectedError
 from asyncio import sleep
 from collections import Counter, namedtuple
+from lxml import etree
 from urllib.parse import parse_qs, urlparse
 import json
 import os.path
@@ -57,12 +58,8 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 	async with session.get(url) as response:
 		data = await response.text()
 
-	id_ind = data.find('meta-preload-data')
-	script_ind = data.find('<script async', id_ind)
-
-	# 28 is len of meta-preload-data" content='
-	# 3 is back-offset from <script
-	json_data = json.loads(data[id_ind + 28:script_ind - 3])
+	root = etree.HTML(data)
+	json_data = json.loads(root.xpath('//meta[@name=\'preload-data\']/@content')[0])
 	art = json_data['illust'][parsed.id]
 
 	return {
