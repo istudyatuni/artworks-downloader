@@ -10,22 +10,19 @@ from art_dl.utils.cleanup import cleanup
 from art_dl.utils.log import Logger, set_verbosity
 from art_dl.utils.retry import retry
 
-SLUGS = {
-	'danbooru.donmai.us': 'danbooru',
-	'imgur.com': 'imgur',
-	'mobile.twitter.com': 'twitter',
-	'nitter.net': 'twitter',
-	'redd.it': 'reddit',
-	'safebooru.donmai.us': 'danbooru',
-	'twitter.com': 'twitter',
-	'wallhaven.cc': 'wallhaven',
-	'whvn.cc': 'wallhaven',
-	'www.artstation.com': 'artstation',
-	'www.deviantart.com': 'deviantart',
-	'www.pixiv.net': 'pixiv',
-	'www.reddit.com': 'reddit',
-	'zettai.moe': 'pixiv',
+SLUGS_MAPPING = {
+	'artstation': ['www.artstation.com'],
+	'danbooru': ['danbooru.donmai.us', 'safebooru.donmai.us'],
+	'deviantart': ['www.deviantart.com'],
+	'imgur': ['imgur.com'],
+	'pixiv': ['www.pixiv.net', 'zettai.moe'],
+	'reddit': ['redd.it', 'www.reddit.com'],
+	'twitter': ['mobile.twitter.com', 'nitter.net', 'twitter.com'],
+	'wallhaven': ['wallhaven.cc', 'whvn.cc'],
 }
+
+SLUGS = { url: slug
+			for slug, urls in SLUGS_MAPPING.items() for url in urls }
 
 logger = Logger(prefix=['main'])
 
