@@ -6,6 +6,7 @@
 - pixiv.net [#usage](#sites-with-simple-usage) [#notes](#pixiv)
   - zettai.moe
 - reddit.com [#usage](#sites-with-simple-usage)
+- twitter.com [#usage](#sites-with-simple-usage) [#notes](#twitter)
 - wallhaven.cc [#usage](#sites-with-simple-usage) [#notes](#wallhaven)
 
 [Supported URL types](#supported-url-types)
@@ -92,6 +93,10 @@ Copy `config.sample.json` to `config.json` and fill "proxy":
 
 If the artwork has more one image, you can specify which images should be downloaded, for example, if the artwork has 10 images and you want to download 1, 3, 4, 5 and 7 image, you can add `#1,3-5,7` to the link for that: `https://www.pixiv.net/<lang>/artworks/<id>#1,3-5,7`.
 
+### Twitter
+
+Here we use an alternative frontend for Twitter: https://nitter.net ([Github](https://github.com/zedeus/nitter))
+
 ### Wallhaven
 
 NSFW images supported only with API key, to use it, get it from [account settings](https://wallhaven.cc/settings/account), then run
@@ -126,6 +131,8 @@ python -m art_dl --action wallhaven:key
   - `https://redd.it/<id>`
   - `https://www.reddit.com/comments/<id>`
   - `https://www.reddit.com/r/<subreddit>/comments/<id>/<any name>`
+- **twitter.com**
+  - `https://(mobile.)twitter.com/<account>/status/<id>`
 - **wallhaven.cc**
   - `https://wallhaven.cc/w/<id>`
   - `https://whvn.cc/<id>`

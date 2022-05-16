@@ -13,8 +13,10 @@ from art_dl.utils.retry import retry
 SLUGS = {
 	'danbooru.donmai.us': 'danbooru',
 	'imgur.com': 'imgur',
+	'mobile.twitter.com': 'twitter',
 	'redd.it': 'reddit',
 	'safebooru.donmai.us': 'danbooru',
+	'twitter.com': 'twitter',
 	'wallhaven.cc': 'wallhaven',
 	'whvn.cc': 'wallhaven',
 	'www.artstation.com': 'artstation',
