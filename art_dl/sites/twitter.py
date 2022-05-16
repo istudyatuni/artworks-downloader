@@ -55,14 +55,14 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 
 
 async def download_image(
-	session: ClientSession, url: str, save_folder: str, name: str
+	session: ClientSession, url: str, save_folder: str, name: str, log_info: str
 ) -> DownloadResult:
 	filename = os.path.join(save_folder, name)
 	if os.path.exists(filename):
-		logger.verbose('skip existing', name)
+		logger.verbose('skip existing', log_info)
 		return DownloadResult.skip
 
-	logger.info('download', name)
+	logger.info('download', log_info)
 	await download_binary(session, url, filename)
 	return DownloadResult.download
 
@@ -105,7 +105,10 @@ async def download(urls: list[str], data_folder: str):
 				filename = filename_shortening(filename + ext, with_ext=True)
 				i += 1
 
-				res = await download_image(session, image_url, save_folder, filename)
+				log_info = f'{parsed.account}/{parsed.id}'
+				if add_index:
+					log_info += ' - ' + str(i)
+				res = await download_image(session, image_url, save_folder, filename, log_info)
 				stats.update({res.value: 1})
 
 	logger.info(counter2str(stats))
