@@ -55,10 +55,10 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 
 	return {
 		'description': description,
+		# save original url (non unquoted) bc when make request like /pic/media/...?name=orig
+		# it will return not original image, but if make request /pic/media%2F...%3Fname%3Dorig
+		# it will return original image
 		'images': [{
-			# save original url (non unquoted) bc when make request like /pic/media/...?name=orig
-			# it will return not original image, but if make request /pic/media%2F...%3Fname%3Dorig
-			# it will return original image
 			'url': i,
 			'ext': os.path.splitext(urlparse(unquote(i)).path)[1],
 		} for i in images],
