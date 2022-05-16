@@ -10,7 +10,7 @@ async def download_binary(session: ClientSession, url: str, filename: str):
 		async with aopen(filename, 'wb') as file:
 			try:
 				await file.write(await response.read())
-				cleanup.remove()
+				cleanup.forget()
 			except:
 				cleanup.clean()
 				print('REMOVING EMPTY FILE')
