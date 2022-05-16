@@ -14,6 +14,7 @@ SLUGS = {
 	'danbooru.donmai.us': 'danbooru',
 	'imgur.com': 'imgur',
 	'mobile.twitter.com': 'twitter',
+	'nitter.net': 'twitter',
 	'redd.it': 'reddit',
 	'safebooru.donmai.us': 'danbooru',
 	'twitter.com': 'twitter',

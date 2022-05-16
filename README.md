@@ -134,6 +134,7 @@ python -m art_dl --action wallhaven:key
   - `https://www.reddit.com/r/<subreddit>/comments/<id>/<any name>`
 - **twitter.com**
   - `https://(mobile.)twitter.com/<account>/status/<id>`
+  - `https://nitter.net/<account>/status/<id>`
 - **wallhaven.cc**
   - `https://wallhaven.cc/w/<id>`
   - `https://whvn.cc/<id>`
