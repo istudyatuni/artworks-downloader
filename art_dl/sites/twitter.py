@@ -91,7 +91,7 @@ async def download(urls: list[str], data_folder: str):
 			else:
 				info = cached
 
-			title_prefix = sep.join([parsed.account, parsed.id, info['description']])
+			title_prefix = sep.join([parsed.account, parsed.id, info['description']]).strip(sep)
 			title_prefix = filename_normalize(title_prefix)
 			add_index = (info['count']) > 1
 
@@ -101,13 +101,13 @@ async def download(urls: list[str], data_folder: str):
 			i = 0
 			for image_url in info['images']:
 				_, ext = os.path.splitext(image_url)
-				filename = (title_prefix + ' - ' + str(i)) if add_index else title_prefix
+				filename = (title_prefix + sep + str(i)) if add_index else title_prefix
 				filename = filename_shortening(filename + ext, with_ext=True)
 				i += 1
 
 				log_info = f'{parsed.account}/{parsed.id}'
 				if add_index:
-					log_info += ' - ' + str(i)
+					log_info += sep + str(i)
 				res = await download_image(session, image_url, save_folder, filename, log_info)
 				stats.update({res.value: 1})
 
