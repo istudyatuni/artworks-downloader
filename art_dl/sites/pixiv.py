@@ -1,10 +1,11 @@
-from aiohttp import ClientSession, ServerDisconnectedError
+from aiohttp import ServerDisconnectedError
 from asyncio import sleep
 from collections import Counter, namedtuple
 from urllib.parse import parse_qs, urlparse
 import json
 import os.path
 
+from art_dl.proxy import ClientSession, ProxyClientSession
 from art_dl.utils.download import download_binary
 from art_dl.utils.log import Logger, Progress
 from art_dl.utils.path import filename_normalize, filename_unhide, mkdir
@@ -113,7 +114,7 @@ async def download(urls: list[str], data_folder: str):
 	stats = Counter()  # type: ignore
 	progress.total = len(urls)
 
-	async with ClientSession(headers=HEADERS) as session:
+	async with ProxyClientSession(headers=HEADERS) as session:
 		for url in urls:
 			progress.i += 1
 

@@ -1,10 +1,10 @@
-from aiohttp import ClientSession
 from collections import Counter, defaultdict, namedtuple
 from enum import Enum
 from functools import reduce
 from urllib.parse import urlparse
 import os.path
 
+from art_dl.proxy import ClientSession, ProxyClientSession
 from art_dl.utils.download import download_binary
 from art_dl.utils.log import Logger, Progress
 from art_dl.utils.path import mkdir
@@ -116,7 +116,7 @@ async def download(urls: list[str], data_folder: str):
 
 		parsed = parse_link(url)
 
-		async with ClientSession(BASE_URL) as session:
+		async with ProxyClientSession(BASE_URL) as session:
 			if parsed['type'] == 'all':
 				artist = parsed['artist']
 				projects_list = await list_projects(session, artist)
@@ -155,7 +155,7 @@ async def download(urls: list[str], data_folder: str):
 	stats = Counter()
 	progress.i = 0
 	progress.total = sum(reduce(lambda a, b: a + len(b.assets), p, 0) for p in projects.values())
-	async with ClientSession() as session:
+	async with ProxyClientSession() as session:
 		for artist, projects_list in projects.items():
 			for project in projects_list:
 				save_folder = os.path.join(data_folder, artist)

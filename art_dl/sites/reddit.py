@@ -1,10 +1,10 @@
-from aiohttp import ClientSession
 from collections import Counter, namedtuple
 from enum import Enum
 from typing import Any
 from urllib.parse import urlparse
 import os.path
 
+from art_dl.proxy import ClientSession, ProxyClientSession
 from art_dl.utils.download import download_binary
 from art_dl.utils.log import Logger, Progress
 from art_dl.utils.path import filename_normalize, mkdir
@@ -97,7 +97,7 @@ async def download(urls: list[str], data_folder: str):
 
 	sep = ' - '
 
-	async with ClientSession() as session:
+	async with ProxyClientSession() as session:
 		for url in urls:
 			progress.i += 1
 
