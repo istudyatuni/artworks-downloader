@@ -123,6 +123,7 @@ python -m art_dl --action wallhaven:key
   - `https://imgur.com/gallery/<id>`
   - `https://imgur.com/t/<tag>/<id>`
 - **pixiv.net**
+  - `https://www.pixiv.net/artworks/<id>`
   - `https://www.pixiv.net/<lang>/artworks/<id>`
 
   - Other sites with the same content as pixiv:

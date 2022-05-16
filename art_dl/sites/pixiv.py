@@ -44,6 +44,10 @@ def parse_link(url: str):
 		# https://www.pixiv.net/<lang>/artworks/<id>
 		return Parsed(path[2], imgs_range)
 
+	if path[0] == 'artworks':
+		# https://www.pixiv.net/artworks/<id>
+		return Parsed(path[1], imgs_range)
+
 	return Parsed()
 
 
