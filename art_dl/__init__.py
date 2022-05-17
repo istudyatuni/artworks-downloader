@@ -7,7 +7,7 @@ import os.path
 from art_dl.log import Logger, set_verbosity
 from art_dl.sites import download, register
 from art_dl.utils.cleanup import cleanup
-from art_dl.utils.creds import save_creds
+from art_dl.utils.credentials import save_creds
 from art_dl.utils.retry import retry
 
 SLUGS_MAPPING = {

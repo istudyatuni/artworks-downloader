@@ -8,7 +8,7 @@ import os.path
 
 from art_dl.cache import cache
 from art_dl.log import Logger, Progress
-from art_dl.utils.creds import get_creds
+from art_dl.utils.credentials import get_creds
 from art_dl.utils.download import download_binary
 from art_dl.utils.path import filename_normalize, filename_shortening, mkdir
 from art_dl.utils.print import counter2str

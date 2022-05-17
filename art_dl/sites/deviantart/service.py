@@ -13,7 +13,7 @@ from .common import (
 	SLUG,
 )
 from art_dl.cache import cache
-from art_dl.utils.creds import get_creds, save_creds
+from art_dl.utils.credentials import get_creds, save_creds
 from art_dl.utils.proxy import ClientSession, ProxyClientSession
 
 API_URL = '/api/v1/oauth2'
