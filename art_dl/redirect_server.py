@@ -18,7 +18,7 @@ async def middleware(request: web.Request, handler: Handler):
 
 	# now hardcoded for deviantart
 	if resp.status == 200:
-		saver_func({ 'code': request.query['code'] })
+		saver_func(request.query['code'])
 		# stop server
 		raise SystemExit
 

@@ -8,13 +8,14 @@ import os.path
 
 from art_dl.cache import cache
 from art_dl.log import Logger, Progress
-from art_dl.utils.credentials import get_creds
+from art_dl.utils.credentials import creds
 from art_dl.utils.download import download_binary
 from art_dl.utils.path import filename_normalize, filename_shortening, mkdir
 from art_dl.utils.print import counter2str
 from art_dl.utils.proxy import ClientSession, ProxyClientSession
 
 SLUG = 'wallhaven'
+CREDS_PATH = [SLUG, 'api_key']
 
 API_URL = 'https://wallhaven.cc/api/v1/w/'
 
@@ -87,17 +88,13 @@ async def download(urls: list[str], data_folder: str, with_key=False):
 
 	retry_with_key = []
 
-	creds = get_creds()
-	has_api_key = not (
-		creds is None or creds.get(SLUG) is None or creds[SLUG].get('api_key') is None
-	)
-
+	api_key = creds.get(CREDS_PATH)
+	has_api_key = api_key is not None
 	if with_key:
-		# second check only for LSP (typechecking)
-		if has_api_key and creds is not None:
+		if has_api_key:
 			logger.info('using api_key', end='\n')
 			params = {
-				'apikey': creds[SLUG]['api_key']
+				'apikey': api_key
 			}
 		else:
 			logger.warn('you should add api_key')
@@ -164,22 +161,13 @@ async def download(urls: list[str], data_folder: str, with_key=False):
 
 def register():
 	"""Ask key"""
-	creds = get_creds()
-	if (
-		creds is not None and creds.get(SLUG) is not None and creds[SLUG].get('api_key') is not None
-	):
+	api_key = creds.get(CREDS_PATH)
+	if (api_key is not None):
 		ans = input('Key already saved, again? [y/N] ')
 		if ans.lower() in ['n', '']:
-			return {
-				SLUG: {
-					'api_key': creds[SLUG]['api_key']
-				}
-			}
+			return None
 		elif ans.lower() != 'y':
 			print('What?')
 			quit(1)
-	return {
-		SLUG: {
-			'api_key': input('Enter api_key: ')
-		}
-	}
+	creds.save(CREDS_PATH, input('Enter api_key: '))
+	logger.info('saved')

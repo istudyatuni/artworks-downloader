@@ -8,5 +8,5 @@ def download(slug: str) -> Callable[[list[str], str], Coroutine[Any, Any, None]]
 	return import_module(MODULE + slug).download
 
 
-def register(slug: str) -> Callable[[], dict[str, Any] | None]:
+def register(slug: str) -> Callable[[], None]:
 	return import_module(MODULE + slug).register

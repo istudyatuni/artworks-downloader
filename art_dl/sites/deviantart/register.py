@@ -1,51 +1,39 @@
 from urllib.parse import urlencode
 
-from .common import BASE_URL, OAUTH_KEY, REDIRECT_URI, SLUG
+from .common import AUTH_LOG_PREFIX, BASE_URL, CREDS_PATHS, REDIRECT_URI, logger
 from art_dl.redirect_server import run as run_redirect_catch_server
-from art_dl.utils.credentials import get_creds
+from art_dl.utils.credentials import creds
 
 AUTH_URL = BASE_URL + '/oauth2/authorize'
 
 
 def ask_app_creds():
-	creds = get_creds()
-	if (
-		creds is not None and creds.get(SLUG) is not None
-		and creds[SLUG].get('client_id') is not None
-	):
+	client_id = creds.get(CREDS_PATHS.client_id)
+	client_secret = creds.get(CREDS_PATHS.client_secret)
+
+	if client_id is not None and client_secret is not None:
 		ans = input('Application data already saved, again? [y/N] ')
 		if ans.lower() in ['n', '']:
-			return {
-				'client_id': creds[SLUG]['client_id'],
-				'client_secret': creds[SLUG]['client_secret'],
-			}
+			return
 		elif ans.lower() != 'y':
 			print('What?')
 			quit(1)
-	return {
-		'client_id': input('Enter client_id: '),
-		'client_secret': input('Enter client_secret: ')
-	}
+
+	creds.save(CREDS_PATHS.client_id, input('Enter client_id: '))
+	creds.save(CREDS_PATHS.client_secret, input('Enter client_secret: '))
 
 
 def register():
-	"""Authorize application"""
-	creds = {
-		SLUG: {
-			**ask_app_creds(),
-			OAUTH_KEY: {
-				'code': None
-			},
-		}
-	}
+	""" Authorize application """
+	ask_app_creds()
 
 	# callback
-	def cred_saver(data):
-		creds[SLUG][OAUTH_KEY] = data
+	def cred_saver(new_code):
+		creds.save(CREDS_PATHS.code, new_code)
 
 	query = {
 		'response_type': 'code',
-		'client_id': creds[SLUG]['client_id'],
+		'client_id': creds.get(CREDS_PATHS.client_id),
 		'redirect_uri': REDIRECT_URI,
 		'scope': ' '.join(['browse']),
 		'view': 'login'
@@ -55,9 +43,6 @@ def register():
 	try:
 		run_redirect_catch_server(url, cred_saver)
 	except SystemExit:
-		print('Server stopped')
+		logger.info('server stopped', prefix=AUTH_LOG_PREFIX)
 
-	if creds[SLUG][OAUTH_KEY].get('code') is not None:
-		return creds
-
-	return None
+	logger.info('authorized', prefix=AUTH_LOG_PREFIX)

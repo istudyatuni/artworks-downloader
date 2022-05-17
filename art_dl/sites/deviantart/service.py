@@ -1,19 +1,19 @@
 # from aiohttp import ClientSession
 from asyncio import sleep
-from copy import deepcopy
 from typing import Any, AsyncGenerator
 
 from .common import (
+	AUTH_LOG_PREFIX,
 	BASE_URL,
+	CREDS_PATHS,
 	logger,
 	make_cache_key,
-	OAUTH_KEY,
 	progress,
 	REDIRECT_URI,
 	SLUG,
 )
 from art_dl.cache import cache
-from art_dl.utils.credentials import get_creds, save_creds
+from art_dl.utils.credentials import creds
 from art_dl.utils.proxy import ClientSession, ProxyClientSession
 
 API_URL = '/api/v1/oauth2'
@@ -24,8 +24,6 @@ API_URL = '/api/v1/oauth2'
 DEFAULT_RATE_LIMIT_TIMEOUT = 32
 INVALID_CODE_MSG = 'Incorrect authorization code.'
 
-AUTH_LOG_PREFIX = [SLUG, 'auth']
-
 
 # TODO: add revoke
 # https://www.deviantart.com/developers/authentication
@@ -33,18 +31,12 @@ class DAService():
 	"""Perform almost all work with auth and API"""
 
 	def __init__(self):
-		self.creds = get_creds() or {}
-		if self.creds is None:
-			raise Exception('Not authorized')
+		self.client_id = creds.get(CREDS_PATHS.client_id)
+		self.client_secret = creds.get(CREDS_PATHS.client_secret)
+		self.code = creds.get(CREDS_PATHS.code)
 
-		creds = self.creds[SLUG]
-
-		self.client_id = creds['client_id']
-		self.client_secret = creds['client_secret']
-		self.code = creds[OAUTH_KEY].get('code')
-
-		self.access_token = creds[OAUTH_KEY].get('access_token')
-		self.refresh_token = creds[OAUTH_KEY].get('refresh_token')
+		self.access_token = creds.get(CREDS_PATHS.access_token)
+		self.refresh_token = creds.get(CREDS_PATHS.refresh_token)
 
 	@property
 	def _auth_header(self) -> str:
@@ -57,11 +49,9 @@ class DAService():
 		}
 
 	def _save_tokens(self):
-		creds = deepcopy(self.creds)
-		creds[SLUG][OAUTH_KEY].pop('code', 0)
-		creds[SLUG][OAUTH_KEY]['access_token'] = self.access_token
-		creds[SLUG][OAUTH_KEY]['refresh_token'] = self.refresh_token
-		save_creds(creds)
+		creds.delete(CREDS_PATHS.code)
+		creds.save(CREDS_PATHS.access_token, self.access_token)
+		creds.save(CREDS_PATHS.refresh_token, self.refresh_token)
 
 	async def _ensure_access(self):
 		if self.refresh_token is None:

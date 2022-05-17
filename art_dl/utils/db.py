@@ -18,6 +18,7 @@ class Queries:
 
 
 class DB:
+	""" Key-value sqlite wrapper """
 
 	def __init__(self, db_name: str, table: str) -> None:
 		self.db_name = db_name

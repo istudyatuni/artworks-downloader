@@ -7,7 +7,6 @@ import os.path
 from art_dl.log import Logger, set_verbosity
 from art_dl.sites import download, register
 from art_dl.utils.cleanup import cleanup
-from art_dl.utils.credentials import save_creds
 from art_dl.utils.retry import retry
 
 SLUGS_MAPPING = {
@@ -92,16 +91,10 @@ def prepare() -> Optional[Tuple[list[str], str]]:
 	set_verbosity(args.quiet, args.verbose)
 
 	if action == ('deviantart', 'register'):
-		creds = register('deviantart')()
-		if creds is not None:
-			save_creds(creds)
-			logger.info('authorized')
+		register('deviantart')()
 		return None
 	elif action == ('wallhaven', 'key'):
-		creds = register('wallhaven')()
-		if creds is not None:
-			save_creds(creds)
-			logger.info('saved')
+		register('wallhaven')()
 		return None
 	elif action is not None:
 		logger.info('unknown action:', args.action)
