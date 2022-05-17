@@ -1,7 +1,7 @@
 from aiohttp import ClientSession
 from aiohttp_socks import ProxyConnector  # type: ignore
 
-from art_dl.config import config
+from art_dl.utils.config import config
 
 __all__ = ['ClientSession', 'ProxyClientSession']
 

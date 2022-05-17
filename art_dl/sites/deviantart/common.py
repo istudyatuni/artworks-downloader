@@ -1,4 +1,4 @@
-from art_dl.utils.log import Logger, Progress
+from art_dl.log import Logger, Progress
 
 SLUG = 'deviantart'
 OAUTH_KEY = 'oauth2'

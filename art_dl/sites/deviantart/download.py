@@ -7,11 +7,11 @@ import os.path
 
 from .common import logger, progress
 from .service import DAService
-from art_dl.proxy import ClientSession, ProxyClientSession
 from art_dl.sites.deviantart.common import SLUG, make_cache_key
 from art_dl.utils.download import download_binary
 from art_dl.utils.path import mkdir
 from art_dl.utils.print import counter2str
+from art_dl.utils.proxy import ClientSession, ProxyClientSession
 import art_dl.cache as cache
 
 

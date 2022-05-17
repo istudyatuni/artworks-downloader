@@ -6,12 +6,12 @@ from typing import Any, Tuple
 from urllib.parse import urlparse
 import os.path
 
-from art_dl.creds import get_creds
-from art_dl.proxy import ClientSession, ProxyClientSession
+from art_dl.log import Logger, Progress
+from art_dl.utils.creds import get_creds
 from art_dl.utils.download import download_binary
-from art_dl.utils.log import Logger, Progress
 from art_dl.utils.path import filename_normalize, filename_shortening, mkdir
 from art_dl.utils.print import counter2str
+from art_dl.utils.proxy import ClientSession, ProxyClientSession
 import art_dl.cache as cache
 
 SLUG = 'wallhaven'

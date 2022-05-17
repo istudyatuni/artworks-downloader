@@ -1,5 +1,5 @@
 '''https://danbooru.donmai.us/wiki_pages/help:api'''
-from art_dl.proxy import ClientSession, ProxyClientSession
+from art_dl.utils.proxy import ClientSession, ProxyClientSession
 
 
 async def fetch_smth(session: ClientSession, url: str):
