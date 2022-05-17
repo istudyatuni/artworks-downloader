@@ -84,7 +84,7 @@ async def download(urls: list[str], data_folder: str):
 	progress.total = len(urls)
 	sep = ' - '
 
-	async with ProxyClientSession(BASE_URL) as session:
+	async with ProxyClientSession(BASE_URL, cookies=COOKIES) as session:
 		for url in urls:
 			progress.i += 1
 
