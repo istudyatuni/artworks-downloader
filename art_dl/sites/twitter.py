@@ -75,7 +75,7 @@ async def download_image(
 		return DownloadResult.skip
 
 	logger.info('download', log_info)
-	await download_binary(session, url + '?name=orig', filename)
+	await download_binary(session, url, filename)
 	return DownloadResult.download
 
 
