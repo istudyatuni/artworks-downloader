@@ -12,9 +12,9 @@ from .common import (
 	REDIRECT_URI,
 	SLUG,
 )
+from art_dl.cache import cache
 from art_dl.utils.creds import get_creds, save_creds
 from art_dl.utils.proxy import ClientSession, ProxyClientSession
-import art_dl.cache as cache
 
 API_URL = '/api/v1/oauth2'
 # start from 32 instead of 1 to skip small timeouts because

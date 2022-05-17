@@ -1,4 +1,4 @@
-import art_dl.cache as cache
+from art_dl.cache import cache
 
 
 class Retry:

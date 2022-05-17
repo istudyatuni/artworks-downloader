@@ -6,13 +6,13 @@ from urllib.parse import parse_qs, urlparse
 import json
 import os.path
 
+from art_dl.cache import cache
 from art_dl.log import Logger, Progress
 from art_dl.utils.download import download_binary
 from art_dl.utils.path import filename_normalize, filename_unhide, mkdir
 from art_dl.utils.print import counter2str
 from art_dl.utils.proxy import ClientSession, ProxyClientSession
 from art_dl.utils.url import parse_range
-import art_dl.cache as cache
 
 SLUG = 'pixiv'
 HEADERS = {

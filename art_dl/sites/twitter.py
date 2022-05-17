@@ -4,12 +4,12 @@ from lxml import etree
 from urllib.parse import unquote, urlparse
 import os.path
 
+from art_dl.cache import cache
 from art_dl.log import Logger, Progress
 from art_dl.utils.download import download_binary
 from art_dl.utils.path import filename_normalize, filename_shortening, mkdir
 from art_dl.utils.print import counter2str
 from art_dl.utils.proxy import ClientSession, ProxyClientSession
-import art_dl.cache as cache
 
 SLUG = 'twitter'
 BASE_URL = 'https://nitter.net'
