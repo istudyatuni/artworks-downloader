@@ -3,4 +3,5 @@
 mypy
 toml
 types-aiofiles==0.8.8
+types-lxml
 yapf

@@ -20,7 +20,7 @@ COOKIES = {
 	'hideTweetStats': 'on',
 }
 
-Parsed = namedtuple('Parsed', ['id', 'account', 'path'], defaults=[None, None])
+Parsed = namedtuple('Parsed', ['id', 'account', 'path'], defaults=[None, None, None])
 
 logger = Logger(prefix=[SLUG, 'download'], inline=True)
 progress = Progress()
