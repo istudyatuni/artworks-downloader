@@ -51,7 +51,9 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 
 	root = etree.HTML(data)
 	description = root.xpath('//meta[@property=\'og:description\']/@content')[0]
-	images = root.xpath('//div[@class="attachments"]/div/div[@class="attachment image"]/a/@href')
+	images_urls = root.xpath(
+		'//div[@class="attachments"]/div/div[@class="attachment image"]/a/@href'
+	)
 
 	return {
 		'description': description,
@@ -61,8 +63,8 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 		'images': [{
 			'url': i,
 			'ext': os.path.splitext(urlparse(unquote(i)).path)[1],
-		} for i in images],
-		'count': len(images),
+		} for i in images_urls],
+		'count': len(images_urls),
 	}
 
 

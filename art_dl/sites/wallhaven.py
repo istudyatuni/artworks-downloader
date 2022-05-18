@@ -90,6 +90,7 @@ async def download(urls: list[str], data_folder: str, with_key=False):
 
 	api_key = creds.get(CREDS_PATH)
 	has_api_key = api_key is not None
+	params = {}
 	if with_key:
 		if has_api_key:
 			logger.info('using api_key', end='\n')
@@ -99,8 +100,6 @@ async def download(urls: list[str], data_folder: str, with_key=False):
 		else:
 			logger.warn('you should add api_key')
 			return
-	else:
-		params = {}
 
 	async with ProxyClientSession() as session:
 		for url in urls:
@@ -165,7 +164,7 @@ def register():
 	if api_key is not None:
 		ans = input('Key already saved, again? [y/N] ')
 		if ans.lower() in ['n', '']:
-			return None
+			return
 		elif ans.lower() != 'y':
 			print('What?')
 			quit(1)
