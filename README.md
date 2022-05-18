@@ -36,7 +36,7 @@ python -m art_dl
 ## Usage
 
 ```
-usage: art-dl [-h] [-u URL] [-l LIST] [--folder FOLDER] [--action ACTION] [-q] [-v]
+usage: art-dl [-h] [-u URL] [-l LIST] [--folder FOLDER] [--action ACTION] [-q] [-v] [--version]
 
 Artworks downloader
 
@@ -48,6 +48,7 @@ options:
   --action ACTION
   -q, --quiet           Do not show logs
   -v, --verbose         Show more logs
+  --version             Show version
 ```
 
 ### Sites with simple usage

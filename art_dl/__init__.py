@@ -46,6 +46,8 @@ def parse_args():
 	parser.add_argument('-q', '--quiet', action='store_true', help='Do not show logs')
 	parser.add_argument('-v', '--verbose', action='store_true', help='Show more logs')
 
+	parser.add_argument('--version', action='store_true', help='Show version')
+
 	return parser.parse_args()
 
 
@@ -85,11 +87,18 @@ def prepare() -> Optional[Tuple[list[str], str]]:
 	folder = os.path.abspath(args.folder)
 	action = tuple(args.action.split(':')) if args.action else None
 
+	# version
+	if args.version:
+		from importlib import metadata
+		return print(metadata.version('art-dl'))
+
+	# log config
 	if args.quiet and args.verbose:
 		print('You must specify either --verbose or --quiet, not both')
 		quit(1)
 	set_verbosity(args.quiet, args.verbose)
 
+	# actions
 	if action == ('deviantart', 'register'):
 		register('deviantart')()
 		return None
