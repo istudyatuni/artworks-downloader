@@ -92,7 +92,7 @@ art-dl -u [URL here]
 
 ### Proxy
 
-Copy `config.sample.json` to `config.json` and fill "proxy":
+Create `config.json` file with this content and fill "proxy":
 
 ```json
 {
