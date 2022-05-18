@@ -162,7 +162,7 @@ async def download(urls: list[str], data_folder: str, with_key=False):
 def register():
 	"""Ask key"""
 	api_key = creds.get(CREDS_PATH)
-	if (api_key is not None):
+	if api_key is not None:
 		ans = input('Key already saved, again? [y/N] ')
 		if ans.lower() in ['n', '']:
 			return None

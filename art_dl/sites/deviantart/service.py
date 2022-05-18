@@ -39,13 +39,9 @@ class DAService():
 		self.refresh_token = creds.get(CREDS_PATHS.refresh_token)
 
 	@property
-	def _auth_header(self) -> str:
-		return 'Bearer ' + self.access_token
-
-	@property
 	def _headers(self):
 		return {
-			'authorization': self._auth_header
+			'authorization': 'Bearer ' + self.access_token
 		}
 
 	def _save_tokens(self):
@@ -91,6 +87,7 @@ class DAService():
 		await self._authorize(params)
 
 	async def _authorize(self, add_params):
+		""" Common action for _refresh_token and _fetch_access_token """
 		params = {
 			'client_id': self.client_id,
 			'client_secret': self.client_secret,

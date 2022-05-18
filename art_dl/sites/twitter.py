@@ -44,7 +44,7 @@ def parse_link(url: str) -> Parsed:
 
 
 async def fetch_info(session: ClientSession, parsed: Parsed):
-	logger.info('fetch info', parsed.account + '/' + parsed.id, progress=progress)
+	logger.info('fetch info', f'{parsed.account}/{parsed.id}', progress=progress)
 	# wait for api: https://github.com/zedeus/nitter/issues/192
 	async with session.get(parsed.path) as response:
 		data = await response.text()

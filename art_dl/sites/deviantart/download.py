@@ -82,7 +82,7 @@ async def save_art(service: DAService, session: ClientSession, art: Any, folder:
 		if premium_folder_data['has_access'] is False:
 			logger.warn('no access to', name + ',', 'downloading preview', progress=progress)
 
-	if (art['is_downloadable'] is False or art['download_filesize'] == art['content']['filesize']):
+	if art['is_downloadable'] is False or art['download_filesize'] == art['content']['filesize']:
 		return await save_from_url(session, art['content']['src'], folder, name)
 
 	original_url = await service.get_download(art['deviationid'])
