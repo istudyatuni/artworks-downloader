@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "art-dl"
+version = "0.1.1rc1"
+description = "Artworks downloader"
+authors = ["Ilia <istudyatuni@gmail.com>"]
+readme = "README.md"
+repository = "https://github.com/istudyatuni/artworks-downloader"
+classifiers = [
+	"Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+]
+
+[tool.poetry.urls]
+"Tracker" = "https://github.com/istudyatuni/artworks-downloader/issues"
+
+[tool.poetry.scripts]
+art-dl = "art_dl:main"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+aiofiles = "^0.8.0"
+aiohttp = "^3.8.1"
+aiohttp-socks = {extras = ["asyncio"], version = "^0.7.1"}
+lxml = "^4.8.0"
+
+[tool.poetry.dev-dependencies]
+mypy = "^0.950"
+types-aiofiles = "^0.8.8"
+types-lxml = "^2022.4.10"
+yapf = "^0.32.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

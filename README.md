@@ -13,18 +13,30 @@
 
 ## Install
 
-Clone this repo, then from inside the project
+### With `pip`
 
 ```sh
-python -m venv venv
-source ./venv/bin/activate
-pip install -r requirements.txt
+pip install art-dl
+```
+
+Then run as `art-dl` [#usage](#usage)
+
+### Build from source
+
+You need poetry, [install](https://python-poetry.org/docs/#installation) it, then run from inside the project
+
+```sh
+poetry install
+
+poetry run
+# or
+python -m art_dl
 ```
 
 ## Usage
 
 ```
-usage: python -m art_dl [-h] [-u URL] [-l LIST] [--folder FOLDER] [--action ACTION] [-q] [-v]
+usage: art-dl [-h] [-u URL] [-l LIST] [--folder FOLDER] [--action ACTION] [-q] [-v]
 
 Artworks downloader
 
@@ -43,7 +55,7 @@ options:
 Just run
 
 ```sh
-python -m art_dl -u [URL here]
+art-dl -u [URL here]
 ```
 
 ### DeviantArt
@@ -62,7 +74,7 @@ You should have deviantart.com account, login to it, then
   - run
 
   ```sh
-  python -m art_dl --action deviantart:register
+  art-dl --action deviantart:register
   ```
 
   - paste needed values
@@ -74,7 +86,7 @@ You should have deviantart.com account, login to it, then
 After that you can use it just like
 
 ```sh
-python -m art_dl -u [URL here]
+art-dl -u [URL here]
 ```
 
 ### Proxy
@@ -102,7 +114,7 @@ Here we use an alternative frontend for Twitter: https://nitter.net ([Github](ht
 NSFW images supported only with API key, to use it, get it from [account settings](https://wallhaven.cc/settings/account), then run
 
 ```sh
-python -m art_dl --action wallhaven:key
+art-dl --action wallhaven:key
 ```
 
 ## Supported URL types

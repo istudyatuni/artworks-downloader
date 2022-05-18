@@ -5,3 +5,4 @@ __pycache__
 config.json
 credentials.json
 *.sublime-workspace
+/dist
