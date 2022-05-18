@@ -96,20 +96,20 @@ class DAService():
 		async with ProxyClientSession(BASE_URL) as session:
 			async with session.post('/oauth2/token', params=params) as response:
 				data = await response.json()
-				if 'error' in data:
-					logger.warn(
-						'an error occured during authorization:',
-						data['error_description'],
-						prefix=AUTH_LOG_PREFIX
-					)
-					quit(1)
-				elif response.ok:
+				if response.ok:
 					self.access_token = data['access_token']
 					self.refresh_token = data['refresh_token']
 					self._save_tokens()
 				elif data['error_description'] == INVALID_CODE_MSG:
 					logger.warn('please authorize again', prefix=AUTH_LOG_PREFIX)
 					# or refresh token instead
+				elif 'error' in data:
+					logger.warn(
+						'an error occured during authorization:',
+						data['error_description'],
+						prefix=AUTH_LOG_PREFIX
+					)
+					quit(1)
 
 	async def _pager(self, session: ClientSession, method: str, url: str,
 						**kwargs) -> AsyncGenerator[Any, None]:
