@@ -90,7 +90,15 @@ def prepare() -> Optional[Tuple[list[str], str]]:
 	# version
 	if args.version:
 		from importlib import metadata
-		return print(metadata.version('art-dl'))
+		try:
+			print(metadata.version('art-dl'))
+		except metadata.PackageNotFoundError:
+			if 'site-packages' not in __file__:
+				logger.info('running in dev mode')
+			else:
+				# I don't know how is it possible but anyway
+				raise
+		return None
 
 	# log config
 	if args.quiet and args.verbose:
