@@ -28,7 +28,7 @@ lxml = "^4.8.0"
 mypy = "^0.950"
 types-aiofiles = "^0.8.8"
 types-lxml = "^2022.4.10"
-yapf = "^0.32.0"
+yapf = {git = "https://github.com/google/yapf.git", branch = "main", extras = ["pyproject"]}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
