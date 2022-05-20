@@ -1,10 +1,11 @@
-from aiohttp import ServerDisconnectedError
-from asyncio import sleep
-from collections import Counter, namedtuple
-from lxml import etree
-from urllib.parse import parse_qs, urlparse
 import json
 import os.path
+from asyncio import sleep
+from collections import Counter, namedtuple
+from urllib.parse import parse_qs, urlparse
+
+from aiohttp import ServerDisconnectedError
+from lxml import etree
 
 from art_dl.cache import cache
 from art_dl.log import Logger, Progress

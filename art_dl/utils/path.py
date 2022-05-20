@@ -1,7 +1,7 @@
-from functools import partial
-from os import makedirs
 import os.path
 import re
+from functools import partial
+from os import makedirs
 
 mkdir = partial(makedirs, exist_ok=True)
 

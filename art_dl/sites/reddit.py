@@ -1,8 +1,8 @@
+import os.path
 from collections import Counter, namedtuple
 from enum import Enum
 from typing import Any
 from urllib.parse import urlparse
-import os.path
 
 from art_dl.cache import cache
 from art_dl.log import Logger, Progress

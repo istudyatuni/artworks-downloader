@@ -2,9 +2,10 @@
 Module to catch redirect oauth callback
 """
 
+from typing import Any, Callable
+
 from aiohttp import web
 from aiohttp.typedefs import Handler
-from typing import Any, Callable
 
 saver_func = lambda _: None
 

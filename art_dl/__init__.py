@@ -1,8 +1,8 @@
+import os.path
 from argparse import ArgumentParser
 from asyncio import new_event_loop, set_event_loop
 from typing import Optional, Tuple
 from urllib.parse import urlparse
-import os.path
 
 from art_dl.log import Logger, set_verbosity
 from art_dl.sites import download, register

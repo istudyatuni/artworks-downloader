@@ -1,10 +1,10 @@
+import os.path
 from asyncio import sleep
 from collections import Counter, namedtuple
 from enum import Enum
 from glob import glob
 from typing import Any, Tuple
 from urllib.parse import urlparse
-import os.path
 
 from art_dl.cache import cache
 from art_dl.log import Logger, Progress

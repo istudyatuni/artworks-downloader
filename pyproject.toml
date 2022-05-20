@@ -25,6 +25,7 @@ aiohttp-socks = {extras = ["asyncio"], version = "^0.7.1"}
 lxml = "^4.8.0"
 
 [tool.poetry.dev-dependencies]
+isort = "^5.10.1"
 mypy = "^0.950"
 types-aiofiles = "^0.8.8"
 types-lxml = "^2022.4.10"
@@ -49,3 +50,10 @@ use_tabs = true
 mypy_path = "$MYPY_CONFIG_FILE_DIR"
 namespace_packages = true
 explicit_package_bases = true
+
+[tool.isort]
+include_trailing_comma = true
+indent = "\t"
+line_length = 100
+multi_line_output = 3
+src_paths = ["art_dl"]

@@ -2,19 +2,20 @@
 from asyncio import sleep
 from typing import Any, AsyncGenerator
 
+from art_dl.cache import cache
+from art_dl.utils.credentials import creds
+from art_dl.utils.proxy import ClientSession, ProxyClientSession
+
 from .common import (
 	AUTH_LOG_PREFIX,
 	BASE_URL,
 	CREDS_PATHS,
+	REDIRECT_URI,
+	SLUG,
 	logger,
 	make_cache_key,
 	progress,
-	REDIRECT_URI,
-	SLUG,
 )
-from art_dl.cache import cache
-from art_dl.utils.credentials import creds
-from art_dl.utils.proxy import ClientSession, ProxyClientSession
 
 API_URL = '/api/v1/oauth2'
 # start from 32 instead of 1 to skip small timeouts because

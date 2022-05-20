@@ -1,8 +1,9 @@
 from urllib.parse import urlencode
 
-from .common import AUTH_LOG_PREFIX, BASE_URL, CREDS_PATHS, REDIRECT_URI, logger
 from art_dl.redirect_server import run as run_redirect_catch_server
 from art_dl.utils.credentials import creds
+
+from .common import AUTH_LOG_PREFIX, BASE_URL, CREDS_PATHS, REDIRECT_URI, logger
 
 AUTH_URL = BASE_URL + '/oauth2/authorize'
 

@@ -1,6 +1,6 @@
+import sqlite3 as sql
 from json import dumps, loads
 from typing import Any
-import sqlite3 as sql
 
 
 class Queries:
