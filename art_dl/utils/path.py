@@ -15,7 +15,7 @@ def filename_normalize(filename: str):
 	return re.sub(r'[<>:"\\\/|?*]', '_', filename)
 
 
-def filename_shortening(filename: str, length = 255, with_ext=False):
+def filename_shortening(filename: str, length=255, with_ext=False):
 	""" Strip filename to 255 symbols """
 	if with_ext:
 		file, ext = os.path.splitext(filename)

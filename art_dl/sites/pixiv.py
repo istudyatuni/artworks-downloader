@@ -62,7 +62,9 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 	logger.info('fetch info', parsed.id, progress=progress)
 	async with session.get(url) as response:
 		if response.status == 404:
-			return { 'error': 404 }
+			return {
+				'error': 404
+			}
 		data = await response.text()
 
 	root = etree.HTML(data)
