@@ -21,6 +21,10 @@ HEADERS = {
 }
 URL = 'https://www.pixiv.net/en/artworks/'
 
+ERROR_MESSAGES = {
+	'404': 'work has been deleted or the ID does not exist'
+}
+
 logger = Logger(prefix=[SLUG, 'download'], inline=True)
 progress = Progress()
 
@@ -57,6 +61,8 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 	url = URL + parsed.id
 	logger.info('fetch info', parsed.id, progress=progress)
 	async with session.get(url) as response:
+		if response.status == 404:
+			return { 'error': 404 }
 		data = await response.text()
 
 	root = etree.HTML(data)
@@ -130,6 +136,12 @@ async def download(urls: list[str], data_folder: str):
 
 			if cached is None:
 				info = await fetch_info(session, parsed)
+
+				# do not cache because it can be just wrong url, not deleted
+				if 'error' in info:
+					logger.warn(parsed.id, 'error:', ERROR_MESSAGES[str(info['error'])])
+					continue
+
 				cache.insert(SLUG, parsed.id, info, as_json=True)
 			else:
 				info = cached
