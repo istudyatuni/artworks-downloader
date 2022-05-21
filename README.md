@@ -1,5 +1,7 @@
 # Artworks downloader
 
+## Supported sites
+
 - artstation.com [#usage](#sites-with-simple-usage)
 - deviantart.com [#usage](#deviantart)
 - imgur.com [#usage](#sites-with-simple-usage)
@@ -26,11 +28,21 @@ Then run as `art-dl` [#usage](#usage)
 You need poetry, [install](https://python-poetry.org/docs/#installation) it, then run from inside the project
 
 ```sh
-poetry install
+poetry install --no-dev
 
-poetry run
-# or
+# run with poetry
+poetry run python -m art_dl
+
+# enter venv created with poetry
+poetry shell
+# run inside it as
 python -m art_dl
+# or
+art-dl
+
+# create and activate venv, e.g. with virtualenvwrapper, then
+poetry install --no-dev
+art-dl
 ```
 
 ## Usage
@@ -99,6 +111,8 @@ Create `config.json` file with this content and fill "proxy":
   "proxy": "proxy-url"
 }
 ```
+
+For example, `socks5://localhost:1080`
 
 ## Notes
 
