@@ -74,10 +74,10 @@ async def download_image(
 ) -> DownloadResult:
 	filename = os.path.join(save_folder, name)
 	if os.path.exists(filename):
-		logger.verbose('skip existing', log_info)
+		logger.verbose('skip existing', log_info, progress=progress)
 		return DownloadResult.skip
 
-	logger.info('download', log_info)
+	logger.info('download', log_info, progress=progress)
 	await download_binary(session, url, filename)
 	return DownloadResult.download
 
