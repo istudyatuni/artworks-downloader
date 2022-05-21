@@ -80,13 +80,14 @@ async def download_art(
 	url: str,
 	folder: str,
 	name: str,
+	log_name: str,
 ) -> DownloadResult:
 	filename = os.path.join(folder, name)
 	if os.path.exists(filename):
-		logger.info('skip existing', name, progress=progress)
+		logger.info('skip existing', log_name, progress=progress)
 		return DownloadResult.skip
 
-	logger.info('download', name, progress=progress)
+	logger.info('download', log_name, progress=progress)
 	await download_binary(session, url, filename)
 	return DownloadResult.download
 
@@ -144,11 +145,15 @@ async def download(urls: list[str], data_folder: str):
 				folder = os.path.join(save_folder, title)
 				mkdir(folder)
 
+				i = 0
 				for media_id, ext in data['media_ext'].items():
 					url_filename = media_id + '.' + ext
 					url = IMAGE_URI + url_filename
-					res = await download_art(session, url, folder, url_filename)
+					res = await download_art(
+						session, url, folder, url_filename, f'{parsed.id}/{media_id} - {i}'
+					)
 					stats.update({res.value: 1})
+					i += 1
 
 				if cached is None:
 					cache.insert(SLUG, parsed.id, 'gallery')
@@ -166,7 +171,9 @@ async def download(urls: list[str], data_folder: str):
 				media_id, ext = os.path.splitext(url_filename)
 				filename = sep.join([title, media_id]) + ext
 				mkdir(save_folder)
-				res = await download_art(session, url, save_folder, filename)
+				res = await download_art(
+					session, url, save_folder, filename, f'{parsed.id}/{media_id}'
+				)
 				stats.update({res.value: 1})
 
 	logger.info(counter2str(stats))
