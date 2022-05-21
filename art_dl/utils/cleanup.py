@@ -1,21 +1,25 @@
 import os
 
-from art_dl.cache import cache
+from art_dl.cache import CACHE_DB
+from art_dl.utils.db import DB
 
 
 class Cleanup:
-	KEY = 'CLEANUP'
+	KEY = 'filename'
+
+	def __init__(self) -> None:
+		self.db = DB(CACHE_DB, 'cleanup')
 
 	def set(self, filename: str):
 		""" Remember file for cleaning """
-		cache.insert(None, self.KEY, filename)
+		self.db.insert(self.KEY, filename)
 
 	def forget(self):
-		cache.delete(None, self.KEY)
+		self.db.delete(self.KEY)
 
 	def clean(self):
 		""" Perform cleanup """
-		filename = cache.select(None, self.KEY)
+		filename = self.db.select(self.KEY)
 		if filename is None:
 			return
 		if os.path.exists(filename):
