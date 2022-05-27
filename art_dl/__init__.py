@@ -35,7 +35,11 @@ def parse_args():
 
 	parser.add_argument('-u', '--url', type=str, help='URL to download')
 	parser.add_argument(
-		'-l', '--list', type=str, help='File with list of URLs to download, one URL per line', default=None
+		'-l',
+		'--list',
+		type=str,
+		help='File with list of URLs to download, one URL per line',
+		default=None
 	)
 	parser.add_argument(
 		'--folder', type=str, help='Folder to save artworks. Default folder - data', default='data'
