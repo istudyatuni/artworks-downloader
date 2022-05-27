@@ -19,6 +19,13 @@ PROJECT_INFO_URL = '/projects/{hash}.json'
 logger = Logger(inline=True)
 progress = Progress()
 
+
+class ParsedType(str, Enum):
+	art = 'art'
+	artist = 'artist'
+
+
+Parsed = namedtuple('Parsed', ['id', 'type'])
 Project = namedtuple('Project', ['title', 'hash_id', 'assets'])
 
 
@@ -28,21 +35,16 @@ class DownloadResult(str, Enum):
 	skip = 'skip'
 
 
-def parse_link(url: str):
+def parse_link(url: str) -> Parsed:
 	parsed = urlparse(url)
+	path = parsed.path.lstrip('/').split('/')
 
-	if parsed.path.startswith('/artwork/'):
+	if path[0] == 'artwork':
 		# https://www.artstation.com/artwork/<hash>
-		return {
-			'type': 'art',
-			'project': parsed.path.split('/')[-1]
-		}
+		return Parsed(path[1], ParsedType.art)
 
 	# https://www.artstation.com/<artist>
-	return {
-		'type': 'all',
-		'artist': parsed.path.lstrip('/')
-	}
+	return Parsed(path[0], ParsedType.artist)
 
 
 async def list_projects(session: ClientSession, user: str):
@@ -117,25 +119,20 @@ async def download(urls: list[str], data_folder: str):
 		parsed = parse_link(url)
 
 		async with ProxyClientSession(BASE_URL) as session:
-			if parsed['type'] == 'all':
-				artist = parsed['artist']
-				projects_list = await list_projects(session, artist)
+			if parsed.type == ParsedType.artist:
+				projects_list = [p['hash_id'] for p in await list_projects(session, parsed.id)]
 				stats.update(artist=1)
-			elif parsed['type'] == 'art':
-				projects_list = [parsed['project']]
+			elif parsed.type == ParsedType.art:
+				projects_list = [parsed.id]
 				stats.update(art=1)
 			else:
 				# this should never be called
 				logger.verbose('error parsing')
 				continue
 
-			for project in projects_list:
-				if isinstance(project, str):
-					project_hash = project
-				else:
-					project_hash = project['hash_id']
-
+			for project_hash in projects_list:
 				cached: dict = cache.select(SLUG, project_hash, as_json=True)
+
 				if cached is None:
 					p = await fetch_project(session, project_hash)
 					cache.insert(SLUG, project_hash, p, as_json=True)
