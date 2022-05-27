@@ -162,6 +162,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "nuitka"
+version = "0.8.2"
+description = "Python compiler with full language support and CPython compatibility"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "python-socks"
 version = "2.0.3"
 description = "Core proxy (SOCKS4, SOCKS5, HTTP tunneling) functionality for Python"
@@ -260,7 +268,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "bbc94b987322eb40bdd637cbfdee5e0cc0229f9b789ee8bfd204c5a1a562cdeb"
+content-hash = "1ac05f8abf2d3d3d82a5414eb62947f4af351ebb795a58014283405be5030167"
 
 [metadata.files]
 aiofiles = [
@@ -582,6 +590,9 @@ mypy = [
 mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
+]
+nuitka = [
+    {file = "Nuitka-0.8.2.tar.gz", hash = "sha256:54988729a9ed29df7b0b26b9eaffdae39d89f0b01eef814193b9ea457abe8d5f"},
 ]
 python-socks = [
     {file = "python-socks-2.0.3.tar.gz", hash = "sha256:e3a9ca8e554733862ce4d8ce1d10efb480fd3a3acdafd03393943ec00c98ba8a"},

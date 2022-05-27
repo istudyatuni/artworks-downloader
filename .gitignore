@@ -6,3 +6,7 @@ config.json
 credentials.json
 *.sublime-workspace
 /dist
+
+/art_dl.build
+/art_dl.bin
+/art_dl.exe

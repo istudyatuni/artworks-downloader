@@ -27,6 +27,7 @@ lxml = "^4.8.0"
 [tool.poetry.dev-dependencies]
 isort = "^5.10.1"
 mypy = "^0.950"
+Nuitka = "^0.8.2"
 types-aiofiles = "^0.8.8"
 types-lxml = "^2022.4.10"
 yapf = {git = "https://github.com/google/yapf.git", branch = "main", extras = ["pyproject"]}

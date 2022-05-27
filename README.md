@@ -45,6 +45,16 @@ poetry install --no-dev
 art-dl
 ```
 
+Alternatively, build binary with [nuitka](https://github.com/Nuitka/Nuitka):
+
+```sh
+poetry install
+poetry shell
+python -m nuitka art_dl
+```
+
+After that you will have binary in the root directory.
+
 ## Usage
 
 ```
