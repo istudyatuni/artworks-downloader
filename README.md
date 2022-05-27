@@ -18,10 +18,10 @@
 ### With `pip`
 
 ```sh
-pip install art-dl
+pip install -U art-dl
 ```
 
-Then run as `art-dl` [#usage](#usage)
+Then run as `art-dl`: [#usage](#usage)
 
 ### Build from source
 
@@ -55,7 +55,7 @@ Artworks downloader
 options:
   -h, --help            show this help message and exit
   -u URL, --url URL     URL to download
-  -l LIST, --list LIST  File with list of URLs to download
+  -l LIST, --list LIST  File with list of URLs to download, one URL per line
   --folder FOLDER       Folder to save artworks. Default folder - data
   --action ACTION
   -q, --quiet           Do not show logs
@@ -68,7 +68,10 @@ options:
 Just run
 
 ```sh
-art-dl -u [URL here]
+# download single url
+art-dl -u [URL]
+# download urls from file with list of urls, one url per line
+art-dl -l [file with list of urls]
 ```
 
 ### DeviantArt
@@ -96,11 +99,7 @@ You should have deviantart.com account, login to it, then
   - open suggested link
   - click "Authorize"
 
-After that you can use it just like
-
-```sh
-art-dl -u [URL here]
-```
+After that you can use it as other sites: [#usage](#sites-with-simple-usage)
 
 ### Proxy
 
