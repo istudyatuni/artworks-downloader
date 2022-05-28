@@ -139,3 +139,4 @@ async def download(urls: list[str], data_folder: str):
 				stats.update({res.value: 1})
 
 	logger.info(counter2str(stats))
+	logger.newline(normal=True)

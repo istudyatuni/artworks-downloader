@@ -152,6 +152,7 @@ async def download(urls: list[str], data_folder: str, with_key=False):
 			stats.update(download=1)
 
 	logger.info(counter2str(stats))
+	logger.newline(normal=True)
 
 	if len(retry_with_key) > 0:
 		logger.newline(normal=True)

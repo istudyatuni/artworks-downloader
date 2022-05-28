@@ -1,6 +1,6 @@
 import os.path
 from argparse import ArgumentParser
-from asyncio import new_event_loop, set_event_loop
+from asyncio import create_task, new_event_loop, set_event_loop
 from typing import Optional, Tuple
 from urllib.parse import urlparse
 
@@ -74,13 +74,16 @@ async def process_list(urls: list[str], folder: str):
 		mapping[site_slug].append(u)
 
 	logger.info('saving to', folder)
+	tasks = []
 	for slug, l in mapping.items():
 		if len(l) == 0:
 			continue
 
 		save_folder = os.path.join(folder, slug)
-		await download(slug)(l, save_folder)
-		logger.newline(normal=True)
+		tasks.append(create_task(download(slug)(l, save_folder)))
+
+	for task in tasks:
+		await task
 
 
 def prepare() -> Optional[Tuple[list[str], str]]:

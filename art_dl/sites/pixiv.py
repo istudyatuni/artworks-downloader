@@ -161,3 +161,4 @@ async def download(urls: list[str], data_folder: str):
 					await sleep(5)
 
 	logger.info(counter2str(stats))
+	logger.newline(normal=True)
