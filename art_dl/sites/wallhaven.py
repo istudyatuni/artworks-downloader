@@ -155,7 +155,6 @@ async def download(urls: list[str], data_folder: str, with_key=False):
 	logger.newline(normal=True)
 
 	if len(retry_with_key) > 0:
-		logger.newline(normal=True)
 		return await download(retry_with_key, data_folder, True)
 
 
