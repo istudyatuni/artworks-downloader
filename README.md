@@ -1,5 +1,7 @@
 # Artworks downloader
 
+[![PyPI](https://img.shields.io/pypi/v/art-dl)](https://pypi.org/project/art-dl)
+
 ## Supported sites
 
 - artstation.com [#usage](#sites-with-simple-usage)
