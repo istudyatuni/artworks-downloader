@@ -41,8 +41,9 @@ def parse_link(url: str) -> Parsed:
 		# https://redd.it/<id>
 		return Parsed(id=path[0])
 
-	if len(path) == 2 and path[0] == 'comments':
+	if len(path) == 2 and path[0] in ('comments', 'gallery'):
 		# https://www.reddit.com/comments/<id>
+		# https://www.reddit.com/gallery/<id>
 		return Parsed(id=path[1])
 
 	if len(path) >= 4 and path[0] == 'r' and path[2] == 'comments':

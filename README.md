@@ -167,6 +167,7 @@ art-dl --action wallhaven:key
 - **reddit.com**
   - `https://redd.it/<id>`
   - `https://www.reddit.com/comments/<id>`
+  - `https://www.reddit.com/gallery/<id>`
   - `https://www.reddit.com/r/<subreddit>/comments/<id>/<any name>`
 - **twitter.com**
   - `https://(mobile.)twitter.com/<account>/status/<id>`
