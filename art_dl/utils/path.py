@@ -15,10 +15,41 @@ def filename_normalize(filename: str):
 	return re.sub(r'[<>:"\\\/|?*]', '_', filename)
 
 
-def filename_shortening(filename: str, length=255, with_ext=False):
-	""" Strip filename to 255 symbols """
+def _filename_shortening_ascii(filename: str, length=255, with_ext=False):
 	if with_ext:
 		file, ext = os.path.splitext(filename)
 		return file[:length - len(ext)] + ext
 
 	return filename[:length]
+
+
+def _filename_shortening_unicode(filename: str, length=255, with_ext=False):
+	""" Strip filename to `length` bytes """
+	new_filename = ''
+	ext = ''
+	bytes_len = 0
+
+	if with_ext:
+		filename, ext = os.path.splitext(filename)
+		length -= len(ext)
+
+	for ch in filename:
+		bytes_ch = bytes(ch, encoding='utf-8')
+		bytes_len += len(bytes_ch)
+		new_filename += str(bytes_ch, encoding='utf-8')
+
+		if bytes_len > length:
+			break
+
+	return new_filename + ext
+
+
+def filename_shortening(filename: str, length=255, *, with_ext=False):
+	"""
+	Strip filename to `length` symbols if it's a valid ascii string
+	and to `length` bytes if a string contains unicode characters
+	"""
+	if len(bytes(filename, encoding='utf-8')) == len(filename):
+		return _filename_shortening_ascii(filename, length, with_ext)
+
+	return _filename_shortening_unicode(filename, length, with_ext)
