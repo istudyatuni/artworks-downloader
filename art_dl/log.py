@@ -96,7 +96,11 @@ class Logger:
 			to_print.insert(0, self._log_prefix)
 		to_print_str = self._make_print_str(*to_print, sep=sep)
 
-		spaces_offset = self._term_width() - len(to_print_str) + 1
+		spaces_offset = self._term_width() - len(to_print_str)
+		if self._inline:
+			# otherwise when not inline an extra line will be printed
+			spaces_offset += 1
+
 		self._print_func(to_print_str + ' ' * spaces_offset, end=end)
 
 		if prefix is not None:
