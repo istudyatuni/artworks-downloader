@@ -20,7 +20,7 @@ IMAGE_URI = 'https://i.redd.it/'
 DATA_CACHE_POSTFIX = ':data'
 SKIP_CACHE_TAG = 'SKIP'
 
-REDDIT_DOMAINS = ['reddit.com', 'i.redd.it', 'v.redd.it']
+REDDIT_DOMAINS = ('reddit.com', 'i.redd.it', 'v.redd.it')
 
 logger = Logger(prefix=[SLUG, 'download'], inline=True)
 progress = Progress()
@@ -137,7 +137,7 @@ async def download(urls: list[str], data_folder: str):
 				continue
 
 			save_folder = os.path.join(data_folder, data['subreddit'])
-			title = sep.join([data['title'], parsed.id])
+			title = sep.join((data['title'], parsed.id))
 			title = filename_normalize(title)
 			is_gallery: bool = data.get('is_gallery', False)
 
@@ -169,7 +169,7 @@ async def download(urls: list[str], data_folder: str):
 					cache.insert(SLUG, parsed.id, 'image')
 
 				media_id, ext = os.path.splitext(url_filename)
-				filename = sep.join([title, media_id]) + ext
+				filename = sep.join((title, media_id)) + ext
 				mkdir(save_folder)
 				res = await download_art(
 					session, url, save_folder, filename, f'{parsed.id}/{media_id}'

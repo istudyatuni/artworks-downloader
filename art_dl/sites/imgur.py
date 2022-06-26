@@ -118,7 +118,7 @@ async def download(urls: list[str], data_folder: str):
 
 			images = info['images']
 			one_image = len(images) == 1
-			title_prefix = sep.join([info['title'], info['id']]).strip(sep)
+			title_prefix = sep.join((info['title'], info['id'])).strip(sep)
 			title_prefix = filename_normalize(title_prefix)
 
 			if one_image:
@@ -131,8 +131,8 @@ async def download(urls: list[str], data_folder: str):
 
 			for image in images:
 				title = (
-					sep.join([title_prefix, image['title'],
-								image['id']]).strip(sep).replace(sep * 2, sep)
+					sep.join((title_prefix, image['title'], image['id'])
+								).strip(sep).replace(sep * 2, sep)
 				)
 				name = title + image['ext']
 				res = await download_art(session, image['link'], save_folder, name)

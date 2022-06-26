@@ -102,7 +102,7 @@ async def download_art(
 
 		log_info = [art_info.id]
 		if total_imgs_count > 1:
-			# log image number only if more then one image
+			# log image number only if more than one image
 			log_info.extend(['/', i + 1])
 
 		name = name_prefix + f'_p{i}' + ext

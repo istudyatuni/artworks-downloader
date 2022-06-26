@@ -59,7 +59,7 @@ async def process_list(urls: list[str], folder: str):
 	if len(urls) == 0:
 		logger.info('list is empty')
 		return
-	elif len(urls) == 1 and urls[0] is None:
+	if len(urls) == 1 and urls[0] is None:
 		logger.info('no link')
 		return
 

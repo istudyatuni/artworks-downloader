@@ -73,7 +73,7 @@ class Logger:
 	@staticmethod
 	def _make_print_str(*values: object, sep=None) -> str:
 		# this function is for reduce number of the same calculations
-		return (sep if sep else ' ').join(str(v) for v in values)
+		return (sep or ' ').join(str(v) for v in values)
 
 	def _print(
 		self,

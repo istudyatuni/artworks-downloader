@@ -106,7 +106,7 @@ async def download(urls: list[str], data_folder: str):
 			else:
 				info = cached
 
-			title_prefix = sep.join([parsed.account, parsed.id, info['description']]).strip(sep)
+			title_prefix = sep.join((parsed.account, parsed.id, info['description'])).strip(sep)
 			# 245 = 255 - len('.xxxx') - len(' - xx')
 			title_prefix = filename_shortening(filename_normalize(title_prefix), 245)
 			add_index = (info['count']) > 1
