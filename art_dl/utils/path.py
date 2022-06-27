@@ -34,12 +34,11 @@ def _filename_shortening_unicode(filename: str, length=255, with_ext=False):
 		length -= len(ext)
 
 	for ch in filename:
-		bytes_ch = bytes(ch, encoding='utf-8')
-		bytes_len += len(bytes_ch)
-		new_filename += str(bytes_ch, encoding='utf-8')
-
+		bytes_len += len(bytes(ch, encoding='utf-8'))
 		if bytes_len > length:
 			break
+
+		new_filename += ch
 
 	return new_filename + ext
 
