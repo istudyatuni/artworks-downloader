@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "art-dl"
-version = "0.2.3"
+version = "0.2.4"
 description = "Artworks downloader"
 authors = ["Ilia <istudyatuni@gmail.com>"]
 readme = "README.md"
