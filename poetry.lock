@@ -170,6 +170,18 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "platformdirs"
+version = "2.5.2"
+description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+docs = ["furo (>=2021.7.5b38)", "proselint (>=0.10.2)", "sphinx-autodoc-typehints (>=1.12)", "sphinx (>=4)"]
+test = ["appdirs (==1.4.4)", "pytest-cov (>=2.7)", "pytest-mock (>=3.6)", "pytest (>=6)"]
+
+[[package]]
 name = "python-socks"
 version = "2.0.3"
 description = "Core proxy (SOCKS4, SOCKS5, HTTP tunneling) functionality for Python"
@@ -268,7 +280,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "1ac05f8abf2d3d3d82a5414eb62947f4af351ebb795a58014283405be5030167"
+content-hash = "921a6ac9439aa3584ff7ae654d88bf1af368c52f2245894703e3756962e93105"
 
 [metadata.files]
 aiofiles = [
@@ -593,6 +605,10 @@ mypy-extensions = [
 ]
 nuitka = [
     {file = "Nuitka-0.8.2.tar.gz", hash = "sha256:54988729a9ed29df7b0b26b9eaffdae39d89f0b01eef814193b9ea457abe8d5f"},
+]
+platformdirs = [
+    {file = "platformdirs-2.5.2-py3-none-any.whl", hash = "sha256:027d8e83a2d7de06bbac4e5ef7e023c02b863d7ea5d079477e722bb41ab25788"},
+    {file = "platformdirs-2.5.2.tar.gz", hash = "sha256:58c8abb07dcb441e6ee4b11d8df0ac856038f944ab98b7be6b27b2a3c7feef19"},
 ]
 python-socks = [
     {file = "python-socks-2.0.3.tar.gz", hash = "sha256:e3a9ca8e554733862ce4d8ce1d10efb480fd3a3acdafd03393943ec00c98ba8a"},

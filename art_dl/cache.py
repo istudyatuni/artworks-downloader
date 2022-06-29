@@ -1,8 +1,9 @@
 from typing import Any
 
 from art_dl.utils.db import DB
+from art_dl.utils.dirs import DIRS
 
-CACHE_DB = '.cache.db'
+CACHE_DB = DIRS.cache + 'cache.db'
 
 
 class Cache:

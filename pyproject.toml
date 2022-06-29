@@ -23,6 +23,7 @@ aiofiles = "^0.8.0"
 aiohttp = "^3.8.1"
 aiohttp-socks = {extras = ["asyncio"], version = "^0.7.1"}
 lxml = "^4.8.0"
+platformdirs = "^2.5.2"
 
 [tool.poetry.dev-dependencies]
 isort = "^5.10.1"
