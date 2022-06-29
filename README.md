@@ -115,15 +115,13 @@ After that you can use it as other sites: [#usage](#sites-with-simple-usage)
 
 ### Proxy
 
-Create `config.json` file with this content and fill "proxy":
+Run
 
-```json
-{
-  "proxy": "proxy-url"
-}
+```sh
+art-dl --action config:proxy
 ```
 
-For example, `socks5://localhost:1080`
+Enter proxy, for example, `socks5://localhost:1080`
 
 ## Notes
 

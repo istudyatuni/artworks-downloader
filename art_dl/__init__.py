@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from art_dl.log import Logger, set_verbosity
 from art_dl.sites import download, register
 from art_dl.utils.cleanup import cleanup
+from art_dl.utils.config import config
 from art_dl.utils.retry import retry
 
 SLUGS_MAPPING = {
@@ -119,6 +120,9 @@ def prepare() -> Optional[Tuple[list[str], str]]:
 		return None
 	elif action == ('wallhaven', 'key'):
 		register('wallhaven')()
+		return None
+	elif action == ('config', 'proxy'):
+		config.input_entry('proxy')
 		return None
 	elif action is not None:
 		logger.info('unknown action:', args.action)

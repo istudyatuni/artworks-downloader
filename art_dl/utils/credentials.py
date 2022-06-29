@@ -1,7 +1,9 @@
+import os.path
+
 from art_dl.utils.db import DB
 from art_dl.utils.dirs import DIRS
 
-CREDS_DB = DIRS.config + 'config.db'
+CREDS_DB = os.path.join(DIRS.config, 'config.db')
 CREDS_TABLE = 'credentials'
 
 
