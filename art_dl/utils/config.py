@@ -1,9 +1,7 @@
-import os.path
-
 from art_dl.utils.db import DB
 from art_dl.utils.dirs import DIRS
 
-CONFIG_DB = os.path.join(DIRS.config, 'config.db')
+CONFIG_DB = DIRS.config + '/config.db'
 CONFIG_TABLE = 'configuration'
 
 
