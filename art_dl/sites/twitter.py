@@ -1,8 +1,10 @@
 import os.path
 from collections import Counter, namedtuple
 from enum import Enum
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
+from aiohttp import ClientTimeout
+from aiohttp.client_exceptions import ServerTimeoutError
 from lxml import etree
 
 from art_dl.cache import cache
@@ -13,13 +15,30 @@ from art_dl.utils.print import counter2str
 from art_dl.utils.proxy import ClientSession, ProxyClientSession
 
 SLUG = 'twitter'
+
 BASE_URL = 'https://nitter.net'
+# https://github.com/libredirect/libredirect/blob/master/src/instances/data.json
+# except https://github.com/libredirect/libredirect/blob/master/src/instances/blacklist.json
+FALLBACK_URLS = (
+	'https://nitter.42l.fr',
+	'https://nitter.pussthecat.org',
+	'https://nitter.fdn.fr',
+	'https://nitter.1d4.us',
+	'https://nitter.kavin.rocks',
+	'https://nitter.unixfox.eu',
+	# return to default
+	'https://nitter.net',
+)
+# ind in FALLBACK_URLS
+CURRENT_URL_IND = -1
+
 COOKIES = {
 	# hide replies and images in replies
 	'hideReplies': 'on',
 	# just reduce response a little
 	'hideTweetStats': 'on',
 }
+SESSION_TIMEOUT = ClientTimeout(sock_read=10)
 
 Parsed = namedtuple('Parsed', ['id', 'account', 'path'], defaults=[None, None, None])
 
@@ -30,6 +49,16 @@ progress = Progress()
 class DownloadResult(str, Enum):
 	download = 'download'
 	skip = 'skip'
+
+
+def switch_instance():
+	global BASE_URL
+	global CURRENT_URL_IND
+
+	CURRENT_URL_IND = (CURRENT_URL_IND + 1) % len(FALLBACK_URLS)
+	BASE_URL = FALLBACK_URLS[CURRENT_URL_IND]
+
+	logger.warn('connect timeout, switching instance to', BASE_URL)
 
 
 def parse_link(url: str) -> Parsed:
@@ -46,9 +75,13 @@ def parse_link(url: str) -> Parsed:
 
 async def fetch_info(session: ClientSession, parsed: Parsed):
 	logger.info('fetch info', f'{parsed.account}/{parsed.id}', progress=progress)
-	# wait for api: https://github.com/zedeus/nitter/issues/192
-	async with session.get(parsed.path) as response:
-		data = await response.text()
+	try:
+		# wait for api: https://github.com/zedeus/nitter/issues/192
+		async with session.get(urljoin(BASE_URL, parsed.path)) as response:
+			data = await response.text()
+	except ServerTimeoutError:
+		switch_instance()
+		return await fetch_info(session, parsed)
 
 	root = etree.HTML(data)
 	description = root.xpath('//meta[@property=\'og:description\']/@content')[0]
@@ -78,7 +111,12 @@ async def download_image(
 		return DownloadResult.skip
 
 	logger.info('download', log_info, progress=progress)
-	await download_binary(session, url, filename)
+	try:
+		await download_binary(session, urljoin(BASE_URL, url), filename)
+	except ServerTimeoutError:
+		switch_instance()
+		return await download_image(session, url, save_folder, name, log_info)
+
 	return DownloadResult.download
 
 
@@ -87,7 +125,7 @@ async def download(urls: list[str], data_folder: str):
 	progress.total = len(urls)
 	sep = ' - '
 
-	async with ProxyClientSession(BASE_URL, cookies=COOKIES) as session:
+	async with ProxyClientSession(cookies=COOKIES, timeout=SESSION_TIMEOUT) as session:
 		for url in urls:
 			progress.i += 1
 
