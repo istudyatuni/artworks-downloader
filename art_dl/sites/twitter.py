@@ -38,6 +38,10 @@ COOKIES = {
 	# just reduce response a little
 	'hideTweetStats': 'on',
 }
+HEADERS = {
+	# why Title case??
+	'User-Agent': 'Mozilla/5.0'
+}
 SESSION_TIMEOUT = ClientTimeout(sock_read=10)
 
 Parsed = namedtuple('Parsed', ['id', 'account', 'path'], defaults=[None, None, None])
@@ -125,7 +129,7 @@ async def download(urls: list[str], data_folder: str):
 	progress.total = len(urls)
 	sep = ' - '
 
-	async with ProxyClientSession(cookies=COOKIES, timeout=SESSION_TIMEOUT) as session:
+	async with ProxyClientSession(cookies=COOKIES, timeout=SESSION_TIMEOUT, headers=HEADERS) as session:
 		for url in urls:
 			progress.i += 1
 
