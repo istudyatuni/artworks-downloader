@@ -22,7 +22,8 @@ HEADERS = {
 URL = 'https://www.pixiv.net/en/artworks/'
 
 ERROR_MESSAGES = {
-	'404': 'work has been deleted or the ID does not exist'
+	'404': 'artwork has been deleted or the ID does not exist',
+	'no_original_url': 'this artwork is one of strange arts without url of picture',
 }
 
 logger = Logger(prefix=[SLUG, 'download'], inline=True)
@@ -63,13 +64,18 @@ async def fetch_info(session: ClientSession, parsed: Parsed):
 	async with session.get(url) as response:
 		if response.status == 404:
 			return {
-				'error': 404
+				'error': '404'
 			}
 		data = await response.text()
 
 	root = etree.HTML(data)
 	json_data = json.loads(root.xpath('//meta[@name=\'preload-data\']/@content')[0])
 	art = json_data['illust'][parsed.id]
+
+	if art['urls']['original'] is None:
+		return {
+			'error': 'no_original_url'
+		}
 
 	return {
 		'count': art['pageCount'],
@@ -141,7 +147,7 @@ async def download(urls: list[str], data_folder: str):
 
 				# do not cache because it can be just wrong url, not deleted
 				if 'error' in info:
-					logger.warn(parsed.id, 'error:', ERROR_MESSAGES[str(info['error'])])
+					logger.warn(parsed.id, 'error:', ERROR_MESSAGES[info['error']])
 					continue
 
 				cache.insert(SLUG, parsed.id, info, as_json=True)
