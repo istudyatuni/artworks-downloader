@@ -148,6 +148,7 @@ async def download(urls: list[str], data_folder: str):
 				# do not cache because it can be just wrong url, not deleted
 				if 'error' in info:
 					logger.warn(parsed.id, 'error:', ERROR_MESSAGES[info['error']])
+					stats.update(skip=1)
 					continue
 
 				cache.insert(SLUG, parsed.id, info, as_json=True)
