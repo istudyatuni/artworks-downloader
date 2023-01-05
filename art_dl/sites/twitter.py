@@ -129,7 +129,9 @@ async def download(urls: list[str], data_folder: str):
 	progress.total = len(urls)
 	sep = ' - '
 
-	async with ProxyClientSession(cookies=COOKIES, timeout=SESSION_TIMEOUT, headers=HEADERS) as session:
+	async with ProxyClientSession(
+		cookies=COOKIES, timeout=SESSION_TIMEOUT, headers=HEADERS
+	) as session:
 		for url in urls:
 			progress.i += 1
 
