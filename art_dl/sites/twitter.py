@@ -146,6 +146,11 @@ async def download(urls: list[str], data_folder: str):
 
 			if cached is None:
 				info = await fetch_info(session, parsed)
+				if info['count'] == 0:
+					logger.warn(f'{parsed.account}/{parsed.id}: tweet without images. try again if this is an error')
+					stats.update(skip=1)
+					continue
+
 				cache.insert(SLUG, cache_key, info, as_json=True)
 			else:
 				info = cached
