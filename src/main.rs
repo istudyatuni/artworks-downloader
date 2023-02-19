@@ -1,13 +1,17 @@
 #![allow(unused)]
 
-use extractor::ExtractorConfig;
+use anyhow::Result;
+// use model::error::Result;
+
+use extractor::ExtractorOptions;
 
 mod cache;
 mod extractor;
+mod model;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let urls = vec!["https://imgur.com"];
-    let config = ExtractorConfig::new("test");
-    extractor::download_urls(urls, &config);
+    let config = ExtractorOptions::new("test");
+    extractor::download_urls(urls, &config).await
 }

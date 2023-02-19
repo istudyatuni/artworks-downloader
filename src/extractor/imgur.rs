@@ -1,27 +1,86 @@
 // use crate::cache;
 
-use super::{Extractor, ExtractorConfig};
+use anyhow::Result;
+// use crate::Result;
+use async_trait::async_trait;
+use far::Render;
+use url::Url;
+
+use super::{Extractor, ExtractorOptions};
+use crate::model::error::CrateError;
 
 // just from devtools
 const API_ALBUM_URL: &str =
-    "https://api.imgur.com/post/v1/albums/{id}?client_id=546c25a59c58ad7&include=media";
-const SLUG: &str = "imgur";
+    "https://api.imgur.com/post/v1/albums/{{id}}?client_id=546c25a59c58ad7&include=media";
+// const SLUG: &str = "imgur";
 
 #[derive(Debug)]
-pub struct ImgurExtractor {
-    // urls: Vec<String>,
+pub struct ImgurExtractor {}
+
+#[derive(Debug, Render)]
+struct ApiURLReplacements {
+    id: String,
 }
 
-/*impl ImgurExtractor {
-    pub fn new() -> Self {
-        Self {
-            // urls: todo!(),
+#[derive(Debug)]
+enum LinkType {
+    Album,
+    Image,
+}
+
+#[derive(Debug)]
+struct Parsed {
+    id: String,
+    link_type: LinkType,
+}
+
+impl Parsed {
+    fn new(id: &str, link_type: LinkType) -> Self {
+        let id = id.to_string();
+        Self { id, link_type }
+    }
+}
+
+impl TryFrom<&str> for Parsed {
+    type Error = &'static str;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let Ok(parsed) = Url::parse(value) else {
+            println!("invalid url: {value}");
+            return Err("invalid url");
+        };
+
+        let Some(segments) = parsed.path_segments().map(|c| c.collect::<Vec<_>>()) else {
+            return Err("cannot get path segments");
+        };
+
+        match segments.as_slice() {
+            // https://imgur.com/<id>
+            [id] => Ok(Parsed::new(id, LinkType::Image)),
+
+            // https://imgur.com/a/<id>
+            // https://imgur.com/gallery/<id>
+            // https://imgur.com/t/<tag>/<id>
+            ["a", id] | ["gallery", id] | ["t", _, id] => Ok(Parsed::new(id, LinkType::Album)),
+
+            _ => Err("unsupported url"),
         }
     }
-}*/
+}
 
+#[async_trait]
 impl Extractor for ImgurExtractor {
-    fn download(urls: &[&str], config: &ExtractorConfig) {
-        println!("urls: {urls:#?}")
+    async fn download(urls: &[&str], config: &ExtractorOptions) -> Result<()> {
+        let api_url_template = far::find(API_ALBUM_URL).map_err(CrateError::FarError)?;
+        for &url in urls {
+            let Ok(parsed) = Parsed::try_from(url) else {
+                continue;
+            };
+            println!(
+                "{}",
+                api_url_template.replace(&ApiURLReplacements { id: parsed.id })
+            );
+        }
+        Ok(())
     }
 }
