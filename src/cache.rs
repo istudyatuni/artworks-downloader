@@ -1,6 +1,4 @@
-#![allow(unused)]
-
-use rusqlite::Connection;
+/*use rusqlite::Connection;
 use serde_json::Value;
 
 const CACHE_DB: &str = ".art-dl-cache.db";
@@ -68,3 +66,4 @@ impl Cache {
             .expect("Couldn't delete from cache");
     }
 }
+*/

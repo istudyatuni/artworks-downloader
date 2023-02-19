@@ -1,7 +1,13 @@
-mod cache;
-mod sites;
+#![allow(unused)]
 
-fn main() {
+use extractor::ExtractorConfig;
+
+mod cache;
+mod extractor;
+
+#[tokio::main]
+async fn main() {
     let urls = vec!["https://imgur.com"];
-    sites::process_urls(urls, "save_folder");
+    let config = ExtractorConfig::new("test");
+    extractor::download_urls(urls, &config);
 }

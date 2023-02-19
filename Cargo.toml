@@ -7,7 +7,8 @@ edition = "2021"
 strip = true
 
 [dependencies]
-phf = { version = "0.10.1", features = ["macros"] }
-rusqlite = "0.27.0"
+# rusqlite = "0.27.0"
 serde_json = "1.0.79"
+sqlx = { version = "0.6.2", features = ["sqlite", "json", "runtime-tokio-rustls"] }
+tokio = { version = "1.25.0", features = ["full"] }
 url = "2.2.2"
