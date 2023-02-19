@@ -1,21 +1,31 @@
-// use crate::cache;
-
-use anyhow::Result;
-// use crate::Result;
+use crate::{CrateError, Result};
 use async_trait::async_trait;
 use far::Render;
 use url::Url;
 
-use super::{Extractor, ExtractorOptions};
-use crate::model::error::CrateError;
+use super::common::{Extractor, ExtractorOptions};
 
 // just from devtools
 const API_ALBUM_URL: &str =
     "https://api.imgur.com/post/v1/albums/{{id}}?client_id=546c25a59c58ad7&include=media";
-// const SLUG: &str = "imgur";
 
 #[derive(Debug)]
 pub struct ImgurExtractor {}
+
+#[derive(Debug)]
+struct ImgurInfo {
+    id: String,
+    title: String,
+    images: Vec<ImgurInfoImages>,
+}
+
+#[derive(Debug)]
+struct ImgurInfoImages {
+    id: String,
+    link: String,
+    ext: String,
+    title: String,
+}
 
 #[derive(Debug, Render)]
 struct ApiURLReplacements {
@@ -42,16 +52,16 @@ impl Parsed {
 }
 
 impl TryFrom<&str> for Parsed {
-    type Error = &'static str;
+    type Error = CrateError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let Ok(parsed) = Url::parse(value) else {
             println!("invalid url: {value}");
-            return Err("invalid url");
+            return Err(CrateError::InvalidURL(value.to_string()));
         };
 
         let Some(segments) = parsed.path_segments().map(|c| c.collect::<Vec<_>>()) else {
-            return Err("cannot get path segments");
+            return Err(CrateError::Plain("cannot get path segments".to_string()));
         };
 
         match segments.as_slice() {
@@ -63,14 +73,14 @@ impl TryFrom<&str> for Parsed {
             // https://imgur.com/t/<tag>/<id>
             ["a", id] | ["gallery", id] | ["t", _, id] => Ok(Parsed::new(id, LinkType::Album)),
 
-            _ => Err("unsupported url"),
+            _ => Err(CrateError::UnsupportedURL(value.to_string())),
         }
     }
 }
 
 #[async_trait]
 impl Extractor for ImgurExtractor {
-    async fn download(urls: &[&str], config: &ExtractorOptions) -> Result<()> {
+    async fn fetch_info(urls: &[&str], config: &ExtractorOptions) -> Result<()> {
         let api_url_template = far::find(API_ALBUM_URL).map_err(CrateError::FarError)?;
         for &url in urls {
             let Ok(parsed) = Parsed::try_from(url) else {

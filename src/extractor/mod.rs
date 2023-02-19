@@ -1,59 +1,33 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
-use anyhow::{bail, Result};
-use async_trait::async_trait;
+use crate::{CrateError, Result};
+
 use url::Url;
+
+use common::{Extractor, ExtractorOptions, ExtractorSlug};
+
+pub mod common;
 
 mod imgur;
 
-#[async_trait]
-trait Extractor {
-    async fn download(urls: &[&str], config: &ExtractorOptions) -> Result<()>;
-}
-
-#[derive(Debug)]
-pub struct ExtractorOptions {
-    /// Root folder for saving
-    save_folder: PathBuf,
-}
-
-impl ExtractorOptions {
-    pub fn new(save_folder: &str) -> Self {
-        Self {
-            save_folder: PathBuf::from(save_folder),
-        }
-    }
-    /// Get `save_folder` with appended `filepath`
-    fn save_file_with(&self, filepath: PathBuf) -> PathBuf {
-        self.save_folder.join(filepath)
-    }
-}
-
-fn detect_site(url: &str) -> Result<&str> {
+fn detect_site(url: &str) -> Result<ExtractorSlug> {
     let Ok(parsed) = Url::parse(url) else {
-        bail!("invalid url: {url}");
+        return Err(CrateError::InvalidURL(url.to_string()))
     };
     let Some(host) = parsed.host_str() else {
-        bail!("cannot parse host from url: {url}");
+        // cannot parse host from url
+        return Err(CrateError::InvalidURL(url.to_string()))
     };
     let slug = match host {
-        "danbooru.donmai.us" => "danbooru",
-        "imgur.com" => "imgur",
-        "mobile.twitter.com" => "twitter",
-        "nitter.net" => "twitter",
-        "redd.it" => "reddit",
-        "safebooru.donmai.us" => "danbooru",
-        "twitter.com" => "twitter",
-        "wallhaven.cc" => "wallhaven",
-        "whvn.cc" => "wallhaven",
-        "www.artstation.com" => "artstation",
-        "www.deviantart.com" => "deviantart",
-        "www.pixiv.net" => "pixiv",
-        "www.reddit.com" => "reddit",
-        "zettai.moe" => "pixiv",
-        _ => {
-            bail!("unsupported url: {url}");
-        }
+        "danbooru.donmai.us" | "safebooru.donmai.us" => ExtractorSlug::Danbooru,
+        "imgur.com" => ExtractorSlug::Imgur,
+        "redd.it" | "www.reddit.com" => ExtractorSlug::Reddit,
+        "twitter.com" | "mobile.twitter.com" | "nitter.net" => ExtractorSlug::Twitter,
+        "wallhaven.cc" | "whvn.cc" => ExtractorSlug::Wallhaven,
+        "www.artstation.com" => ExtractorSlug::Artstation,
+        "www.deviantart.com" => ExtractorSlug::DeviantArt,
+        "www.pixiv.net" | "zettai.moe" => ExtractorSlug::Pixiv,
+        _ => return Err(CrateError::UnsupportedURL(url.to_string())),
     };
     Ok(slug)
 }
@@ -68,7 +42,7 @@ pub async fn download_urls(urls: Vec<&str>, config: &ExtractorOptions) -> Result
     }
     for (slug, urls) in map {
         match slug {
-            "imgur" => imgur::ImgurExtractor::download(&urls, &config).await?,
+            ExtractorSlug::Imgur => imgur::ImgurExtractor::fetch_info(&urls, &config).await?,
             _ => continue,
         }
     }

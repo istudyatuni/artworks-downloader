@@ -1,11 +1,11 @@
 #![allow(unused)]
 
-use anyhow::Result;
-// use model::error::Result;
+use model::error::{CrateError, Result};
 
-use extractor::ExtractorOptions;
+use extractor::common::ExtractorOptions;
 
 mod cache;
+mod download;
 mod extractor;
 mod model;
 
