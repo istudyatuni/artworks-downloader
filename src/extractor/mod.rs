@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{CrateError, Result};
-
 use url::Url;
 
+use crate::{CrateError, Result};
 use common::{Extractor, ExtractorOptions, ExtractorSlug};
 
 pub mod common;
@@ -41,10 +40,10 @@ pub async fn download_urls(urls: Vec<&str>, config: &ExtractorOptions) -> Result
         }
     }
     for (slug, urls) in map {
-        match slug {
-            ExtractorSlug::Imgur => imgur::ImgurExtractor::fetch_info(&urls, &config).await?,
+        let info = match slug {
+            ExtractorSlug::Imgur => imgur::ImgurExtractor::fetch_info(&urls, config).await?,
             _ => continue,
-        }
+        };
     }
     Ok(())
 }

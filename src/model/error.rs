@@ -4,6 +4,8 @@ pub type Result<T, E = CrateError> = std::result::Result<T, E>;
 pub enum CrateError {
     #[error("string template parse error: {0}")]
     FarError(#[from] far::Errors),
+    #[error("reqwest error: {0}")]
+    ReqwestError(#[from] reqwest::Error),
 
     #[error("invalid url: {0}")]
     InvalidURL(String),

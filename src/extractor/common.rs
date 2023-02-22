@@ -2,10 +2,7 @@ use std::path::PathBuf;
 
 use crate::Result;
 
-use async_trait::async_trait;
-
-use super::imgur::ImgurExtractor;
-
+/// Slugs for extractor
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum ExtractorSlug {
     Artstation,
@@ -33,9 +30,8 @@ pub enum ExtractorSlug {
     }
 }*/
 
-#[async_trait]
 pub trait Extractor {
-    async fn fetch_info(urls: &[&str], config: &ExtractorOptions) -> Result<()>;
+    async fn fetch_info(urls: &[&str], config: &ExtractorOptions) -> Result<Vec<impl ExtractedInfo>>;
 }
 
 #[derive(Debug)]
@@ -56,6 +52,4 @@ impl ExtractorOptions {
     }
 }
 
-pub trait ExtractedInfo {
-    // fn
-}
+pub trait ExtractedInfo {}

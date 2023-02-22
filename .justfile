@@ -1,29 +1,17 @@
 [private]
 default:
-	just --list
+	just --list --unsorted
 
-# run checks
-check: isort-check yapf-check mypy
+format:
+	cargo fmt
 
-# format all
-format: isort yapf
+clippy:
+	cargo clippy
 
-[private]
-isort:
-	isort art_dl
+# generate doc
+doc:
+	cargo doc --document-private-items --no-deps
 
-[private]
-yapf:
-	python -m yapf -i -r art_dl
-
-[private]
-isort-check:
-	isort art_dl --check
-
-[private]
-yapf-check:
-	python -m yapf --diff -r art_dl
-
-[private]
-mypy:
-	mypy -m art_dl
+# generate and open doc
+doc-open:
+	cargo doc --document-private-items --no-deps --open

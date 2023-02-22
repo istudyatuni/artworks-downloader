@@ -1,8 +1,10 @@
 #![allow(unused)]
-
-use model::error::{CrateError, Result};
+#![allow(incomplete_features)]
+#![feature(async_fn_in_trait)]
+#![feature(return_position_impl_trait_in_trait)]
 
 use extractor::common::ExtractorOptions;
+use model::error::{CrateError, Result};
 
 mod cache;
 mod download;
