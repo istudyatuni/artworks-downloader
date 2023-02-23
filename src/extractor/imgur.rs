@@ -44,8 +44,6 @@ struct ImgurInfo {
 struct ImgurInfoImage {
     id: String,
     link: String,
-    // is this necessary?
-    // ext: Option<String>,
     #[serde(rename(deserialize = "type"))]
     content_type: String,
     title: Option<String>,
@@ -152,7 +150,7 @@ impl ImgurExtractor {
             .map_err(CrateError::ReqwestError)?;
         let res: ImgurInfoWrapper = res.json().await.map_err(CrateError::ReqwestError)?;
         let data = match res.data {
-            ImgurInfoData::Single(image) => image.into(),
+            ImgurInfoData::Single(image) => ImgurInfo::from(image),
             ImgurInfoData::Multiple(info) => info,
         };
         Ok(data)
@@ -166,31 +164,24 @@ impl IntoIterator for ImgurInfo {
     type IntoIter = ImgurInfoIter;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.into()
+        let template = if self.images.len() == 1 {
+            SAVE_SINGLE_FILE_PATTERN
+        } else {
+            SAVE_ALBUM_PATTERN
+        };
+        Self::IntoIter {
+            data: self,
+            template,
+            at: 0,
+        }
     }
 }
 
 #[derive(Debug)]
 struct ImgurInfoIter {
     data: ImgurInfo,
-    template: String,
+    template: &'static str,
     at: usize,
-}
-
-impl From<ImgurInfo> for ImgurInfoIter {
-    fn from(value: ImgurInfo) -> Self {
-        let template = if value.images.len() == 1 {
-            SAVE_SINGLE_FILE_PATTERN
-        } else {
-            SAVE_ALBUM_PATTERN
-        }
-        .to_string();
-        Self {
-            data: value,
-            template,
-            at: 0,
-        }
-    }
 }
 
 impl Iterator for ImgurInfoIter {
@@ -202,7 +193,7 @@ impl Iterator for ImgurInfoIter {
         };
 
         let folder = PathBuf::from(SLUG.to_string());
-        let ext = image.content_type.split("/").collect::<Vec<_>>()[1];
+        let ext = image.content_type.split('/').collect::<Vec<_>>()[1];
         let sub: [(&str, &str); 6] = [
             ("album_title", &self.data.title.clone().unwrap_or("".into())),
             ("album_id", &self.data.id),
@@ -213,7 +204,7 @@ impl Iterator for ImgurInfoIter {
         ];
 
         self.at += 1;
-        let f = template(&self.template, &sub).expect("cannot parse template");
+        let f = template(self.template, sub).expect("cannot parse template");
         let f = f.replace(" -  - ", " - ");
         Some(Self::Item::new(&image.link, folder.join(f)))
     }
