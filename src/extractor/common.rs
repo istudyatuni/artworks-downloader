@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, fmt::Display};
 
 use crate::Result;
 
@@ -15,41 +15,58 @@ pub enum ExtractorSlug {
     Wallhaven,
 }
 
-/*impl ExtractorSlug {
-    pub fn get_extractor(&self) -> impl Extractor {
-        match self {
-            ExtractorSlug::Artstation => todo!(),
-            ExtractorSlug::Danbooru => todo!(),
-            ExtractorSlug::DeviantArt => todo!(),
-            ExtractorSlug::Imgur => ImgurExtractor{},
-            ExtractorSlug::Pixiv => todo!(),
-            ExtractorSlug::Reddit => todo!(),
-            ExtractorSlug::Twitter => todo!(),
-            ExtractorSlug::Wallhaven => todo!(),
-        }
+impl Display for ExtractorSlug {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            ExtractorSlug::Artstation => "artstation",
+            ExtractorSlug::Danbooru => "danbooru",
+            ExtractorSlug::DeviantArt => "deviantart",
+            ExtractorSlug::Imgur => "imgur",
+            ExtractorSlug::Pixiv => "pixiv",
+            ExtractorSlug::Reddit => "reddit",
+            ExtractorSlug::Twitter => "twitter",
+            ExtractorSlug::Wallhaven => "wallhaven",
+        };
+        write!(f, "{s}")
     }
-}*/
+}
 
 pub trait Extractor {
-    async fn fetch_info(urls: &[&str], config: &ExtractorOptions) -> Result<Vec<impl ExtractedInfo>>;
+    async fn fetch_info(
+        urls: &[&str],
+        config: &ExtractorOptions,
+    ) -> Result<Vec<impl ExtractedInfo>>;
 }
 
 #[derive(Debug)]
 pub struct ExtractorOptions {
     /// Root folder for saving
-    save_folder: PathBuf,
+    root_save_folder: PathBuf,
 }
 
 impl ExtractorOptions {
     pub fn new(save_folder: &str) -> Self {
         Self {
-            save_folder: PathBuf::from(save_folder),
+            root_save_folder: PathBuf::from(save_folder),
         }
     }
-    /// Get `save_folder` with appended `filepath`
+    /// Get `root_save_folder` with appended `filepath`
     fn save_file_to(&self, filepath: PathBuf) -> PathBuf {
-        self.save_folder.join(filepath)
+        self.root_save_folder.join(filepath)
     }
 }
 
-pub trait ExtractedInfo {}
+#[derive(Debug)]
+pub struct ExtractedItem {
+    pub link: String,
+    pub save_path: PathBuf,
+}
+
+impl ExtractedItem {
+    pub fn new(link: &str, save_path: PathBuf) -> Self {
+        let link = link.into();
+        Self { link, save_path }
+    }
+}
+
+pub trait ExtractedInfo: IntoIterator<Item = ExtractedItem> {}

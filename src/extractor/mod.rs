@@ -40,10 +40,15 @@ pub async fn download_urls(urls: Vec<&str>, config: &ExtractorOptions) -> Result
         }
     }
     for (slug, urls) in map {
-        let info = match slug {
+        let info_vec = match slug {
             ExtractorSlug::Imgur => imgur::ImgurExtractor::fetch_info(&urls, config).await?,
             _ => continue,
         };
+        for info in info_vec {
+            for image in info {
+                println!("download: {image:?}");
+            }
+        }
     }
     Ok(())
 }

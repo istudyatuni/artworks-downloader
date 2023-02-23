@@ -7,6 +7,7 @@ name = "art-dl"
 version = "0.0.0"
 dependencies = [
  "far",
+ "nanotemplate",
  "reqwest",
  "serde",
  "serde_json",
@@ -399,6 +400,12 @@ dependencies = [
  "wasi",
  "windows-sys 0.45.0",
 ]
+
+[[package]]
+name = "nanotemplate"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f247bfe894f8a04e0d8b1eb5eed9dfb7424f6dda47cf83e3f03670e87cb2831b"
 
 [[package]]
 name = "native-tls"

@@ -1,16 +1,22 @@
-use std::fmt::Display;
+use std::{fmt::Display, path::PathBuf};
 
 use far::Render;
+use nanotemplate::template;
 use reqwest::{header::AUTHORIZATION, Client};
 use serde::Deserialize;
 use url::Url;
 
+use super::common::{ExtractedInfo, ExtractedItem, Extractor, ExtractorOptions, ExtractorSlug};
 use crate::{CrateError, Result};
-use super::common::{ExtractedInfo, Extractor, ExtractorOptions};
 
 const API_ALBUM_URL: &str = "https://api.imgur.com/3/{{link_type}}/{{id}}";
 // just from devtools
 const AUTHORIZATION_KEY: &str = "Client-ID 546c25a59c58ad7";
+
+const SLUG: ExtractorSlug = ExtractorSlug::Imgur;
+const SAVE_SINGLE_FILE_PATTERN: &str =
+    "{album_title}{sep}{album_id}{sep}{image_title}{sep}{image_id}.{ext}";
+const SAVE_ALBUM_PATTERN: &str = "{album_title}{sep}{album_id}/{image_title}{sep}{image_id}.{ext}";
 
 #[derive(Debug)]
 pub struct ImgurExtractor {}
@@ -39,7 +45,7 @@ struct ImgurInfoImage {
     id: String,
     link: String,
     // is this necessary?
-    ext: Option<String>,
+    // ext: Option<String>,
     title: Option<String>,
 }
 
@@ -112,7 +118,7 @@ impl Extractor for ImgurExtractor {
         urls: &[&str],
         config: &ExtractorOptions,
     ) -> Result<Vec<impl ExtractedInfo>> {
-        let api_url_template = far::find(API_ALBUM_URL).map_err(CrateError::FarError)?;
+        let url_template = far::find(API_ALBUM_URL).map_err(CrateError::FarError)?;
         let client = Client::new();
 
         let mut extracted = vec![];
@@ -122,9 +128,9 @@ impl Extractor for ImgurExtractor {
                 Err(e) => {
                     eprintln!("cannot parse url: {e}");
                     continue;
-                },
+                }
             };
-            let url = api_url_template.replace(&parsed);
+            let url = url_template.replace(&parsed);
             match Self::fetch_info_inner(&client, &url).await {
                 Ok(info) => extracted.push(info),
                 Err(e) => eprintln!("cannot fetch info: {e}"),
@@ -152,3 +158,61 @@ impl ImgurExtractor {
 }
 
 impl ExtractedInfo for ImgurInfo {}
+
+impl IntoIterator for ImgurInfo {
+    type Item = ExtractedItem;
+    type IntoIter = ImgurInfoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.into()
+    }
+}
+
+#[derive(Debug)]
+struct ImgurInfoIter {
+    data: ImgurInfo,
+    template: String,
+    at: usize,
+}
+
+impl From<ImgurInfo> for ImgurInfoIter {
+    fn from(value: ImgurInfo) -> Self {
+        let template = if value.images.len() == 1 {
+            SAVE_SINGLE_FILE_PATTERN
+        } else {
+            SAVE_ALBUM_PATTERN
+        }
+        .to_string();
+        Self {
+            data: value,
+            template,
+            at: 0,
+        }
+    }
+}
+
+impl Iterator for ImgurInfoIter {
+    type Item = ExtractedItem;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let Some(image) = self.data.images.get(self.at) else {
+            return None;
+        };
+
+        let folder = PathBuf::from(SLUG.to_string());
+        let ext = PathBuf::from(image.link.clone());
+        let sub: [(&str, &str); 6] = [
+            ("album_title", &self.data.title.clone().unwrap_or("".into())),
+            ("album_id", &self.data.id),
+            ("image_title", &image.title.clone().unwrap_or("".into())),
+            ("image_id", &image.id),
+            ("sep", " - "),
+            ("ext", ext.extension().unwrap_or_default().to_str().unwrap_or_default()),
+        ];
+
+        self.at += 1;
+        let f = template(&self.template, &sub).expect("cannot parse template");
+        let f = f.replace(" -  - ", " - ");
+        Some(Self::Item::new(&image.link, folder.join(f)))
+    }
+}

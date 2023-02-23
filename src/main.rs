@@ -2,6 +2,7 @@
 #![allow(incomplete_features)]
 #![feature(async_fn_in_trait)]
 #![feature(return_position_impl_trait_in_trait)]
+#![feature(type_alias_impl_trait)]
 
 use extractor::common::ExtractorOptions;
 use model::error::{CrateError, Result};
