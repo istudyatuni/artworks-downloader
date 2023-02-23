@@ -46,6 +46,8 @@ struct ImgurInfoImage {
     link: String,
     // is this necessary?
     // ext: Option<String>,
+    #[serde(rename(deserialize = "type"))]
+    content_type: String,
     title: Option<String>,
 }
 
@@ -200,14 +202,14 @@ impl Iterator for ImgurInfoIter {
         };
 
         let folder = PathBuf::from(SLUG.to_string());
-        let ext = PathBuf::from(image.link.clone());
+        let ext = image.content_type.split("/").collect::<Vec<_>>()[1];
         let sub: [(&str, &str); 6] = [
             ("album_title", &self.data.title.clone().unwrap_or("".into())),
             ("album_id", &self.data.id),
             ("image_title", &image.title.clone().unwrap_or("".into())),
             ("image_id", &image.id),
             ("sep", " - "),
-            ("ext", ext.extension().unwrap_or_default().to_str().unwrap_or_default()),
+            ("ext", ext),
         ];
 
         self.at += 1;
