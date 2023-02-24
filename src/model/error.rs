@@ -4,8 +4,6 @@ pub type Result<T, E = CrateError> = std::result::Result<T, E>;
 pub enum CrateError {
     #[error("string template parse error: {0}")]
     FarError(#[from] far::Errors),
-    // #[error("make template error: {0}")]
-    // TemplateError(#[from] nanotemplate::TemplateError),
     #[error("reqwest error: {0}")]
     ReqwestError(#[from] reqwest::Error),
 
@@ -16,8 +14,19 @@ pub enum CrateError {
 
     #[error("invalid pattern: {0}")]
     InvalidPattern(String),
+    #[error("missing key for template: {0}")]
+    MissingTemplateKey(String),
 
     #[error("error: {0}")]
     /// Variant for all other errors
     Plain(String),
+}
+
+impl CrateError {
+    pub fn missing_template_key<T: Into<String>>(key: T) -> Self {
+        Self::MissingTemplateKey(key.into())
+    }
+    pub fn plain<T: Into<String>>(msg: T) -> Self {
+        Self::Plain(msg.into())
+    }
 }

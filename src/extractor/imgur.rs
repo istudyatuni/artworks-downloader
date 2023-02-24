@@ -96,7 +96,7 @@ impl TryFrom<&str> for Parsed {
         let parsed = Url::parse(value).map_err(|s| CrateError::InvalidURL(s.to_string()))?;
         let Some(segments) = parsed.path_segments().map(|c| c.collect::<Vec<_>>()) else {
             let msg = format!("cannot get path segments from {value}");
-            return Err(CrateError::Plain(msg));
+            return Err(CrateError::plain(msg));
         };
 
         match segments.as_slice() {
