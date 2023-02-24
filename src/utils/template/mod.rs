@@ -10,30 +10,38 @@ pub struct Template {
 }
 
 impl Template {
-    pub fn render_map<V>(&self, map: HashMap<String, V>) -> Result<PathBuf>
-    where
-        V: ToString,
-    {
-        let mut path = PathBuf::new();
-        let mut segment = String::new();
+    pub fn render_map<V: ToString>(&self, map: HashMap<String, V>) -> Result<String> {
+        // let mut path = PathBuf::new();
+        let mut result = String::new();
         for l in &self.lexems {
             match l {
                 Lexem::PathSep => {
-                    path.push(segment.clone());
-                    segment.clear();
+                    // path.push(result.clone());
+                    // result.clear();
+
+                    // unnecessary for plain string, but needed for path
+                    result.push('/')
                 }
-                Lexem::Plain { text } => segment.push_str(text),
+                Lexem::Plain { text } => result.push_str(text),
                 Lexem::Sub { name } => {
                     let Some(value) = map.get(name) else {
                         return Err(CrateError::missing_template_key(name))
                     };
-                    segment.push_str(&value.to_string())
+                    result.push_str(&value.to_string())
                 }
             }
         }
-        Ok(path)
+        Ok(result)
     }
-    pub fn render<K, V, I>(&self, it: I) -> Result<PathBuf>
+    pub fn render_path<K, V, I>(&self, it: I) -> Result<PathBuf>
+    where
+        K: Eq + ToString,
+        V: ToString,
+        I: IntoIterator<Item = (K, V)>,
+    {
+        self.render(it).map(|s| PathBuf::from(s))
+    }
+    pub fn render<K, V, I>(&self, it: I) -> Result<String>
     where
         K: Eq + ToString,
         V: ToString,
@@ -72,5 +80,18 @@ impl Lexem {
     }
     fn plain<T: Into<String>>(t: T) -> Self {
         Self::Plain { text: t.into() }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::{Lexem, Template};
+
+    #[test]
+    fn render_test() {
+        let lexems = vec![Lexem::plain("text-"), Lexem::sub("test")];
+        let t = Template { lexems };
+        let sub = [("test", "asdf")];
+        assert_eq!(t.render(sub).unwrap(), String::from("text-asdf"));
     }
 }
