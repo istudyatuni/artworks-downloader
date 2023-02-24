@@ -10,7 +10,7 @@ pub struct Template {
 }
 
 impl Template {
-    pub fn render_map<V: ToString>(&self, map: HashMap<String, V>) -> Result<String> {
+    fn render_map<V: ToString>(&self, map: HashMap<String, V>) -> Result<String> {
         // let mut path = PathBuf::new();
         let mut result = String::new();
         for l in &self.lexems {
@@ -39,7 +39,7 @@ impl Template {
         V: ToString,
         I: IntoIterator<Item = (K, V)>,
     {
-        self.render(it).map(|s| PathBuf::from(s))
+        self.render(it).map(PathBuf::from)
     }
     pub fn render<K, V, I>(&self, it: I) -> Result<String>
     where

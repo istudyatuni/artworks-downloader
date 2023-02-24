@@ -1,6 +1,5 @@
 use std::{fmt::Display, path::PathBuf};
 
-use far::Render;
 use reqwest::{header::AUTHORIZATION, Client};
 use serde::Deserialize;
 use url::Url;
@@ -9,7 +8,7 @@ use super::common::{ExtractedInfo, ExtractedItem, Extractor, ExtractorOptions, E
 use crate::utils::template::Template;
 use crate::{CrateError, Result};
 
-const API_ALBUM_URL: &str = "https://api.imgur.com/3/{{link_type}}/{{id}}";
+const API_ALBUM_URL: &str = "https://api.imgur.com/3/{type}/{id}";
 // just from devtools
 const AUTHORIZATION_KEY: &str = "Client-ID 546c25a59c58ad7";
 
@@ -76,7 +75,7 @@ impl Display for LinkType {
     }
 }
 
-#[derive(Debug, Render)]
+#[derive(Debug)]
 struct Parsed {
     id: String,
     link_type: LinkType,
@@ -118,7 +117,7 @@ impl Extractor for ImgurExtractor {
         urls: &[&str],
         config: &ExtractorOptions,
     ) -> Result<Vec<impl ExtractedInfo>> {
-        let url_template = far::find(API_ALBUM_URL).map_err(CrateError::FarError)?;
+        let url_template = Template::try_from(API_ALBUM_URL)?;
         let client = Client::new();
 
         let mut extracted = vec![];
@@ -130,7 +129,11 @@ impl Extractor for ImgurExtractor {
                     continue;
                 }
             };
-            let url = url_template.replace(&parsed);
+            let sub = [
+                ("id", parsed.id),
+                ("type", parsed.link_type.to_string()),
+            ];
+            let url = url_template.render(sub)?;
             match Self::fetch_info_inner(&client, &url).await {
                 Ok(info) => extracted.push(info),
                 Err(e) => eprintln!("cannot fetch info: {e}"),
@@ -194,7 +197,7 @@ impl Iterator for ImgurInfoIter {
         };
 
         let folder = PathBuf::from(SLUG.to_string());
-        let ext = image.content_type.split('/').collect::<Vec<_>>()[1];
+        let ext = image.content_type.split('/').last().unwrap_or_default();
         let sub: [(&str, &str); 6] = [
             ("album_title", &self.data.title.clone().unwrap_or("".into())),
             ("album_id", &self.data.id),
@@ -205,7 +208,7 @@ impl Iterator for ImgurInfoIter {
         ];
 
         self.at += 1;
-        let f = self.template.render(sub).expect("cannot parse template");
+        let f = self.template.render(sub).unwrap();
         let f = f.replace(" -  - ", " - ");
         Some(Self::Item::new(&image.link, folder.join(f)))
     }

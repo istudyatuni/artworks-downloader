@@ -7,7 +7,6 @@ edition = "2021"
 strip = true
 
 [dependencies]
-far = "0.2.1"
 nom = "7.1.3"
 reqwest = { version = "0.11.14", features = ["json"] }
 # rusqlite = "0.27.0"
