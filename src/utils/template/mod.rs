@@ -51,7 +51,7 @@ impl TryFrom<&str> for Template {
     type Error = CrateError;
 
     fn try_from(value: &str) -> Result<Template> {
-        let lexems = parser::parse_template(value)?;
+        let lexems = parser::parse_path_template(value)?;
         Ok(Self { lexems })
     }
 }

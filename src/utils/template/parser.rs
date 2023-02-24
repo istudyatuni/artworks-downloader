@@ -16,20 +16,39 @@ fn sub(i: &str) -> IResult<&str, Lexem> {
     delimited(tag("{"), take_while(is_key), tag("}"))(i).map(|(s, l)| (s, Lexem::sub(l)))
 }
 
-fn text(i: &str) -> IResult<&str, Lexem> {
-    take_till(|c| "{/".contains(c))(i).map(|(s, t)| (s, Lexem::plain(t)))
+fn text<'a>(i: &'a str, exclude: &'a str) -> IResult<&'a str, Lexem> {
+    take_till(|c| exclude.contains(c))(i).map(|(s, t)| (s, Lexem::plain(t)))
 }
 
-fn segment(i: &str) -> IResult<&str, Vec<Lexem>> {
-    many_till(alt((sub, text)), alt((tag("/"), eof)))(i).map(|(s, (v, _))| (s, v))
+fn path_text(i: &str) -> IResult<&str, Lexem> {
+    text(i, "{/")
 }
 
-fn path(i: &str) -> IResult<&str, Vec<Lexem>> {
-    many_till(segment, eof)(i).map(|(s, (v, _))| (s, v.join(&Lexem::sep())))
+fn path_segment(i: &str) -> IResult<&str, Vec<Lexem>> {
+    many_till(alt((sub, path_text)), alt((tag("/"), eof)))(i).map(|(s, (v, _))| (s, v))
 }
 
-pub fn parse_template(s: &str) -> Result<Vec<Lexem>> {
-    path(s)
+fn path_template(i: &str) -> IResult<&str, Vec<Lexem>> {
+    many_till(path_segment, eof)(i).map(|(s, (v, _))| (s, v.join(&Lexem::sep())))
+}
+
+pub fn parse_path_template(s: &str) -> Result<Vec<Lexem>> {
+    path_template(s)
+        // TODO: return error if remaining string is not empty
+        .map(|(_, v)| v)
+        .map_err(|e| CrateError::InvalidPattern(e.to_string()))
+}
+
+fn any_text(i: &str) -> IResult<&str, Lexem> {
+    text(i, "{")
+}
+
+fn any_template(i: &str) -> IResult<&str, Vec<Lexem>> {
+    many_till(alt((sub, any_text)), eof)(i).map(|(s, (v, _))| (s, v))
+}
+
+pub fn parse_any_template(s: &str) -> Result<Vec<Lexem>> {
+    any_template(s)
         // TODO: return error if remaining string is not empty
         .map(|(_, v)| v)
         .map_err(|e| CrateError::InvalidPattern(e.to_string()))
@@ -46,14 +65,14 @@ mod test {
     }
     #[test]
     fn text_test() {
-        assert_eq!(text("text{tag}"), Ok(("{tag}", Lexem::plain("text"))));
-        assert_eq!(text("text/{tag}"), Ok(("/{tag}", Lexem::plain("text"))));
-        assert_eq!(text("text"), Ok(("", Lexem::plain("text"))));
+        assert_eq!(text("text{tag}", "{/"), Ok(("{tag}", Lexem::plain("text"))));
+        assert_eq!(text("text/{tag}", "{/"), Ok(("/{tag}", Lexem::plain("text"))));
+        assert_eq!(text("text", "{/"), Ok(("", Lexem::plain("text"))));
     }
     #[test]
     fn segment_test() {
         assert_eq!(
-            segment("{ab_c} - text - {test}{text}"),
+            path_segment("{ab_c} - text - {test}{text}"),
             Ok((
                 "",
                 vec![
@@ -68,12 +87,29 @@ mod test {
     #[test]
     fn path_test() {
         assert_eq!(
-            path("{a}/{text}.{ext}"),
+            path_template("{a}/{text}.{ext}"),
             Ok((
                 "",
                 vec![
                     Lexem::sub("a"),
                     Lexem::sep(),
+                    Lexem::sub("text"),
+                    Lexem::plain("."),
+                    Lexem::sub("ext"),
+                ]
+            ))
+        );
+    }
+    #[test]
+    fn any_test() {
+        assert_eq!(
+            any_template("http://{a}/{text}.{ext}"),
+            Ok((
+                "",
+                vec![
+                    Lexem::plain("http://"),
+                    Lexem::sub("a"),
+                    Lexem::plain("/"),
                     Lexem::sub("text"),
                     Lexem::plain("."),
                     Lexem::sub("ext"),
