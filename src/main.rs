@@ -11,6 +11,7 @@ mod cache;
 mod download;
 mod extractor;
 mod model;
+mod utils;
 
 #[tokio::main]
 async fn main() -> Result<()> {

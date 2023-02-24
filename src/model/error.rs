@@ -14,6 +14,9 @@ pub enum CrateError {
     #[error("unsupported url: {0}")]
     UnsupportedURL(String),
 
+    #[error("invalid pattern: {0}")]
+    InvalidPattern(String),
+
     #[error("error: {0}")]
     /// Variant for all other errors
     Plain(String),

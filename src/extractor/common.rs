@@ -1,4 +1,4 @@
-use std::{path::PathBuf, fmt::Display};
+use std::{fmt::Display, path::PathBuf};
 
 use crate::Result;
 
