@@ -5,7 +5,7 @@
 #![feature(type_alias_impl_trait)]
 
 use extractor::common::ExtractorOptions;
-use model::error::{CrateError, Result};
+pub use model::error::{CrateError, Result};
 
 mod cache;
 mod download;

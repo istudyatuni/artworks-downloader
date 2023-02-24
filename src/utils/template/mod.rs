@@ -65,7 +65,7 @@ impl TryFrom<&str> for Template {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Lexem {
+enum Lexem {
     PathSep,
     Plain { text: String },
     Sub { name: String },

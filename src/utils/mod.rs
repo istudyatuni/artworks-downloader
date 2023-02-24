@@ -1,1 +1,1 @@
-mod template;
+pub mod template;

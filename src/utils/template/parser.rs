@@ -32,7 +32,7 @@ fn path_template(i: &str) -> IResult<&str, Vec<Lexem>> {
     many_till(path_segment, eof)(i).map(|(s, (v, _))| (s, v.join(&Lexem::sep())))
 }
 
-pub fn parse_path_template(s: &str) -> Result<Vec<Lexem>> {
+pub(super) fn parse_path_template(s: &str) -> Result<Vec<Lexem>> {
     path_template(s)
         // TODO: return error if remaining string is not empty
         .map(|(_, v)| v)
@@ -47,7 +47,7 @@ fn any_template(i: &str) -> IResult<&str, Vec<Lexem>> {
     many_till(alt((sub, any_text)), eof)(i).map(|(s, (v, _))| (s, v))
 }
 
-pub fn parse_any_template(s: &str) -> Result<Vec<Lexem>> {
+pub(super) fn parse_any_template(s: &str) -> Result<Vec<Lexem>> {
     any_template(s)
         // TODO: return error if remaining string is not empty
         .map(|(_, v)| v)
@@ -66,7 +66,10 @@ mod test {
     #[test]
     fn text_test() {
         assert_eq!(text("text{tag}", "{/"), Ok(("{tag}", Lexem::plain("text"))));
-        assert_eq!(text("text/{tag}", "{/"), Ok(("/{tag}", Lexem::plain("text"))));
+        assert_eq!(
+            text("text/{tag}", "{/"),
+            Ok(("/{tag}", Lexem::plain("text")))
+        );
         assert_eq!(text("text", "{/"), Ok(("", Lexem::plain("text"))));
     }
     #[test]

@@ -1,12 +1,12 @@
 use std::{fmt::Display, path::PathBuf};
 
 use far::Render;
-use nanotemplate::template;
 use reqwest::{header::AUTHORIZATION, Client};
 use serde::Deserialize;
 use url::Url;
 
 use super::common::{ExtractedInfo, ExtractedItem, Extractor, ExtractorOptions, ExtractorSlug};
+use crate::utils::template::Template;
 use crate::{CrateError, Result};
 
 const API_ALBUM_URL: &str = "https://api.imgur.com/3/{{link_type}}/{{id}}";
@@ -169,6 +169,7 @@ impl IntoIterator for ImgurInfo {
         } else {
             SAVE_ALBUM_PATTERN
         };
+        let template = Template::try_from(template).unwrap();
         Self::IntoIter {
             data: self,
             template,
@@ -180,7 +181,7 @@ impl IntoIterator for ImgurInfo {
 #[derive(Debug)]
 struct ImgurInfoIter {
     data: ImgurInfo,
-    template: &'static str,
+    template: Template,
     at: usize,
 }
 
@@ -204,7 +205,7 @@ impl Iterator for ImgurInfoIter {
         ];
 
         self.at += 1;
-        let f = template(self.template, sub).expect("cannot parse template");
+        let f = self.template.render(sub).expect("cannot parse template");
         let f = f.replace(" -  - ", " - ");
         Some(Self::Item::new(&image.link, folder.join(f)))
     }
