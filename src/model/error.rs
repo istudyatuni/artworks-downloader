@@ -21,6 +21,12 @@ pub enum CrateError {
 }
 
 impl CrateError {
+    pub fn invalid_url<T: Into<String>>(url: T) -> Self {
+        Self::InvalidURL(url.into())
+    }
+    pub fn unsupported_url<T: Into<String>>(url: T) -> Self {
+        Self::UnsupportedURL(url.into())
+    }
     pub fn missing_template_key<T: Into<String>>(key: T) -> Self {
         Self::MissingTemplateKey(key.into())
     }

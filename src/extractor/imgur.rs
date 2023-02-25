@@ -92,22 +92,24 @@ impl TryFrom<&str> for Parsed {
     type Error = CrateError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let parsed = Url::parse(value).map_err(|s| CrateError::InvalidURL(s.to_string()))?;
+        let parsed = Url::parse(value).map_err(|s| CrateError::invalid_url(s.to_string()))?;
         let Some(segments) = parsed.path_segments().map(|c| c.collect::<Vec<_>>()) else {
             let msg = format!("cannot get path segments from {value}");
             return Err(CrateError::plain(msg));
         };
 
         match segments.as_slice() {
+            ["" | "a" | "gallery" | "t"] | ["t", _] => Err(CrateError::invalid_url(value)),
+
             // https://imgur.com/<id>
             [id] => Ok(Parsed::new(id, LinkType::Image)),
 
             // https://imgur.com/a/<id>
             // https://imgur.com/gallery/<id>
             // https://imgur.com/t/<tag>/<id>
-            ["a", id] | ["gallery", id] | ["t", _, id] => Ok(Parsed::new(id, LinkType::Album)),
+            ["a" | "gallery", id] | ["t", _, id] => Ok(Parsed::new(id, LinkType::Album)),
 
-            _ => Err(CrateError::UnsupportedURL(value.to_string())),
+            _ => Err(CrateError::unsupported_url(value)),
         }
     }
 }
@@ -129,10 +131,7 @@ impl Extractor for ImgurExtractor {
                     continue;
                 }
             };
-            let sub = [
-                ("id", parsed.id),
-                ("type", parsed.link_type.to_string()),
-            ];
+            let sub = [("id", parsed.id), ("type", parsed.link_type.to_string())];
             let url = url_template.render(sub)?;
             match Self::fetch_info_inner(&client, &url).await {
                 Ok(info) => extracted.push(info),

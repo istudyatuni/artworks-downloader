@@ -11,11 +11,11 @@ mod imgur;
 
 fn detect_site(url: &str) -> Result<ExtractorSlug> {
     let Ok(parsed) = Url::parse(url) else {
-        return Err(CrateError::InvalidURL(url.to_string()))
+        return Err(CrateError::invalid_url(url))
     };
     let Some(host) = parsed.host_str() else {
         // cannot parse host from url
-        return Err(CrateError::InvalidURL(url.to_string()))
+        return Err(CrateError::invalid_url(url))
     };
     let slug = match host {
         "danbooru.donmai.us" | "safebooru.donmai.us" => ExtractorSlug::Danbooru,
@@ -26,7 +26,7 @@ fn detect_site(url: &str) -> Result<ExtractorSlug> {
         "www.artstation.com" => ExtractorSlug::Artstation,
         "www.deviantart.com" => ExtractorSlug::DeviantArt,
         "www.pixiv.net" | "zettai.moe" => ExtractorSlug::Pixiv,
-        _ => return Err(CrateError::UnsupportedURL(url.to_string())),
+        _ => return Err(CrateError::unsupported_url(url)),
     };
     Ok(slug)
 }
