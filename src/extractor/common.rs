@@ -51,7 +51,7 @@ impl ExtractorOptions {
         }
     }
     /// Get `root_save_folder` with appended `filepath`
-    fn save_file_to(&self, filepath: PathBuf) -> PathBuf {
+    pub fn save_file_to(&self, filepath: &PathBuf) -> PathBuf {
         self.root_save_folder.join(filepath)
     }
 }
@@ -69,4 +69,10 @@ impl ExtractedItem {
     }
 }
 
+/// This marker trait indicates that an object with extracted
+/// information can provide information about extracted info
+///
+/// This also enforces to implement an iterator
+///
+/// To do this [`IntoIterator`] (and maybe [`Iterator`]) should be implemented
 pub trait ExtractedInfo: IntoIterator<Item = ExtractedItem> {}

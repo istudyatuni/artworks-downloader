@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
+use reqwest::Client;
 use url::Url;
 
+use crate::download::download_and_save;
 use crate::{CrateError, Result};
-use common::{Extractor, ExtractorOptions, ExtractorSlug};
+use common::{ExtractedItem, Extractor, ExtractorOptions, ExtractorSlug};
 
 pub mod common;
 
@@ -39,14 +41,22 @@ pub async fn download_urls(urls: Vec<&str>, config: &ExtractorOptions) -> Result
             Err(err) => eprintln!("{err}"),
         }
     }
+    let mut to_download = vec![];
     for (slug, urls) in map {
         let info_vec = match slug {
             ExtractorSlug::Imgur => imgur::ImgurExtractor::fetch_info(&urls, config).await?,
             _ => continue,
         };
-        for info in info_vec {
-            for image in info {
-                println!("download: {image:?}");
+        to_download.extend(info_vec);
+    }
+    let client = Client::new();
+    for info in to_download {
+        for image in info {
+            let image: ExtractedItem = image;
+            println!("download: {:?}", image.save_path);
+            let res = download_and_save(&client, config, &image.link, &image.save_path).await;
+            if let Err(e) = res {
+                eprintln!("{e}");
             }
         }
     }

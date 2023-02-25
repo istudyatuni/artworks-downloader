@@ -117,7 +117,7 @@ impl TryFrom<&str> for Parsed {
 impl Extractor for ImgurExtractor {
     async fn fetch_info(
         urls: &[&str],
-        config: &ExtractorOptions,
+        _config: &ExtractorOptions,
     ) -> Result<Vec<impl ExtractedInfo>> {
         let url_template = Template::try_from(API_ALBUM_URL)?;
         let client = Client::new();
