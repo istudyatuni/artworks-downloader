@@ -7,48 +7,25 @@ use nom::{
     IResult,
 };
 
-use crate::{CrateError, Result};
-
 use super::Lexem;
+use crate::{CrateError, Result};
 
 fn sub(i: &str) -> IResult<&str, Lexem> {
     let is_key = |c: char| c.is_alphabetic() || c == '_';
     delimited(tag("{"), take_while(is_key), tag("}"))(i).map(|(s, l)| (s, Lexem::sub(l)))
 }
 
-fn text<'a>(i: &'a str, exclude: &'a str) -> IResult<&'a str, Lexem> {
-    take_till(|c| exclude.contains(c))(i).map(|(s, t)| (s, Lexem::plain(t)))
+fn text(i: &str) -> IResult<&str, Lexem> {
+    let stop = |c| c == '{';
+    take_till(stop)(i).map(|(s, t)| (s, Lexem::plain(t)))
 }
 
-fn path_text(i: &str) -> IResult<&str, Lexem> {
-    text(i, "{/")
+fn template(i: &str) -> IResult<&str, Vec<Lexem>> {
+    many_till(alt((sub, text)), eof)(i).map(|(s, (v, _))| (s, v))
 }
 
-fn path_segment(i: &str) -> IResult<&str, Vec<Lexem>> {
-    many_till(alt((sub, path_text)), alt((tag("/"), eof)))(i).map(|(s, (v, _))| (s, v))
-}
-
-fn path_template(i: &str) -> IResult<&str, Vec<Lexem>> {
-    many_till(path_segment, eof)(i).map(|(s, (v, _))| (s, v.join(&Lexem::sep())))
-}
-
-pub(super) fn parse_path_template(s: &str) -> Result<Vec<Lexem>> {
-    path_template(s)
-        // TODO: return error if remaining string is not empty
-        .map(|(_, v)| v)
-        .map_err(|e| CrateError::InvalidPattern(e.to_string()))
-}
-
-fn any_text(i: &str) -> IResult<&str, Lexem> {
-    text(i, "{")
-}
-
-fn any_template(i: &str) -> IResult<&str, Vec<Lexem>> {
-    many_till(alt((sub, any_text)), eof)(i).map(|(s, (v, _))| (s, v))
-}
-
-pub(super) fn parse_any_template(s: &str) -> Result<Vec<Lexem>> {
-    any_template(s)
+pub(super) fn parse_template(s: &str) -> Result<Vec<Lexem>> {
+    template(s)
         // TODO: return error if remaining string is not empty
         .map(|(_, v)| v)
         .map_err(|e| CrateError::InvalidPattern(e.to_string()))
@@ -65,59 +42,21 @@ mod test {
     }
     #[test]
     fn text_test() {
-        assert_eq!(text("text{tag}", "{/"), Ok(("{tag}", Lexem::plain("text"))));
-        assert_eq!(
-            text("text/{tag}", "{/"),
-            Ok(("/{tag}", Lexem::plain("text")))
-        );
-        assert_eq!(text("text", "{/"), Ok(("", Lexem::plain("text"))));
+        assert_eq!(text("text{tag}"), Ok(("{tag}", Lexem::plain("text"))));
+        assert_eq!(text("text/{tag}"), Ok(("{tag}", Lexem::plain("text/"))));
+        assert_eq!(text("text"), Ok(("", Lexem::plain("text"))));
     }
     #[test]
-    fn segment_test() {
-        assert_eq!(
-            path_segment("{ab_c} - text - {test}{text}"),
-            Ok((
-                "",
-                vec![
-                    Lexem::sub("ab_c"),
-                    Lexem::plain(" - text - "),
-                    Lexem::sub("test"),
-                    Lexem::sub("text"),
-                ]
-            ))
-        );
-    }
-    #[test]
-    fn path_test() {
-        assert_eq!(
-            path_template("{a}/{text}.{ext}"),
-            Ok((
-                "",
-                vec![
-                    Lexem::sub("a"),
-                    Lexem::sep(),
-                    Lexem::sub("text"),
-                    Lexem::plain("."),
-                    Lexem::sub("ext"),
-                ]
-            ))
-        );
-    }
-    #[test]
-    fn any_test() {
-        assert_eq!(
-            any_template("http://{a}/{text}.{ext}"),
-            Ok((
-                "",
-                vec![
-                    Lexem::plain("http://"),
-                    Lexem::sub("a"),
-                    Lexem::plain("/"),
-                    Lexem::sub("text"),
-                    Lexem::plain("."),
-                    Lexem::sub("ext"),
-                ]
-            ))
-        );
+    fn template_test() {
+        let mut expected = vec![
+            Lexem::sub("a"),
+            Lexem::plain("/"),
+            Lexem::sub("text"),
+            Lexem::plain("."),
+            Lexem::sub("ext"),
+        ];
+        assert_eq!(template("{a}/{text}.{ext}"), Ok(("", expected.clone())));
+        expected.insert(0, Lexem::plain("http://"));
+        assert_eq!(template("http://{a}/{text}.{ext}"), Ok(("", expected)));
     }
 }

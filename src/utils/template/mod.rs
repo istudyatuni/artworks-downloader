@@ -11,17 +11,9 @@ pub struct Template {
 
 impl Template {
     fn render_map<V: ToString>(&self, map: HashMap<String, V>) -> Result<String> {
-        // let mut path = PathBuf::new();
         let mut result = String::new();
         for l in &self.lexems {
             match l {
-                Lexem::PathSep => {
-                    // path.push(result.clone());
-                    // result.clear();
-
-                    // unnecessary for plain string, but needed for path
-                    result.push('/')
-                }
                 Lexem::Plain { text } => result.push_str(text),
                 Lexem::Sub { name } => {
                     let Some(value) = map.get(name) else {
@@ -32,14 +24,6 @@ impl Template {
             }
         }
         Ok(result)
-    }
-    pub fn render_path<K, V, I>(&self, it: I) -> Result<PathBuf>
-    where
-        K: Eq + ToString,
-        V: ToString,
-        I: IntoIterator<Item = (K, V)>,
-    {
-        self.render(it).map(PathBuf::from)
     }
     pub fn render<K, V, I>(&self, it: I) -> Result<String>
     where
@@ -59,22 +43,18 @@ impl TryFrom<&str> for Template {
     type Error = CrateError;
 
     fn try_from(value: &str) -> Result<Template> {
-        let lexems = parser::parse_path_template(value)?;
+        let lexems = parser::parse_template(value)?;
         Ok(Self { lexems })
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Lexem {
-    PathSep,
     Plain { text: String },
     Sub { name: String },
 }
 
 impl Lexem {
-    fn sep() -> Self {
-        Self::PathSep
-    }
     fn sub<T: Into<String>>(n: T) -> Self {
         Self::Sub { name: n.into() }
     }
