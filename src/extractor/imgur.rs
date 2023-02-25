@@ -5,7 +5,7 @@ use serde::Deserialize;
 use url::Url;
 
 use super::common::{ExtractedInfo, ExtractedItem, Extractor, ExtractorOptions, ExtractorSlug};
-use crate::utils::template::Template;
+use crate::utils::{cleaner::SepCleaner, template::Template};
 use crate::{CrateError, Result};
 
 const API_ALBUM_URL: &str = "https://api.imgur.com/3/{type}/{id}";
@@ -208,7 +208,8 @@ impl Iterator for ImgurInfoIter {
 
         self.at += 1;
         let f = self.template.render(sub).unwrap();
-        let f = f.replace(" -  - ", " - ");
+        let f: PathBuf = f.replace(" -  - ", " - ").into();
+        let f = f.try_clear_separator(" - ").unwrap();
         Some(Self::Item::new(&image.link, folder.join(f)))
     }
 }
