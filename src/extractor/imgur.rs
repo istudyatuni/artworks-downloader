@@ -148,9 +148,8 @@ impl ImgurExtractor {
             .get(url)
             .header(AUTHORIZATION, AUTHORIZATION_KEY)
             .send()
-            .await
-            .map_err(CrateError::ReqwestError)?;
-        let res: ImgurInfoWrapper = res.json().await.map_err(CrateError::ReqwestError)?;
+            .await?;
+        let res: ImgurInfoWrapper = res.json().await?;
         let data = match res.data {
             ImgurInfoData::Single(image) => ImgurInfo::from(image),
             ImgurInfoData::Multiple(info) => info,

@@ -11,13 +11,10 @@ async fn download_binary(client: &Client, url: &str) -> Result<Vec<u8>> {
     Ok(client
         .get(url)
         .send()
-        .await
-        .map_err(CrateError::ReqwestError)?
-        .error_for_status()
-        .map_err(CrateError::ReqwestError)?
+        .await?
+        .error_for_status()?
         .bytes()
-        .await
-        .map_err(CrateError::ReqwestError)?
+        .await?
         .into())
 }
 
@@ -35,5 +32,5 @@ pub async fn download_and_save(
     if let Some(dir) = path.parent() {
         create_dir_all(dir)?;
     }
-    write(path, download_binary(client, url).await?).map_err(CrateError::IoError)
+    Ok(write(path, download_binary(client, url).await?)?)
 }
