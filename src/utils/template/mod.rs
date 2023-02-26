@@ -31,11 +31,7 @@ impl Template {
         V: ToString,
         I: IntoIterator<Item = (K, V)>,
     {
-        let mut map = HashMap::new();
-        for (k, v) in it {
-            map.insert(k.to_string(), v);
-        }
-        self.render_map(map)
+        self.render_map(it.into_iter().map(|(k, v)| (k.to_string(), v)).collect())
     }
 }
 

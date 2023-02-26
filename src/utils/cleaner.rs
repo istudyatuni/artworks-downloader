@@ -14,6 +14,8 @@ impl SepCleaner for PathBuf {
         let Some(s) = self.to_str() else {
             return Err(crate::CrateError::plain("cannot convert to utf-8 string"))
         };
+        // "{sep}{sep}" -> "{sep}"
+        let s = s.replace(&(sep.to_owned() + sep), sep);
         Ok(s.split('/')
             .map(|s| s.strip_prefix(sep).unwrap_or(s))
             .map(|s| s.strip_suffix(sep).unwrap_or(s))

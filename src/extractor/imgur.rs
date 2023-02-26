@@ -206,8 +206,7 @@ impl Iterator for ImgurInfoIter {
         ];
 
         self.at += 1;
-        let f = self.template.render(sub).unwrap();
-        let f: PathBuf = f.replace(" -  - ", " - ").into();
+        let f: PathBuf = self.template.render(sub).unwrap().into();
         let f = f.try_clear_separator(" - ").unwrap();
         Some(Self::Item::new(&image.link, folder.join(f)))
     }
