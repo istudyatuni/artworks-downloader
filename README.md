@@ -1,65 +1,43 @@
 # Artworks downloader
 
-[![PyPI](https://img.shields.io/pypi/v/art-dl)](https://pypi.org/project/art-dl)
-
 ## Supported sites
 
-- artstation.com [#usage](#sites-with-simple-usage)
-- deviantart.com [#usage](#deviantart)
-- imgur.com [#usage](#sites-with-simple-usage)
-- pixiv.net [#usage](#sites-with-simple-usage) [#notes](#pixiv)
-  - zettai.moe
-- reddit.com [#usage](#sites-with-simple-usage)
-- twitter.com [#usage](#sites-with-simple-usage) [#notes](#twitter)
-- wallhaven.cc [#usage](#sites-with-simple-usage) [#notes](#wallhaven)
+<!-- - artstation.com [#usage](#sites-with-simple-usage) -->
+<!-- - deviantart.com [#usage](#deviantart) -->
+- imgur.com [#usage](#usage)
+<!-- - pixiv.net [#usage](#sites-with-simple-usage) [#notes](#pixiv) -->
+  <!-- - zettai.moe -->
+<!-- - reddit.com [#usage](#sites-with-simple-usage) -->
+<!-- - twitter.com [#usage](#sites-with-simple-usage) [#notes](#twitter) -->
+<!-- - wallhaven.cc [#usage](#sites-with-simple-usage) [#notes](#wallhaven) -->
+
+*Other sites in progress*
 
 [Supported URL types](#supported-url-types)
 
 ## Install
 
-### With `pip`
-
 ```sh
-pip install -U art-dl
+cargo install art-dl
 ```
 
 Then run as `art-dl`: [#usage](#usage)
 
 ### Build from source
 
-You need poetry, [install](https://python-poetry.org/docs/#installation) it, then run from inside the project
+Clone the repo, then run from inside of it:
 
 ```sh
-poetry install --no-dev
-
-# run with poetry
-poetry run python -m art_dl
-
-# enter venv created with poetry
-poetry shell
-# run inside it as
-python -m art_dl
-# or
-art-dl
-
-# create and activate venv, e.g. with virtualenvwrapper, then
-poetry install --no-dev
-art-dl
+cargo install --path .
 ```
-
-Alternatively, build binary with [nuitka](https://github.com/Nuitka/Nuitka):
-
-```sh
-poetry install
-poetry shell
-python -m nuitka art_dl
-```
-
-After that you will have binary in the root directory.
 
 ## Usage
 
-```
+<!-- ```sh
+art-dl [file with list of urls]
+``` -->
+
+<!-- ```
 usage: art-dl [-h] [-u URL] [-l LIST] [--folder FOLDER] [--action ACTION] [-q] [-v] [--version]
 
 Artworks downloader
@@ -73,20 +51,25 @@ options:
   -q, --quiet           Do not show logs
   -v, --verbose         Show more logs
   --version             Show version
-```
+``` -->
 
-### Sites with simple usage
+<!-- ### Sites with simple usage -->
 
 Just run
 
 ```sh
+# download urls from file with list of urls, one url per line
+art-dl [file with list of urls]
+```
+
+<!-- ```sh
 # download single url
 art-dl -u [URL]
 # download urls from file with list of urls, one url per line
 art-dl -l [file with list of urls]
-```
+``` -->
 
-### DeviantArt
+<!-- ### DeviantArt
 
 You should have deviantart.com account, login to it, then
 
@@ -111,9 +94,9 @@ You should have deviantart.com account, login to it, then
   - open suggested link
   - click "Authorize"
 
-After that you can use it as other sites: [#usage](#sites-with-simple-usage)
+After that you can use it as other sites: [#usage](#sites-with-simple-usage) -->
 
-### Proxy
+<!-- ### Proxy
 
 Run
 
@@ -121,9 +104,9 @@ Run
 art-dl --action config:proxy
 ```
 
-Enter proxy, for example, `socks5://localhost:1080`
+Enter proxy, for example, `socks5://localhost:1080` -->
 
-## Notes
+<!-- ## Notes
 
 ### Pixiv
 
@@ -139,11 +122,11 @@ NSFW images supported only with API key, to use it, get it from [account setting
 
 ```sh
 art-dl --action wallhaven:key
-```
+``` -->
 
 ## Supported URL types
 
-- **artstation.com**
+<!-- - **artstation.com**
   - `https://www.artstation.com/artwork/<hash>`
   - `https://www.artstation.com/<artist>`
 - **deviantart.com**
@@ -153,12 +136,12 @@ art-dl --action wallhaven:key
   - "Featured" collection
     - `https://www.deviantart.com/<artist>/gallery`
   - `https://www.deviantart.com/<artist>/gallery/<some number>/<gallery name>`
-  - `https://www.deviantart.com/<artist>/art/<name>`
+  - `https://www.deviantart.com/<artist>/art/<name>` -->
 - **imgur.com**
   - `https://imgur.com/a/<id>`
   - `https://imgur.com/gallery/<id>`
   - `https://imgur.com/t/<tag>/<id>`
-- **pixiv.net**
+<!-- - **pixiv.net**
   - `https://www.pixiv.net/artworks/<id>`
   - `https://www.pixiv.net/<lang>/artworks/<id>`
 
@@ -174,4 +157,4 @@ art-dl --action wallhaven:key
   - `https://nitter.net/<account>/status/<id>`
 - **wallhaven.cc**
   - `https://wallhaven.cc/w/<id>`
-  - `https://whvn.cc/<id>`
+  - `https://whvn.cc/<id>` -->
